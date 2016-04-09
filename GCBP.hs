@@ -9,6 +9,7 @@ import Data.Maybe
 import Data.Monoid
 import Data.Tuple
 import Data.Proxy
+import Debug.Trace
 
 -- gcbc :: (Either a c -> Either b c) -> a -> b
 -- gcbc iso a = case iso (Left a) of
@@ -142,3 +143,9 @@ gcbp minuend subtrahend =
   unsafeTotal . foldMap leftPartial $
     iterate (step minuend subtrahend) (partial minuend)
 
+instrument :: String -> [a] -> [a]
+instrument s =
+  foldr cons nil
+  where
+    cons a as = trace (s ++ " :")  (a : as)
+    nil       = trace (s ++ " []") []
