@@ -1,0 +1,7 @@
+Proof of GCBP from Garsia-Milne:
+
+Given (m : A0 + A1 <-> B0 + B1) and (s : A1 <-> B1).  Let A+ = A0+A1,
+similarly for B+.  Let A- = A1, B- = B1.  Define alpha : A+ <-> A-
+which leaves A0 alone and swaps the A1 part of A+ with A-, similarly
+for beta : B+ <-> B-.  Then Garsia-Milne constructs a bijection A0 <->
+B0 (in fact, the same one that GCBP constructs).
