@@ -5,3 +5,12 @@ similarly for B+.  Let A- = A1, B- = B1.  Define alpha : A+ <-> A-
 which leaves A0 alone and swaps the A1 part of A+ with A-, similarly
 for beta : B+ <-> B-.  Then Garsia-Milne constructs a bijection A0 <->
 B0 (in fact, the same one that GCBP constructs).
+
+Proof of G-M from GCBP:
+
+Set A0 = F_alpha etc.  Set A1 = A - F_alpha.  f is a bijection between
+A0 + A1.  For the bijection between A1 <-> B1, do what f does on A- /
+B-, and then do the same thing on A+ - F_alpha / B+ - F_beta under the
+correspondences induced by alpha / beta.
+
+Does this give the same function as G-M would???
