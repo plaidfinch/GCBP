@@ -6,7 +6,7 @@ import Prelude hiding ((.), id, Either(..), either)
 import Control.Category
 import Control.Monad
 import Data.Maybe
-import Data.List
+import Data.Monoid
 import Data.Tuple
 import Data.Proxy
 
@@ -26,7 +26,7 @@ import Data.Proxy
 
 -------------------------------------------------------------
 
-data a + b = InL a | InR b deriving (Eq, Show)
+data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
 class Category c => Groupoid c where
   invert :: c a b -> c b a
@@ -101,31 +101,22 @@ composeN :: Integer -> (a -> a) -> (a -> a)
 composeN 0 _ = id
 composeN n f = f . composeN (n - 1) f
 
-class Finite c where
-  size :: proxy c -> Integer
-
-instance Finite Bool where
-  size _ = 8
-
-gcbp :: forall a b c d. Finite c
-     => (a + c <=> b + d)
-     -> (c <=> d)
-     -> (a <=> b)
-gcbp minuend subtrahend =
+gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbpExact i minuend subtrahend =
   unsafeTotal . leftPartial $
-    composeN (size (Proxy :: Proxy c))
-             (step minuend subtrahend)
-             (partial minuend)
+    composeN i
+      (step minuend subtrahend)
+      (partial minuend)
 
-data Three = One | Two | Three deriving (Eq, Show)
+data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
 
 test :: Three + Bool <=> Three + Bool
 test = unsafeBuildBijection
-  [ (InL One,   InL Two)
+  [ (InL One,   InL Two  )
   , (InL Two,   InL Three)
   , (InL Three, InR False)
-  , (InR False, InR True)
-  , (InR True,  InL One) ]
+  , (InR False, InR True )
+  , (InR True,  InL One  ) ]
 
 unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
 unsafeBuildBijection pairs =
@@ -133,3 +124,21 @@ unsafeBuildBijection pairs =
   where
     f = flip lookup pairs
     g = flip lookup (map swap pairs)
+
+--------------------------------------------------
+
+merge :: (a <-> b) -> (a <-> b) -> (a <-> b)
+merge (f :<->: g) ~(h :<->: i) =
+  getFirst . (First . f <> First . h)
+  :<->:
+  getFirst . (First . g <> First . i)
+
+instance Monoid (a <-> b) where
+  mempty = const Nothing :<->: const Nothing
+  mappend = merge
+
+gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp minuend subtrahend =
+  unsafeTotal . foldMap leftPartial $
+    iterate (step minuend subtrahend) (partial minuend)
+
