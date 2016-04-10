@@ -7,23 +7,9 @@ import Control.Category
 import Control.Monad
 import Control.Applicative
 import Data.Maybe
-import Data.Monoid
 import Data.Tuple
 import Debug.Trace
 
--- gcbc :: (Either a c -> Either b c) -> a -> b
--- gcbc iso a = case iso (Left a) of
---   Left b -> b
---   Right c -> fixEither (iso . Right) c
-
--- fixEither :: (a -> Either b a) -> a -> b
--- fixEither f a0 =
---   case f a0 of
---     Left b -> b
---     Right a -> fixEither f a
-
--- swapEither :: Either a b -> Either b a
--- swapEither = either Right Left
 
 -------------------------------------------------------------
 
@@ -122,6 +108,20 @@ instance Parallel (<->) where
     either (fmap InL . f) (fmap InR . h) :<->:
     either (fmap InL . g) (fmap InR . i)
 
+--------------------------------------------------
+
+gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbpExact i minuend subtrahend =
+  unsafeTotal . leftPartial $
+    composeN i
+      (step minuend subtrahend)
+      (partial minuend)
+  where
+    composeN 0 _ = id
+    composeN n f = f . composeN (n - 1) f
+
+--------------------------------------------------
+
 -- TODO: Think about how to use Cayley encoding to make both directions
 -- use monadic right-recursion
 step :: (a + c <=> b + d)
@@ -134,34 +134,6 @@ step minuend subtrahend current =
   inverse (leftPartial current ||| partial subtrahend)
   >>>
   partial minuend
-
-composeN :: Integer -> (a -> a) -> (a -> a)
-composeN 0 _ = id
-composeN n f = f . composeN (n - 1) f
-
-gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbpExact i minuend subtrahend =
-  unsafeTotal . leftPartial $
-    composeN i
-      (step minuend subtrahend)
-      (partial minuend)
-
-data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
-
-test :: Three + Bool <=> Three + Bool
-test = unsafeBuildBijection
-  [ (InL One,   InL Two  )
-  , (InL Two,   InL Three)
-  , (InL Three, InR False)
-  , (InR False, InR True )
-  , (InR True,  InL One  ) ]
-
-unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
-unsafeBuildBijection pairs =
-  unsafeTotal (f :<->: g)
-  where
-    f = flip lookup pairs
-    g = flip lookup (map swap pairs)
 
 (<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
 (f <||> g) a = f a <|> g a
@@ -188,6 +160,27 @@ gmip involA involB f' f =
 gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp' minuend subtrahend =
   gmip id id subtrahend minuend
+
+--------------------------------------------------
+
+data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
+
+test :: Three + Bool <=> Three + Bool
+test = unsafeBuildBijection
+  [ (InL One,   InL Two  )
+  , (InL Two,   InL Three)
+  , (InL Three, InR False)
+  , (InR False, InR True )
+  , (InR True,  InL One  ) ]
+
+unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
+unsafeBuildBijection pairs =
+  unsafeTotal (f :<->: g)
+  where
+    f = flip lookup pairs
+    g = flip lookup (map swap pairs)
+
+--------------------------------------------------
 
 instrument :: String -> [a] -> [a]
 instrument s =
