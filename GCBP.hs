@@ -127,6 +127,7 @@ step minuend subtrahend current =
   >>>
   partial minuend
 
+infixl 3 <||>
 (<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
 (f <||> g) a = f a <|> g a
 
@@ -134,7 +135,7 @@ instance Monoid (a <-> b) where
   mempty =
     const Nothing :<->: const Nothing
   mappend (f :<->: g) ~(h :<->: i) =
-    f <||> h :<->: g <||> i
+    (f <||> h) :<->: (g <||> i)
 
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp minuend subtrahend =

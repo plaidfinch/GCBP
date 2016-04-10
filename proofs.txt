@@ -14,3 +14,13 @@ B-, and then do the same thing on A+ - F_alpha / B+ - F_beta under the
 correspondences induced by alpha / beta.
 
 Does this give the same function as G-M would??? (Yes.)
+
+-----
+
+Car thoughts:
+
+- We can use empty instead of (leftPartial current), because (due to merge) we never use it. You can see this because IO version doesn't change.
+- We want to do algebraic stuff with three operators: (.) (|||) and (<>).
+- How is left-biased (<>) defined? In order to produce a bijection, it needs to only add edges that don't conflict in *either* direction. (example: (1<->2,2<->3) <> id is not bijective w/o this)
+- If you compose bijections in the "wrong" way, this /works/ if you only ever look at palindromes. Wrong way: (f, f^-1) . (g, g^-1) = (f . g, f^1 . g^1). [The types don't line up this way...] You have to coalesce by pairs...
+- We think that there's an "abides" between all three pairs of operators. Is this the case?
