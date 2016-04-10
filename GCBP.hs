@@ -1,21 +1,21 @@
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module GCBP where
 
-import Prelude hiding ((.), id, Either(..), either)
-import Control.Category
-import Control.Monad
-import Control.Monad.Trans
-import Control.Monad.Trans.Maybe
-import Control.Applicative
-import Data.Maybe
-import Data.Functor.Identity
-import Data.Tuple
-import Debug.Trace
+import           Control.Applicative
+import           Control.Category
+import           Control.Monad
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Maybe
+import           Data.Functor.Identity
+import           Data.Maybe
+import           Data.Tuple
+import           Debug.Trace
+import           Prelude                   hiding (Either (..), either, id, (.))
 
 data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
@@ -127,6 +127,8 @@ gcbpExact i minuend subtrahend =
 
 --------------------------------------------------
 
+-- TODO: Use iterateMaybeM (from monad-extras) for step??
+
 -- TODO: Think about how to use Cayley encoding to make both directions
 -- use monadic right-recursion
 step :: Monad m
@@ -185,7 +187,34 @@ test = unsafeBuildBijection
   , (InR False, InR True )
   , (InR True,  InL One  ) ]
 
-unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
+testy :: J IO (Three + Bool) (Three + Bool)
+testy = f pairs :<~>: f (map swap pairs)
+  where
+    f elts i = do
+      let o = fromJust (lookup i elts)
+      putStrLn (show i ++ "->" ++ show o)
+      return o
+    pairs =
+      [ (InL One,   InL Two  )
+      , (InL Two,   InL Three)
+      , (InL Three, InR False)
+      , (InR False, InR True )
+      , (InR True,  InL One  ) ]
+
+{-
+TODO: Can we do better than this?
+
+λ> apply (gcbp testy id) Three
+InL Three->InR False
+InL Three->InR False
+InR False->InR True
+InL Three->InR False
+InR False->InR True
+InR True->InL One
+One
+-}
+
+unsafeBuildBijection :: (Monad m, Eq a, Eq b) => [(a,b)] -> J m a b
 unsafeBuildBijection pairs =
   unsafeTotal (f :<~>: g)
   where
