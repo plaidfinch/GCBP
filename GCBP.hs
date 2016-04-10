@@ -2,7 +2,7 @@
 
 module GCBP where
 
-import Prelude hiding ((.), id, Either(..), either)
+import Prelude hiding ((.), id)
 import Control.Category
 import Control.Monad
 import Control.Applicative
@@ -10,12 +10,7 @@ import Data.Maybe
 import Data.Tuple
 import Debug.Trace
 
-data a + b = InL a | InR b deriving (Eq, Show, Ord)
-
-either :: (a -> c) -> (b -> c) -> a + b -> c
-either f g = \case
-  InL a -> f a
-  InR b -> g b
+type (+) = Either
 
 maybeLeft :: a + b -> Maybe a
 maybeLeft = either Just (const Nothing)
@@ -24,14 +19,14 @@ maybeRight :: a + b -> Maybe b
 maybeRight = either (const Nothing) Just
 
 swapEither :: a + b -> b + a
-swapEither = either InR InL
+swapEither = either Right Left
 
 commute :: a + b <=> b + a
 commute = swapEither :<=>: swapEither
 
 assoc :: a + (b + c) <=> (a + b) + c
-assoc = either (InL . InL) (either (InL . InR) InR) :<=>:
-        either (either InL (InR . InL)) (InR . InR)
+assoc = either (Left . Left) (either (Left . Right) Right) :<=>:
+        either (either Left (Right . Left)) (Right . Right)
 
 reassocL :: (a + (b + c)) <=> (a' + (b' + c'))
          -> ((a + b) + c) <=> ((a' + b') + c')
@@ -84,26 +79,26 @@ applyPartial (f :<->: _) = f
 
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
 leftPartial (f :<->: g) =
-  (maybeLeft <=< f . InL) :<->:
-  (maybeLeft <=< g . InL)
+  (maybeLeft <=< f . Left) :<->:
+  (maybeLeft <=< g . Left)
 
 rightPartial :: (a + c <-> b + d) -> (c <-> d)
 rightPartial (f :<->: g) =
-  (maybeRight <=< f . InR) :<->:
-  (maybeRight <=< g . InR)
+  (maybeRight <=< f . Right) :<->:
+  (maybeRight <=< g . Right)
 
 class Category arr => Parallel arr where
   (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
 
 instance Parallel (<=>) where
   (f :<=>: g) ||| (h :<=>: i) =
-    either (InL . f) (InR . h) :<=>:
-    either (InL . g) (InR . i)
+    either (Left . f) (Right . h) :<=>:
+    either (Left . g) (Right . i)
 
 instance Parallel (<->) where
   (f :<->: g) ||| (h :<->: i) =
-    either (fmap InL . f) (fmap InR . h) :<->:
-    either (fmap InL . g) (fmap InR . i)
+    either (fmap Left . f) (fmap Right . h) :<->:
+    either (fmap Left . g) (fmap Right . i)
 
 --------------------------------------------------
 
@@ -166,11 +161,11 @@ data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
 
 test :: Three + Bool <=> Three + Bool
 test = unsafeBuildBijection
-  [ (InL One,   InL Two  )
-  , (InL Two,   InL Three)
-  , (InL Three, InR False)
-  , (InR False, InR True )
-  , (InR True,  InL One  ) ]
+  [ (Left One,   Left Two  )
+  , (Left Two,   Left Three)
+  , (Left Three, Right False)
+  , (Right False, Right True )
+  , (Right True,  Left One  ) ]
 
 unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
 unsafeBuildBijection pairs =
