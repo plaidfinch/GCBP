@@ -15,7 +15,7 @@ import           Data.Functor.Identity
 import           Data.Maybe
 import           Data.Tuple
 import           Debug.Trace
-import           Prelude                   hiding (Either (..), either, id, (.))
+import           Prelude                   hiding (either, id, (.))
 
 data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
