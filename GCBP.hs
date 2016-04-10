@@ -128,6 +128,8 @@ gcbpExact i minuend subtrahend =
 
 --------------------------------------------------
 
+-- TODO: Use iterateMaybeM (from monad-extras) for step??
+
 -- TODO: Think about how to use Cayley encoding to make both directions
 -- use monadic right-recursion
 step :: Monad m
@@ -186,7 +188,34 @@ test = unsafeBuildBijection
   , (InR False, InR True )
   , (InR True,  InL One  ) ]
 
-unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
+testy :: J IO (Three + Bool) (Three + Bool)
+testy = f pairs :<~>: f (map swap pairs)
+  where
+    f elts i = do
+      let o = fromJust (lookup i elts)
+      putStrLn (show i ++ "->" ++ show o)
+      return o
+    pairs =
+      [ (InL One,   InL Two  )
+      , (InL Two,   InL Three)
+      , (InL Three, InR False)
+      , (InR False, InR True )
+      , (InR True,  InL One  ) ]
+
+{-
+TODO: Can we do better than this?
+
+λ> apply (gcbp testy id) Three
+InL Three->InR False
+InL Three->InR False
+InR False->InR True
+InL Three->InR False
+InR False->InR True
+InR True->InL One
+One
+-}
+
+unsafeBuildBijection :: (Monad m, Eq a, Eq b) => [(a,b)] -> J m a b
 unsafeBuildBijection pairs =
   unsafeTotal (f :<~>: g)
   where
