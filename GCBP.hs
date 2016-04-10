@@ -1,22 +1,22 @@
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module GCBP where
 
-import Prelude hiding ((.), id, Either(..), either)
-import Control.Category
-import Control.Monad
-import Control.Monad.Trans
-import Control.Monad.Trans.Maybe
-import Control.Applicative
-import Data.Maybe
-import Data.Functor.Identity
-import Data.Proxy
-import Data.Tuple
-import Debug.Trace
+import           Control.Applicative
+import           Control.Category
+import           Control.Monad
+import           Control.Monad.Trans
+import           Control.Monad.Trans.Maybe
+import           Data.Functor.Identity
+import           Data.Maybe
+import           Data.Proxy
+import           Data.Tuple
+import           Debug.Trace
+import           Prelude                   hiding (Either (..), either, id, (.))
 
 data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
