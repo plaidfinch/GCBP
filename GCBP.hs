@@ -5,10 +5,10 @@ module GCBP where
 import Prelude hiding ((.), id, Either(..), either)
 import Control.Category
 import Control.Monad
+import Control.Applicative
 import Data.Maybe
 import Data.Monoid
 import Data.Tuple
-import Data.Proxy
 import Debug.Trace
 
 -- gcbc :: (Either a c -> Either b c) -> a -> b
@@ -29,8 +29,37 @@ import Debug.Trace
 
 data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
+either :: (a -> c) -> (b -> c) -> a + b -> c
+either f g = \case
+  InL a -> f a
+  InR b -> g b
+
+maybeLeft :: a + b -> Maybe a
+maybeLeft = either Just (const Nothing)
+
+maybeRight :: a + b -> Maybe b
+maybeRight = either (const Nothing) Just
+
+swapEither :: a + b -> b + a
+swapEither = either InR InL
+
+commute :: a + b <=> b + a
+commute = swapEither :<=>: swapEither
+
+assoc :: a + (b + c) <=> (a + b) + c
+assoc = either (InL . InL) (either (InL . InR) InR) :<=>:
+        either (either InL (InR . InL)) (InR . InR)
+
+reassocL :: (a + (b + c)) <=> (a' + (b' + c'))
+         -> ((a + b) + c) <=> ((a' + b') + c')
+reassocL bij = assoc . bij . inverse assoc
+
+reassocR :: ((a + b) + c) <=> ((a' + b') + c')
+         -> (a + (b + c)) <=> (a' + (b' + c'))
+reassocR bij = inverse assoc . bij . assoc
+
 class Category c => Groupoid c where
-  invert :: c a b -> c b a
+  inverse :: c a b -> c b a
 
 data a <=> b = (a -> b) :<=>: (b -> a)
 infixr 8 <=>
@@ -39,7 +68,7 @@ infixr 8 :<=>:
 -- Maybe later try modality-parameterized ___-jections?
 
 instance Groupoid (<=>) where
-  invert (f :<=>: g) = g :<=>: f
+  inverse (f :<=>: g) = g :<=>: f
 
 instance Category (<=>) where
   id = id :<=>: id
@@ -65,26 +94,36 @@ instance Category (<->) where
     (f1 <=< f2) :<->: (g2 <=< g1)
 
 instance Groupoid (<->) where
-  invert (f :<->: g) = g :<->: f
+  inverse (f :<->: g) = g :<->: f
 
 applyPartial :: (a <-> b) -> a -> Maybe b
 applyPartial (f :<->: _) = f
 
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
 leftPartial (f :<->: g) =
-  (either Just (const Nothing) <=< f . InL) :<->:
-  (either Just (const Nothing) <=< g . InL)
+  (maybeLeft <=< f . InL) :<->:
+  (maybeLeft <=< g . InL)
 
-either :: (a -> c) -> (b -> c) -> a + b -> c
-either f g = \case
-  InL a -> f a
-  InR b -> g b
+rightPartial :: (a + c <-> b + d) -> (c <-> d)
+rightPartial (f :<->: g) =
+  (maybeRight <=< f . InR) :<->:
+  (maybeRight <=< g . InR)
 
-parallel :: (a <-> c) -> (b <-> d) -> (a + b <-> c + d)
-parallel (f :<->: g) (h :<->: i) =
-  either (fmap InL . f) (fmap InR . h) :<->:
-  either (fmap InL . g) (fmap InR . i)
+class Category arr => Parallel arr where
+  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
 
+instance Parallel (<=>) where
+  (f :<=>: g) ||| (h :<=>: i) =
+    either (InL . f) (InR . h) :<=>:
+    either (InL . g) (InR . i)
+
+instance Parallel (<->) where
+  (f :<->: g) ||| (h :<->: i) =
+    either (fmap InL . f) (fmap InR . h) :<->:
+    either (fmap InL . g) (fmap InR . i)
+
+-- TODO: Think about how to use Cayley encoding to make both directions
+-- use monadic right-recursion
 step :: (a + c <=> b + d)
      -> (c <=> d)
      -> (a + c <-> b + d)
@@ -92,9 +131,7 @@ step :: (a + c <=> b + d)
 step minuend subtrahend current =
   current
   >>>
-  invert (leftPartial current
-          `parallel`
-          partial subtrahend)
+  inverse (leftPartial current ||| partial subtrahend)
   >>>
   partial minuend
 
@@ -128,20 +165,30 @@ unsafeBuildBijection pairs =
 
 --------------------------------------------------
 
-merge :: (a <-> b) -> (a <-> b) -> (a <-> b)
-merge (f :<->: g) ~(h :<->: i) =
-  getFirst . (First . f <> First . h)
-  :<->:
-  getFirst . (First . g <> First . i)
+(<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
+(f <||> g) a = f a <|> g a
 
 instance Monoid (a <-> b) where
-  mempty = const Nothing :<->: const Nothing
-  mappend = merge
+  mempty =
+    const Nothing :<->: const Nothing
+  mappend (f :<->: g) ~(h :<->: i) =
+    f <||> h :<->: g <||> i
 
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp minuend subtrahend =
   unsafeTotal . foldMap leftPartial $
     iterate (step minuend subtrahend) (partial minuend)
+
+gmip :: (a <=> a')
+     -> (b <=> b')
+     -> (a' <=> b')
+     -> (fa + a <=> fb + b)
+     -> (fa <=> fb)
+gmip involA involB f' f =
+  gcbp (reassocR $ f ||| f') ((involA >>> f' >>> inverse involB) ||| f')
+
+-- gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+-- gcbp' 
 
 instrument :: String -> [a] -> [a]
 instrument s =
