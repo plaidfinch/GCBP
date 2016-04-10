@@ -163,8 +163,6 @@ unsafeBuildBijection pairs =
     f = flip lookup pairs
     g = flip lookup (map swap pairs)
 
---------------------------------------------------
-
 (<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
 (f <||> g) a = f a <|> g a
 
@@ -187,8 +185,9 @@ gmip :: (a <=> a')
 gmip involA involB f' f =
   gcbp (reassocR $ f ||| f') ((involA >>> f' >>> inverse involB) ||| f')
 
--- gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
--- gcbp' 
+gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp' minuend subtrahend =
+  gmip id id subtrahend minuend
 
 instrument :: String -> [a] -> [a]
 instrument s =

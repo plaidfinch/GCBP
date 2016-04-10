@@ -13,4 +13,4 @@ A0 + A1.  For the bijection between A1 <-> B1, do what f does on A- /
 B-, and then do the same thing on A+ - F_alpha / B+ - F_beta under the
 correspondences induced by alpha / beta.
 
-Does this give the same function as G-M would???
+Does this give the same function as G-M would??? (Yes.)
