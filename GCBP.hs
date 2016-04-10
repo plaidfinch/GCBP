@@ -14,7 +14,6 @@ import Control.Monad.Trans.Maybe
 import Control.Applicative
 import Data.Maybe
 import Data.Functor.Identity
-import Data.Proxy
 import Data.Tuple
 import Debug.Trace
 
