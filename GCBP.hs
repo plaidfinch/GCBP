@@ -1,12 +1,20 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, LambdaCase, ScopedTypeVariables #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module GCBP where
 
 import Prelude hiding ((.), id, Either(..), either)
 import Control.Category
 import Control.Monad
+import Control.Monad.Trans
+import Control.Monad.Trans.Maybe
 import Control.Applicative
 import Data.Maybe
+import Data.Functor.Identity
+import Data.Proxy
 import Data.Tuple
 import Debug.Trace
 
@@ -17,97 +25,98 @@ either f g = \case
   InL a -> f a
   InR b -> g b
 
-maybeLeft :: a + b -> Maybe a
-maybeLeft = either Just (const Nothing)
+hoistMaybe :: Monad m => Maybe a -> MaybeT m a
+hoistMaybe = MaybeT . return
 
-maybeRight :: a + b -> Maybe b
-maybeRight = either (const Nothing) Just
+-- TODO: Can we generalize away the specificity of MaybeT?
+-- All we use is its Alternative-y-ness... (as Brent says)
+maybeLeft :: Monad m => a + b -> MaybeT m a
+maybeLeft = either return (const empty)
+
+maybeRight :: Monad m => a + b -> MaybeT m b
+maybeRight = either (const empty) return
 
 swapEither :: a + b -> b + a
 swapEither = either InR InL
 
-commute :: a + b <=> b + a
-commute = swapEither :<=>: swapEither
+commute :: Monad m => J m (a + b) (b + a)
+commute = return . swapEither :<~>: return . swapEither
 
-assoc :: a + (b + c) <=> (a + b) + c
-assoc = either (InL . InL) (either (InL . InR) InR) :<=>:
-        either (either InL (InR . InL)) (InR . InR)
+assoc :: Monad m => J m (a + (b + c)) ((a + b) + c)
+assoc = return . either (InL . InL) (either (InL . InR) InR) :<~>:
+        return . either (either InL (InR . InL)) (InR . InR)
 
-reassocL :: (a + (b + c)) <=> (a' + (b' + c'))
-         -> ((a + b) + c) <=> ((a' + b') + c')
+reassocL :: Monad m
+         => J m (a + (b + c)) (a' + (b' + c'))
+         -> J m ((a + b) + c) ((a' + b') + c')
 reassocL bij = assoc . bij . inverse assoc
 
-reassocR :: ((a + b) + c) <=> ((a' + b') + c')
-         -> (a + (b + c)) <=> (a' + (b' + c'))
+reassocR :: Monad m
+         => J m ((a + b) + c) ((a' + b') + c')
+         -> J m (a + (b + c)) (a' + (b' + c'))
 reassocR bij = inverse assoc . bij . assoc
 
 class Category c => Groupoid c where
   inverse :: c a b -> c b a
 
-data a <=> b = (a -> b) :<=>: (b -> a)
+data J m a b = (a -> m b) :<~>: (b -> m a)
+infixr 8 :<~>:
+
+type (<=>) = J Identity
 infixr 8 <=>
-infixr 8 :<=>:
 
--- TODO: Maybe later try modality-parameterized ___-jections?
+instance Monad m => Groupoid (J m) where
+  inverse (f :<~>: g) = g :<~>: f
 
-instance Groupoid (<=>) where
-  inverse (f :<=>: g) = g :<=>: f
+instance Monad m => Category (J m) where
+  id = return :<~>: return
+  (f1 :<~>: g1) . (f2 :<~>: g2) =
+    (f1 <=< f2) :<~>: (g2 <=< g1)
 
-instance Category (<=>) where
-  id = id :<=>: id
-  (f1 :<=>: g1) . (f2 :<=>: g2) =
-    (f1 . f2) :<=>: (g2 . g1)
+apply :: J m a b -> a -> m b
+apply (f :<~>: _) = f
 
-applyIso :: (a <=> b) -> a -> b
-applyIso (f :<=>: _) = f
-
-data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
+type (<->) = J (MaybeT Identity)
 infixr 8 <->
-infixr 8 :<->:
 
-partial :: (a <=> b) -> (a <-> b)
-partial (f :<=>: g) = Just . f :<->: Just . g
+hoistJ :: (forall x. m x -> n x) -> J m a b -> J n a b
+hoistJ nat (f :<~>: g) = nat . f :<~>: nat . g
 
-unsafeTotal :: (a <-> b) -> (a <=> b)
-unsafeTotal (f :<->: g) = fromJust . f :<=>: fromJust . g
+liftJ :: (Monad m, MonadTrans t) => J m a b -> J (t m) a b
+liftJ = hoistJ lift
 
-instance Category (<->) where
-  id = Just :<->: Just
-  (f1 :<->: g1) . (f2 :<->: g2) =
-    (f1 <=< f2) :<->: (g2 <=< g1)
+partial :: Monad m => J m a b -> J (MaybeT m) a b
+partial = liftJ
 
-instance Groupoid (<->) where
-  inverse (f :<->: g) = g :<->: f
+unsafeTotal :: Functor m => J (MaybeT m) a b -> J m a b
+unsafeTotal = hoistJ (fmap fromJust . runMaybeT)
 
-applyPartial :: (a <-> b) -> a -> Maybe b
-applyPartial (f :<->: _) = f
-
-leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial (f :<->: g) =
-  (maybeLeft <=< f . InL) :<->:
+leftPartial :: Monad m
+            => J (MaybeT m) (a + c) (b + d)
+            -> J (MaybeT m) a b
+leftPartial (f :<~>: g) =
+  (maybeLeft <=< f . InL) :<~>:
   (maybeLeft <=< g . InL)
 
-rightPartial :: (a + c <-> b + d) -> (c <-> d)
-rightPartial (f :<->: g) =
-  (maybeRight <=< f . InR) :<->:
+rightPartial :: Monad m
+             => J (MaybeT m) (a + c) (b + d)
+             -> J (MaybeT m) c d
+rightPartial (f :<~>: g) =
+  (maybeRight <=< f . InR) :<~>:
   (maybeRight <=< g . InR)
 
-class Category arr => Parallel arr where
-  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
-
-instance Parallel (<=>) where
-  (f :<=>: g) ||| (h :<=>: i) =
-    either (InL . f) (InR . h) :<=>:
-    either (InL . g) (InR . i)
-
-instance Parallel (<->) where
-  (f :<->: g) ||| (h :<->: i) =
-    either (fmap InL . f) (fmap InR . h) :<->:
-    either (fmap InL . g) (fmap InR . i)
+(|||) :: Functor m => J m a c -> J m b d -> J m (a + b) (c + d)
+(f :<~>: g) ||| (h :<~>: i) =
+  either (fmap InL . f) (fmap InR . h) :<~>:
+  either (fmap InL . g) (fmap InR . i)
 
 --------------------------------------------------
 
-gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbpExact :: Monad m
+          => Integer
+          -> J m (a + c) (b + d)
+          -> J m c d
+          -> J m a b
 gcbpExact i minuend subtrahend =
   unsafeTotal . leftPartial $
     composeN i
@@ -121,10 +130,11 @@ gcbpExact i minuend subtrahend =
 
 -- TODO: Think about how to use Cayley encoding to make both directions
 -- use monadic right-recursion
-step :: (a + c <=> b + d)
-     -> (c <=> d)
-     -> (a + c <-> b + d)
-     -> (a + c <-> b + d)
+step :: Monad m
+     => J m (a + c) (b + d)
+     -> J m c d
+     -> J (MaybeT m) (a + c) (b + d)
+     -> J (MaybeT m) (a + c) (b + d)
 step minuend subtrahend current =
   current
   >>>
@@ -135,26 +145,30 @@ step minuend subtrahend current =
 (<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
 (f <||> g) a = f a <|> g a
 
-instance Monoid (a <-> b) where
+instance Alternative m => Monoid (J m a b) where
   mempty =
-    const Nothing :<->: const Nothing
-  mappend (f :<->: g) ~(h :<->: i) =
-    f <||> h :<->: g <||> i
+    const empty :<~>: const empty
+  mappend (f :<~>: g) ~(h :<~>: i) =
+    f <||> h :<~>: g <||> i
 
-gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp :: Monad m => J m (a + c) (b + d) -> J m c d -> J m a b
 gcbp minuend subtrahend =
   unsafeTotal . foldMap leftPartial $
     iterate (step minuend subtrahend) (partial minuend)
 
-gmip :: (a <=> a')
-     -> (b <=> b')
-     -> (a' <=> b')
-     -> (fa + a <=> fb + b)
-     -> (fa <=> fb)
+gmip :: Monad m
+     => J m a a'
+     -> J m b b'
+     -> J m a' b'
+     -> J m (fa + a) (fb + b)
+     -> J m fa fb
 gmip involA involB f' f =
   gcbp (reassocR $ f ||| f') ((involA >>> f' >>> inverse involB) ||| f')
 
-gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp' :: Monad m
+      => J m (a + c) (b + d)
+      -> J m c d
+      -> J m a b
 gcbp' minuend subtrahend =
   gmip id id subtrahend minuend
 
@@ -174,10 +188,10 @@ test = unsafeBuildBijection
 
 unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
 unsafeBuildBijection pairs =
-  unsafeTotal (f :<->: g)
+  unsafeTotal (f :<~>: g)
   where
-    f = flip lookup pairs
-    g = flip lookup (map swap pairs)
+    f = hoistMaybe . flip lookup pairs
+    g = hoistMaybe . flip lookup (map swap pairs)
 
 --------------------------------------------------
 
