@@ -10,9 +10,6 @@ import Data.Maybe
 import Data.Tuple
 import Debug.Trace
 
-
--------------------------------------------------------------
-
 data a + b = InL a | InR b deriving (Eq, Show, Ord)
 
 either :: (a -> c) -> (b -> c) -> a + b -> c
@@ -51,7 +48,7 @@ data a <=> b = (a -> b) :<=>: (b -> a)
 infixr 8 <=>
 infixr 8 :<=>:
 
--- Maybe later try modality-parameterized ___-jections?
+-- TODO: Maybe later try modality-parameterized ___-jections?
 
 instance Groupoid (<=>) where
   inverse (f :<=>: g) = g :<=>: f
@@ -160,6 +157,8 @@ gmip involA involB f' f =
 gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp' minuend subtrahend =
   gmip id id subtrahend minuend
+
+-- TODO: gmip all by itself (is this worth it?)
 
 --------------------------------------------------
 
