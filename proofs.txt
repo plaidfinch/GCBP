@@ -1,3 +1,7 @@
+See https://www.math.upenn.edu/~wilf/PIMS/PIMSLectures.pdf for some
+good background.
+
+
 Proof of GCBP from Garsia-Milne:
 
 Given (m : A0 + A1 <-> B0 + B1) and (s : A1 <-> B1).  Let A+ = A0+A1,
