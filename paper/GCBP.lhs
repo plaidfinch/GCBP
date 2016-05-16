@@ -2,16 +2,107 @@
 
 \documentclass[preprint]{sigplanconf}
 
-% The following \documentclass options may be useful:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% lhs2TeX
 
-% preprint      Remove this option only once the paper is in final form.
-% 10pt          To set in 10-point type instead of 9-point.
-% 11pt          To set in 11-point type instead of 9-point.
-% numbers       To obtain numeric citation style instead of author/year.
+%include polycode.fmt
 
+%format a0
+%format a1
+%format b0
+%format b1
+
+%if false
+\begin{code}
+{-# LANGUAGE TypeOperators #-}
+\end{code}
+%endif
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Package imports
+
+\usepackage{amsthm}
 \usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{latexsym}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{xcolor}
+\usepackage[all]{xy}
+\usepackage{breakurl}
 
-\newcommand{\cL}{{\cal L}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Diagrams
+
+\usepackage{graphicx}
+\usepackage[outputdir=diagrams,backend=pgf,extension=pgf,input]{diagrams-latex}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Prettyref
+
+\usepackage{prettyref}
+
+\newrefformat{fig}{Figure~\ref{#1}}
+\newrefformat{sec}{\Sect\ref{#1}}
+\newrefformat{eq}{equation~\eqref{#1}}
+\newrefformat{prob}{Problem~\ref{#1}}
+\newrefformat{tab}{Table~\ref{#1}}
+\newrefformat{thm}{Theorem~\ref{#1}}
+\newrefformat{lem}{Lemma~\ref{#1}}
+\newrefformat{prop}{Proposition~\ref{#1}}
+\newrefformat{defn}{Definition~\ref{#1}}
+\newrefformat{cor}{Corollary~\ref{#1}}
+\newcommand{\pref}[1]{\prettyref{#1}}
+
+% \Pref is just like \pref but it uppercases the first letter; for use
+% at the beginning of a sentence.
+\newcommand{\Pref}[1]{%
+  \expandafter\ifx\csname r@@#1\endcsname\relax {\scriptsize[ref]}
+    \else
+    \edef\reftext{\prettyref{#1}}\expandafter\MakeUppercase\reftext
+    \fi
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Comments
+
+\newif\ifcomments\commentstrue
+%\newif\ifcomments\commentsfalse
+
+\ifcomments
+\newcommand{\authornote}[3]{\textcolor{#1}{[#3 ---#2]}}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+\newcommand{\chaptertodo}[1]{\textcolor{gray}{[TODO (Later): #1]}}
+\else
+\newcommand{\authornote}[3]{}
+\newcommand{\todo}[1]{}
+\newcommand{\chaptertodo}[1]{}
+\fi
+
+\newcommand{\bay}[1]{\authornote{blue}{BAY}{#1}}
+\newcommand{\jc}[1]{\authornote{purple}{JC}{#1}}
+\newcommand{\scw}[1]{\authornote{magenta}{SCW}{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Semantic markup
+
+\newcommand{\eg}{\latin{e.g.}\xspace}
+\newcommand{\ie}{\latin{i.e.}\xspace}
+\newcommand{\etal}{\latin{et al.}\xspace}
+\newcommand{\etc}{\latin{etc.}\xspace}
+
+\newcommand{\term}[1]{\emph{#1}}
+\newcommand{\latin}[1]{\textit{#1}}
+\newcommand{\foreign}[1]{\emph{#1}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Math typesetting
+
+\newcommand{\bij}{\leftrightarrow}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
 
@@ -20,7 +111,7 @@
 \setlength{\pdfpagewidth}{\paperwidth}
 
 \conferenceinfo{CONF 'yy}{Month d--d, 20yy, City, ST, Country}
-\copyrightyear{20yy}
+\copyrightyear{2016}
 \copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
 \copyrightdoi{nnnnnnn.nnnnnnn}
 
@@ -29,18 +120,20 @@
 %\publicationrights{licensed}     % this is the default
 %\publicationrights{author-pays}
 
-\titlebanner{banner above paper title}        % These are ignored unless
-\preprintfooter{short description of paper}   % 'preprint' option specified.
+\titlebanner{DRAFT --- do not distribute}       % These are ignored unless
+% \preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Title Text}
-\subtitle{Subtitle Text, if any}
+% I do not actually like this title or subtitle, just putting
+% something here for now
+\title{Subtracting Isos}
+\subtitle{Computing with Bijection Principles}
 
-\authorinfo{Name1}
-           {Affiliation1}
-           {Email1}
-\authorinfo{Name2\and Name3}
-           {Affiliation2/3}
-           {Email2/3}
+\authorinfo{Kenneth Foner}
+           {University of Pennsylvania, USA}
+           {kfoner@@seas.upenn.edu}
+\authorinfo{Brent A. Yorgey}
+           {Hendrix College, Conway, AR, USA}
+           {yorgey@@hendrix.edu}
 
 \maketitle
 
@@ -77,13 +170,13 @@ Acknowledgments, if needed.
 
 % The bibliography should be embedded for final submission.
 
-\begin{thebibliography}{}
-\softraggedright
+% \begin{thebibliography}{}
+% \softraggedright
 
-\bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
-P. Q. Smith, and X. Y. Jones. ...reference text...
+% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+% P. Q. Smith, and X. Y. Jones. ...reference text...
 
-\end{thebibliography}
+% \end{thebibliography}
 
 
 \end{document}
