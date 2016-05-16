@@ -19,5 +19,5 @@ main = shake shakeOptions $ do
         let input = replaceExtension output "tex"
         need [input]
 
-        cmd pdflatex $ ["--enable-write18", input]
+        () <- cmd pdflatex $ ["--enable-write18", input]
         cmd pdflatex $ ["--enable-write18", input]
