@@ -1,4 +1,4 @@
 #!/bin/bash
 
 cabal sandbox init
-cabal install shake diagrams -fpgf diagrams-builder
+cabal install shake -fpgf -frasterific diagrams diagrams-builder
