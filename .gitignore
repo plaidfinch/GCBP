@@ -14,7 +14,9 @@ cabal.sandbox.config
 *.aux
 *.hp
 .stack-work/
+.shake/
 
 *.log
 *.pdf
+*.ptb
 paper/GCBP.tex
