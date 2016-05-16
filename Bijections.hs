@@ -7,39 +7,35 @@
 
 module Bijections where
 
-import           Control.Arrow          ((&&&))
-import           Control.Lens           (makeLenses, mapped, (^.), _2)
-import           Control.Monad          (msum)
+import           Control.Arrow        ((&&&))
+import           Control.Lens         (makeLenses, mapped, (^.), _2)
+import           Control.Monad        (msum)
 import           Data.Default.Class
-import           Data.List              (findIndex, isSuffixOf, partition)
-import qualified Data.Map               as M
-import           Data.Maybe             (catMaybes, fromMaybe)
+import           Data.List            (findIndex, isSuffixOf, partition)
+import qualified Data.Map             as M
+import           Data.Maybe           (catMaybes, fromMaybe)
 import           Data.Typeable
 
-import           Diagrams.Backend.Cairo
+import           Diagrams.Backend.PGF
 import           Diagrams.Core.Names
-import           Diagrams.Prelude       hiding (end, r2, start)
-import           Graphics.SVGFonts
+import           Diagrams.Prelude     hiding (dot, end, r2, start)
 
 ------------------------------------------------------------
 -- Diagram utilities
 
-type Dia = Diagram Cairo R2
+type Dia = Diagram B
 
 dot :: Dia
 dot = circle 0.3 # fc black # lw none
-
-text' :: Double -> String -> Dia
-text' d t = stroke (textSVG' $ TextOpts t lin INSIDE_H KERN False d d) # fc black
 
 ------------------------------------------------------------
 -- Name utilities
 
 disjointly :: Qualifiable q => ([q] -> q) -> [q] -> q
-disjointly f = f . zipWith (|>) ['a'..]
+disjointly f = f . zipWith (.>>) ['a'..]
 
 (|@) :: Char -> Int -> Name
-c |@ i = c |> toName i
+c |@ i = c .>> toName i
 
 (|@@) :: Char -> [Int] -> [Name]
 c |@@ is = map (c |@) is
@@ -68,7 +64,7 @@ data ASet =
 $(makeLenses ''ASet)
 
 instance Qualifiable ASet where
-  n |> s = s & eltNames %~ (n|>)
+  n .>> s = s & eltNames %~ (n .>>)
 
 type Set = [ASet]
 
@@ -83,7 +79,7 @@ set :: IsName n => [n] -> Colour Double -> ASet
 set ns c = ASet (map toName ns) c
 
 drawSet :: Set -> Dia
-drawSet = centerY . vcat . zipWithMult (|>) ['a'..] . map drawAtomic . annot . annot
+drawSet = centerY . vcat . zipWithMult (.>>) ['a'..] . map drawAtomic . annot . annot
   where
     zipWithMult _ _ [x] = [x]
     zipWithMult f xs ys = zipWith f xs ys
@@ -109,7 +105,7 @@ data ABij
   = ABij
     { _bijDomain :: [Name]
     , _bijData   :: Name -> Maybe Name
-    , _bijStyle  :: Name -> Style R2
+    , _bijStyle  :: Name -> Style V2 Double
     , _bijSep    :: Double
     , _bijLabel  :: Maybe Dia
     }
@@ -117,14 +113,14 @@ data ABij
 $(makeLenses ''ABij)
 
 instance Qualifiable ABij where
-  n |> bij = bij & bijData %~ prefixF n & bijDomain %~ (n |>)
+  n .>> bij = bij & bijData %~ prefixF n & bijDomain %~ (n .>>)
     where
       prefixF :: IsName a => a -> (Name -> Maybe Name) -> (Name -> Maybe Name)
       prefixF _ _ (Name [])     = Just $ Name []
       prefixF i f (Name (AName a : as)) =
         case cast a of
           Nothing -> Nothing
-          Just a' -> if a' == i then (i |>) <$> f (Name as) else Nothing
+          Just a' -> if a' == i then (i .>>) <$> f (Name as) else Nothing
 
 bijFun :: [Int] -> (Int -> Maybe Int) -> ABij
 bijFun is f = def & bijDomain .~ toNamesI is & bijData .~ fmap toName . f . extractInt 0
@@ -175,7 +171,7 @@ parBijs :: [Bij] -> Bij
 parBijs = disjointly concat
 
 labelBij :: String -> Bij -> Bij
-labelBij s = (mapped . bijLabel) .~ Just (text' 2 s)
+labelBij s = (mapped . bijLabel) .~ Just (text s)
 
 ------------------------------------------------------------
 -- Alternating lists
@@ -249,10 +245,10 @@ drawBComplex :: BComplex -> Dia
 drawBComplex = centerX . drawBComplexR 0
   where
     drawBComplexR :: Int -> BComplex -> Dia
-    drawBComplexR i (Single s) = i |> drawSet s
+    drawBComplexR i (Single s) = i .>> drawSet s
     drawBComplexR i (Cons ss bs c) =
         hcat
-        [ i |> s1
+        [ i .>> s1
         , strutX thisSep <> label
         , drawBComplexR (succ i) c
         ]
@@ -263,16 +259,16 @@ drawBComplex = centerX . drawBComplexR 0
           [] -> 0
           _  -> maximum . map (^. bijSep) $ bs
         label = (fromMaybe mempty . msum . reverse . map (^. bijLabel) $ bs)
-                # (\d -> d # withEnvelope (strutY (height d) :: D R2))
+                # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
                 # (\d -> translateY (-(height s1 + thisSep - height d)/2) d)
 
 drawABij :: Int -> [Name] -> ABij -> Dia -> Dia
 drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bijData))) $ ns)
   where
     conn :: (Name,Name) -> Dia -> Dia
-    conn (n1,n2) = withNames [i |> n1, (i+1) |> n2] $ \[s1,s2] -> atop (drawLine s1 s2 # applyStyle (sty n1))
+    conn (n1,n2) = withNames [i .>> n1, (i+1) .>> n2] $ \[s1,s2] -> atop (drawLine s1 s2 # applyStyle (sty n1))
     sty = b ^. bijStyle
-    drawLine sub1 sub2 = boundaryFrom sub1 v ~~ boundaryFrom sub2 (negateV v)
+    drawLine sub1 sub2 = boundaryFrom sub1 v ~~ boundaryFrom sub2 (negated v)
       where
         v = location sub2 .-. location sub1
 
@@ -379,8 +375,8 @@ bij0 = [mkABij a0 b0 ((`mod` 3) . succ . succ)]
 bij1 = [mkABij a1 b1 id]
 
 names01, names02 :: [Name]
-names01 = 'X' |> disjointly concat [head bij0^.bijDomain, head bij1^.bijDomain]
-names02 = 'Y' |> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
+names01 = 'X' .>> disjointly concat [head bij0^.bijDomain, head bij1^.bijDomain]
+names02 = 'Y' .>> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
 
 bij01 :: Bij
 bij01 = []
