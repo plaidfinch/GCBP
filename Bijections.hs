@@ -1,31 +1,33 @@
+{-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE PartialTypeSignatures     #-}
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TupleSections             #-}
 {-# LANGUAGE TypeOperators             #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
+{-# LANGUAGE TypeFamilies              #-}
+
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Bijections where
 
-import           Control.Arrow        ((&&&))
-import           Control.Lens         (makeLenses, mapped, (^.), _2)
-import           Control.Monad        (msum)
+import           Control.Arrow       ((&&&))
+import           Control.Lens        (makeLenses, mapped, (^.), _2)
+import           Control.Monad       (msum)
 import           Data.Default.Class
-import           Data.List            (findIndex, isSuffixOf, partition)
-import qualified Data.Map             as M
-import           Data.Maybe           (catMaybes, fromMaybe)
+import           Data.List           (findIndex, isSuffixOf, partition)
+import qualified Data.Map            as M
+import           Data.Maybe          (catMaybes, fromMaybe)
 import           Data.Typeable
 
-import           Diagrams.Backend.PGF
 import           Diagrams.Core.Names
-import           Diagrams.Prelude     hiding (dot, end, r2, start)
+import           Diagrams.Prelude    hiding (dot, end, r2, start)
 
 ------------------------------------------------------------
 -- Diagram utilities
 
-type Dia = Diagram B
-
-dot :: Dia
+dot :: _ => Diagram b
 dot = circle 0.3 # fc black # lw none
 
 ------------------------------------------------------------
@@ -78,7 +80,7 @@ nset n c = ASet (map toName [0::Int .. (n-1)]) c
 set :: IsName n => [n] -> Colour Double -> ASet
 set ns c = ASet (map toName ns) c
 
-drawSet :: Set -> Dia
+drawSet :: _ => Set -> Diagram b
 drawSet = centerY . vcat . zipWithMult (.>>) ['a'..] . map drawAtomic . annot . annot
   where
     zipWithMult _ _ [x] = [x]
@@ -101,18 +103,18 @@ drawSet = centerY . vcat . zipWithMult (.>>) ['a'..] . map drawAtomic . annot . 
 ------------------------------------------------------------
 -- Bijections
 
-data ABij
+data ABij b
   = ABij
     { _bijDomain :: [Name]
     , _bijData   :: Name -> Maybe Name
     , _bijStyle  :: Name -> Style V2 Double
     , _bijSep    :: Double
-    , _bijLabel  :: Maybe Dia
+    , _bijLabel  :: Maybe (Diagram b)
     }
 
 $(makeLenses ''ABij)
 
-instance Qualifiable ABij where
+instance Qualifiable (ABij b) where
   n .>> bij = bij & bijData %~ prefixF n & bijDomain %~ (n .>>)
     where
       prefixF :: IsName a => a -> (Name -> Maybe Name) -> (Name -> Maybe Name)
@@ -122,7 +124,7 @@ instance Qualifiable ABij where
           Nothing -> Nothing
           Just a' -> if a' == i then (i .>>) <$> f (Name as) else Nothing
 
-bijFun :: [Int] -> (Int -> Maybe Int) -> ABij
+bijFun :: [Int] -> (Int -> Maybe Int) -> ABij b
 bijFun is f = def & bijDomain .~ toNamesI is & bijData .~ fmap toName . f . extractInt 0
   where
     extractInt :: Int -> Name -> Int
@@ -132,10 +134,10 @@ bijFun is f = def & bijDomain .~ toNamesI is & bijData .~ fmap toName . f . extr
                                  Nothing -> i
                                  Just i' -> i'
 
-bijTable :: [(Name, Name)] -> ABij
+bijTable :: [(Name, Name)] -> ABij b
 bijTable tab = def & bijDomain .~ map fst tab & bijData .~ tableToFun tab
 
-mkABij :: ASet -> ASet -> (Int -> Int) -> ABij
+mkABij :: ASet -> ASet -> (Int -> Int) -> ABij b
 mkABij s1 s2 f = def & bijDomain .~ (s1 ^. eltNames)
                      & bijData   .~ \n -> findIndex (==n) (s1 ^. eltNames) >>= ((s2^.eltNames) !!!) . f
 
@@ -150,7 +152,7 @@ mkABij s1 s2 f = def & bijDomain .~ (s1 ^. eltNames)
 tableToFun :: Eq a => [(a, b)] -> a -> Maybe b
 tableToFun = flip lookup
 
-instance Default ABij where
+instance Default (ABij b) where
   def = ABij
     { _bijDomain = []
     , _bijData   = const Nothing
@@ -159,18 +161,18 @@ instance Default ABij where
     , _bijLabel  = Nothing
     }
 
-type Bij = [ABij]
+type Bij b = [ABij b]
 
-emptyBij :: Bij
+emptyBij :: Bij b
 emptyBij = [with & bijData .~ const Nothing]
 
-parBij :: Bij -> Bij -> Bij
+parBij :: Bij b -> Bij b -> Bij b
 parBij x y = parBijs [x,y]
 
-parBijs :: [Bij] -> Bij
+parBijs :: [Bij b] -> Bij b
 parBijs = disjointly concat
 
-labelBij :: String -> Bij -> Bij
+labelBij :: _ => String -> Bij b -> Bij b
 labelBij s = (mapped . bijLabel) .~ Just (text s)
 
 ------------------------------------------------------------
@@ -230,21 +232,20 @@ foldA f g (Cons a b l) = g a b (foldA f g l)
 ------------------------------------------------------------
 -- Bijection complexes
 
-type BComplex = AltList Set Bij
+type BComplex b = AltList Set (Bij b)
 
-labelBC :: String -> BComplex -> BComplex
+labelBC :: _ => String -> BComplex b -> BComplex b
 labelBC = map2 . labelBij
 
-seqC :: BComplex -> Bij -> BComplex -> BComplex
+seqC :: BComplex b -> Bij b -> BComplex b -> BComplex b
 seqC = concatA
 
-parC :: BComplex -> BComplex -> BComplex
+parC :: BComplex b -> BComplex b -> BComplex b
 parC = zipWithA (++) parBij
 
-drawBComplex :: BComplex -> Dia
+drawBComplex :: _ => BComplex b -> Diagram b
 drawBComplex = centerX . drawBComplexR 0
   where
-    drawBComplexR :: Int -> BComplex -> Dia
     drawBComplexR i (Single s) = i .>> drawSet s
     drawBComplexR i (Cons ss bs c) =
         hcat
@@ -262,10 +263,10 @@ drawBComplex = centerX . drawBComplexR 0
                 # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
                 # (\d -> translateY (-(height s1 + thisSep - height d)/2) d)
 
-drawABij :: Int -> [Name] -> ABij -> Dia -> Dia
+drawABij :: _ => Int -> [Name] -> ABij b -> Diagram b -> Diagram b
 drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bijData))) $ ns)
   where
-    conn :: (Name,Name) -> Dia -> Dia
+    -- conn :: (Name,Name) -> Diagram b -> Diagram b
     conn (n1,n2) = withNames [i .>> n1, (i+1) .>> n2] $ \[s1,s2] -> atop (drawLine s1 s2 # applyStyle (sty n1))
     sty = b ^. bijStyle
     drawLine sub1 sub2 = boundaryFrom sub1 v ~~ boundaryFrom sub2 (negated v)
@@ -278,7 +279,7 @@ toNameI = toName
 toNamesI :: [Int] -> [Name]
 toNamesI = map toName
 
-plus, minus, equals :: Dia
+plus, minus, equals :: _ => Diagram b
 plus = hrule 1 <> vrule 1
 minus = hrule 1
 equals = hrule 1 === strutY 0.5 === hrule 1
@@ -342,7 +343,7 @@ orbits r1 r2 = removeTails $ orbits' r2 r1 r1
         finished rel = (start rel == end rel) || all ((/= end rel) . start) r1
     removeTails rs = filter (\r -> not (any (r `isTailOf`) rs)) rs
 
-bijToRel :: Bij -> Relation Name
+bijToRel :: Bij b -> Relation Name
 bijToRel = foldr unionR emptyR . map bijToRel1
   where
     bijToRel1 bij = mkRelation . catMaybes . map (_2 id . (id &&& (bij^.bijData))) $ bij^.bijDomain
@@ -350,7 +351,7 @@ bijToRel = foldr unionR emptyR . map bijToRel1
 orbitsToColorMap :: Ord a => [Colour Double] -> Relation a -> M.Map a (Colour Double)
 orbitsToColorMap colors orbs = M.fromList (concat $ zipWith (\rel c -> map (,c) rel) (map relatorToList orbs) (cycle colors))
 
-colorBij :: M.Map Name (Colour Double) -> Bij -> Bij
+colorBij :: M.Map Name (Colour Double) -> Bij b -> Bij b
 colorBij colors = map colorBij'
   where
     colorBij' bij = bij & bijStyle .~ \n -> maybe id lc (M.lookup n colors) ((bij ^. bijStyle) n)
@@ -365,12 +366,12 @@ b0 = nset 3 blue
 a1 = nset 2 green
 b1 = nset 2 red
 
-bc0, bc1, bc01 :: BComplex
+bc0, bc1, bc01 :: BComplex b
 bc0 = [a0] .- bij0 -.. [b0]
 bc1 = [a1] .- bij1 -.. [b1]
 bc01 = [a0,a1] .- bij01 -.. [b0,b1]
 
-bij0, bij1 :: Bij
+bij0, bij1 :: Bij b
 bij0 = [mkABij a0 b0 ((`mod` 3) . succ . succ)]
 bij1 = [mkABij a1 b1 id]
 
@@ -378,6 +379,6 @@ names01, names02 :: [Name]
 names01 = 'X' .>> disjointly concat [head bij0^.bijDomain, head bij1^.bijDomain]
 names02 = 'Y' .>> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
 
-bij01 :: Bij
+bij01 :: Bij b
 bij01 = []
 
