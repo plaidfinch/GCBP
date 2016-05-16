@@ -1,3 +1,4 @@
+{-# LANGUAGE DefaultSignatures         #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
@@ -16,9 +17,10 @@ import           Control.Arrow       ((&&&))
 import           Control.Lens        (makeLenses, mapped, (^.), _2)
 import           Control.Monad       (msum)
 import           Data.Default.Class
-import           Data.List           (findIndex, isSuffixOf, partition)
+import           Data.List           (find, findIndex, isSuffixOf, partition)
 import qualified Data.Map            as M
 import           Data.Maybe          (catMaybes, fromMaybe)
+import           Data.Tuple          (swap)
 import           Data.Typeable
 
 import           Diagrams.Core.Names
@@ -106,8 +108,11 @@ drawSet = centerY . vcat . zipWithMult (.>>) ['a'..] . map drawAtomic . annot . 
 data ABij b
   = ABij
     { _bijDomain :: [Name]
+    , _bijRange  :: [Name]
     , _bijData   :: Name -> Maybe Name
+    , _bijData'  :: Name -> Maybe Name
     , _bijStyle  :: Name -> Style V2 Double
+    , _bijStyle' :: Name -> Style V2 Double
     , _bijSep    :: Double
     , _bijLabel  :: Maybe (Diagram b)
     }
@@ -115,7 +120,11 @@ data ABij b
 $(makeLenses ''ABij)
 
 instance Qualifiable (ABij b) where
-  n .>> bij = bij & bijData %~ prefixF n & bijDomain %~ (n .>>)
+  n .>> bij = bij
+            & bijData   %~ prefixF n
+            & bijData'  %~ prefixF n
+            & bijDomain %~ (n .>>)
+            & bijRange  %~ (n .>>)
     where
       prefixF :: IsName a => a -> (Name -> Maybe Name) -> (Name -> Maybe Name)
       prefixF _ _ (Name [])     = Just $ Name []
@@ -124,22 +133,45 @@ instance Qualifiable (ABij b) where
           Nothing -> Nothing
           Just a' -> if a' == i then (i .>>) <$> f (Name as) else Nothing
 
+toNameI :: Int -> Name
+toNameI = toName
+
+toNamesI :: [Int] -> [Name]
+toNamesI = map toName
+
 bijFun :: [Int] -> (Int -> Maybe Int) -> ABij b
-bijFun is f = def & bijDomain .~ toNamesI is & bijData .~ fmap toName . f . extractInt 0
-  where
-    extractInt :: Int -> Name -> Int
-    extractInt i (Name []) = i
-    extractInt i (Name ns) = case last ns of
-                               AName a -> case cast a of
-                                 Nothing -> i
-                                 Just i' -> i'
+bijFun is f
+  = def
+  & bijDomain .~ toNamesI is
+  & bijRange  .~ toNamesI (catMaybes $ map f is)
+  & bijData   .~ fmap toName . f . extractInt 0
+  & bijData'  .~ fmap toName . (\m -> find (\n -> f n == Just m) is) . extractInt 0
+
+extractInt :: Int -> Name -> Int
+extractInt i (Name []) = i
+extractInt i (Name ns)
+  = case last ns of
+      AName a -> case cast a of
+        Nothing -> i
+        Just i' -> i'
 
 bijTable :: [(Name, Name)] -> ABij b
-bijTable tab = def & bijDomain .~ map fst tab & bijData .~ tableToFun tab
+bijTable tab = def
+  & bijDomain .~ map fst tab
+  & bijRange  .~ map snd tab
+  & bijData   .~ tableToFun tab
+  & bijData'  .~ tableToFun (map swap tab)
 
 mkABij :: ASet -> ASet -> (Int -> Int) -> ABij b
 mkABij s1 s2 f = def & bijDomain .~ (s1 ^. eltNames)
-                     & bijData   .~ \n -> findIndex (==n) (s1 ^. eltNames) >>= ((s2^.eltNames) !!!) . f
+                     & bijRange  .~ (s2 ^. eltNames)
+                     & bijData   .~ (\x -> do
+                         n <- findIndex (==x) (s1 ^. eltNames)
+                         (s2 ^. eltNames) !!! f n)
+                     & bijData'  .~ (\y -> do
+                         m <- findIndex (==y) (s2 ^. eltNames)
+                         n <- findIndex (\n -> f (extractInt 0 n) == m) (s1 ^. eltNames)
+                         (s1 ^. eltNames) !!! n)
 
 -- mkBij :: Set -> Set -> (Int -> Int) -> Bij
 -- mkBij ss1 ss2 f = undefined
@@ -155,25 +187,36 @@ tableToFun = flip lookup
 instance Default (ABij b) where
   def = ABij
     { _bijDomain = []
+    , _bijRange  = []
     , _bijData   = const Nothing
-    , _bijStyle  = const $ mempty # dashingG [0.03,0.02] 0 # lineCap LineCapButt
+    , _bijData'  = const Nothing
+    , _bijStyle  = defaultStyle
+    , _bijStyle' = defaultStyle
     , _bijSep    = 3
     , _bijLabel  = Nothing
     }
+    where
+      defaultStyle = const $ mempty # dashingG [0.03,0.02] 0 # lineCap LineCapButt
 
-type Bij b = [ABij b]
+newtype Bij b = Bij { _bijParts :: [ABij b] }
 
-emptyBij :: Bij b
-emptyBij = [with & bijData .~ const Nothing]
+makeLenses ''Bij
 
-parBij :: Bij b -> Bij b -> Bij b
-parBij x y = parBijs [x,y]
-
-parBijs :: [Bij b] -> Bij b
-parBijs = disjointly concat
+instance Par (Bij b) where
+  empty = Bij [with & bijData .~ const Nothing]
+  pars  = Bij . disjointly concat . map (^.bijParts)
 
 labelBij :: _ => String -> Bij b -> Bij b
-labelBij s = (mapped . bijLabel) .~ Just (text s)
+labelBij s = (bijParts . mapped . bijLabel) .~ Just (text s)
+
+------------------------------------------------------------
+-- Reversible things
+
+-- instance Reversing (ABij b) where
+--   reversing = 
+
+-- instance Reversing (Bij b) where
+--   reversing = bijParts . mapped %~ reversing
 
 ------------------------------------------------------------
 -- Alternating lists
@@ -241,13 +284,13 @@ seqC :: BComplex b -> Bij b -> BComplex b -> BComplex b
 seqC = concatA
 
 parC :: BComplex b -> BComplex b -> BComplex b
-parC = zipWithA (++) parBij
+parC = zipWithA (++) par
 
 drawBComplex :: _ => BComplex b -> Diagram b
 drawBComplex = centerX . drawBComplexR 0
   where
     drawBComplexR i (Single s) = i .>> drawSet s
-    drawBComplexR i (Cons ss bs c) =
+    drawBComplexR i (Cons ss b c) =
         hcat
         [ i .>> s1
         , strutX thisSep <> label
@@ -255,6 +298,7 @@ drawBComplex = centerX . drawBComplexR 0
         ]
         # applyAll (map (drawABij i (map fst $ names s1)) bs)
       where
+        bs = b ^. bijParts
         s1 = drawSet ss
         thisSep = case bs of
           [] -> 0
@@ -272,12 +316,6 @@ drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bi
     drawLine sub1 sub2 = boundaryFrom sub1 v ~~ boundaryFrom sub2 (negated v)
       where
         v = location sub2 .-. location sub1
-
-toNameI :: Int -> Name
-toNameI = toName
-
-toNamesI :: [Int] -> [Name]
-toNamesI = map toName
 
 plus, minus, equals :: _ => Diagram b
 plus = hrule 1 <> vrule 1
@@ -330,6 +368,9 @@ emptyR = []
 unionR :: Relation a -> Relation a -> Relation a
 unionR = (++)
 
+unionRs :: [Relation a] -> Relation a
+unionRs = concat
+
 composeR :: Eq a => Relation a -> Relation a -> Relation a
 composeR rs1 rs2 = [ rel | rel1 <- rs1, rel2 <- rs2, Just rel <- [composeRelators rel1 rel2] ]
 
@@ -344,7 +385,7 @@ orbits r1 r2 = removeTails $ orbits' r2 r1 r1
     removeTails rs = filter (\r -> not (any (r `isTailOf`) rs)) rs
 
 bijToRel :: Bij b -> Relation Name
-bijToRel = foldr unionR emptyR . map bijToRel1
+bijToRel = unionRs . map bijToRel1 . view bijParts
   where
     bijToRel1 bij = mkRelation . catMaybes . map (_2 id . (id &&& (bij^.bijData))) $ bij^.bijDomain
 
@@ -352,7 +393,7 @@ orbitsToColorMap :: Ord a => [Colour Double] -> Relation a -> M.Map a (Colour Do
 orbitsToColorMap colors orbs = M.fromList (concat $ zipWith (\rel c -> map (,c) rel) (map relatorToList orbs) (cycle colors))
 
 colorBij :: M.Map Name (Colour Double) -> Bij b -> Bij b
-colorBij colors = map colorBij'
+colorBij colors = bijParts . mapped %~ colorBij'
   where
     colorBij' bij = bij & bijStyle .~ \n -> maybe id lc (M.lookup n colors) ((bij ^. bijStyle) n)
 
@@ -372,13 +413,16 @@ bc1 = [a1] .- bij1 -.. [b1]
 bc01 = [a0,a1] .- bij01 -.. [b0,b1]
 
 bij0, bij1 :: Bij b
-bij0 = [mkABij a0 b0 ((`mod` 3) . succ . succ)]
-bij1 = [mkABij a1 b1 id]
+bij0 = Bij [mkABij a0 b0 ((`mod` 3) . succ . succ)]
+bij1 = Bij [mkABij a1 b1 id]
 
 names01, names02 :: [Name]
-names01 = 'X' .>> disjointly concat [head bij0^.bijDomain, head bij1^.bijDomain]
+names01 = 'X' .>> disjointly concat
+                  [ bij0 ^?! bijParts . _head . bijDomain
+                  , bij1 ^?! bijParts . _head . bijDomain
+                  ]
 names02 = 'Y' .>> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
 
 bij01 :: Bij b
-bij01 = []
+bij01 = bij0 `par` bij1
 
