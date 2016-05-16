@@ -74,16 +74,12 @@
 \ifcomments
 \newcommand{\authornote}[3]{\textcolor{#1}{[#3 ---#2]}}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
-\newcommand{\chaptertodo}[1]{\textcolor{gray}{[TODO (Later): #1]}}
 \else
 \newcommand{\authornote}[3]{}
 \newcommand{\todo}[1]{}
-\newcommand{\chaptertodo}[1]{}
 \fi
 
 \newcommand{\bay}[1]{\authornote{blue}{BAY}{#1}}
-\newcommand{\jc}[1]{\authornote{purple}{JC}{#1}}
-\newcommand{\scw}[1]{\authornote{magenta}{SCW}{#1}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Semantic markup
@@ -153,7 +149,48 @@ keyword1, keyword2
 
 \section{Introduction}
 
-The text of the paper begins here.
+Suppose we have four sets $A_0, A_1, B_0,$ and $B_1$ with bijections
+$f_0 : A_0 \bij B_0$ and $f_1 : A_1 \bij B_1$, as illustrated in
+\todo{make illustration}.  Then we can easily ``add'' these bijections
+to produce a new bijection \[ f : A_0 + A_1 \bij B_0 + B_1 \]
+(where $+$ denotes the disjoint union of sets): we just take
+$f = f_0 + f_1$, that is, the function which applies $f_0$ when given
+an $A_0$, and $f_1$ when given an $A_1$. That is, in Haskell,
+\begin{code}
+type (+) = Either
+
+(+) :: (a0 -> b0) -> (a1 -> b1) -> (a0 + a1 -> b0 + b1)
+(f + g) (Left x)   = Left   (f x)
+(f + g) (Right y)  = Right  (g y)
+\end{code}
+$(f + g)$ is a bijection as long as $f$ and $g$ are.
+
+So we can define the \emph{sum} of two bijections.  What about the
+\emph{difference}?  That is, given
+\[ f : A_0 + A_1 \bij B_0 + B_1 \] and
+\[ f_1 : A_1 \bij B_1, \] can we compute some
+\[ f_0 : A_0 \bij B_0? \]
+
+This comes up in combinatorics, when \todo{finish}.  \todo{Also definition of
+virtual species, XXX other places.}
+
+Certainly we can say that $A_0$ and $B_0$ have the same size: the
+existence of the bijections $f$ and $f_1$ tell us that
+$|A_0 + A_1| = |B_0 + B_1|$ and $|A_1| = |B_1|$; since, in general,
+$|X + Y| = |X| + |Y|$, we can just subtract sizes to conclude that
+$|A_0| = |B_0|$.  So, if we are willing to use the law of excluded
+middle, we can say that there \emph{must exist} some bijection
+$A_0 \bij B_0$.  But what if we want to actually \emph{compute} a
+concrete bijection $A_0 \bij B_0$?  Then LEM is too big a
+sledgehammer: we need something more subtle.
+
+To see why this problem is not as trivial as it may first seem,
+consider \todo{figure}.  The bijection $A_0 + A_1 \bij B_0 + B_1$ may
+arbitrarily mix elements, so we cannot just drop $A_1$ and $B_1$.
+Some of the elements in $A_0$ may map to elements in $B_1$, and vice
+versa.
+
+An algorithmically elegant solution was introduced by \todo{cite Gordon}.
 
 \appendix
 \section{Appendix Title}
