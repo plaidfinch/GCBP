@@ -36,6 +36,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Diagrams
 
+\usepackage{pgf}
 \usepackage{graphicx}
 \usepackage[outputdir=diagrams,backend=pgf,extension=pgf,input]{diagrams-latex}
 
@@ -151,7 +152,24 @@ keyword1, keyword2
 
 Suppose we have four sets $A_0, A_1, B_0,$ and $B_1$ with bijections
 $f_0 : A_0 \bij B_0$ and $f_1 : A_1 \bij B_1$, as illustrated in
-\todo{make illustration}.  Then we can easily ``add'' these bijections
+\todo{make illustration}.
+\begin{figure}
+  \centering
+  \begin{diagram}[width=150]
+    import Bijections
+
+    dia = vsep 1 . map centerX $  -- $
+      [ hsep 3 . map alignB $ -- $
+        [ drawBComplex (bc0 & labelBC "$f_0$")
+        , drawBComplex (bc1 & labelBC "$f_1$")
+        ]
+      , drawBComplex (bc01 & labelBC "$f_0 + f_1$")
+      ]
+  \end{diagram}
+  \caption{Adding bijections}
+  \label{fig:diagram}
+\end{figure}
+Then we can easily ``add'' these bijections
 to produce a new bijection \[ f : A_0 + A_1 \bij B_0 + B_1 \]
 (where $+$ denotes the disjoint union of sets): we just take
 $f = f_0 + f_1$, that is, the function which applies $f_0$ when given
