@@ -360,19 +360,6 @@ drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bi
       where
         v = location sub2 .-. location sub1
 
-plus, minus, equals :: _ => Diagram b
-plus = hrule 1 <> vrule 1
-minus = hrule 1
-equals = hrule 1 === strutY 0.5 === hrule 1
-
-mapAName :: (Typeable a, Typeable b, Ord b, Show b) => (a -> b) -> AName -> AName
-mapAName f an@(AName x) = case cast x of
-                            Nothing -> an
-                            Just a  -> AName (f a)
-
-mapName :: (Typeable a, Typeable b, Ord b, Show b) => (a -> b) -> Name -> Name
-mapName f (Name ns) = Name (map (mapAName f) ns)
-
 ------------------------------------------------------------
 -- Computing orbits/coloration
 
