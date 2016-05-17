@@ -17,7 +17,7 @@ main = shake shakeOptions $ do
 
     "*.pdf" %> \output -> do
         let input = replaceExtension output "tex"
-        need [input]
+        need [input, "Bijections.hs"]
 
         () <- cmd pdflatex $ ["--enable-write18", input]
         cmd pdflatex $ ["--enable-write18", input]
