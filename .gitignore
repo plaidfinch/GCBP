@@ -19,4 +19,11 @@ cabal.sandbox.config
 *.log
 *.pdf
 *.ptb
-paper/GCBP.tex
+
+.diagrams_cache/
+diagrams/
+
+GCBP-paper.tex
+Test
+Test.png
+
