@@ -8,7 +8,7 @@ pdflatex = "pdflatex"
 main :: IO ()
 main = shake shakeOptions $ do
 
-    want ["GCBP.pdf"]
+    want ["GCBP-paper.pdf"]
 
     "*.tex" %> \output -> do
         let input = replaceExtension output "lhs"
