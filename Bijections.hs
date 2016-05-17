@@ -14,8 +14,6 @@
 module Bijections where
 
 import           Control.Arrow       ((&&&))
-import           Control.Lens        (makeLenses, makeLensesWith, mapped, (^.), _2)
-import           Control.Monad       (msum)
 import           Data.Default.Class
 import           Data.List           (find, findIndex, isSuffixOf, partition)
 import qualified Data.Map            as M
@@ -129,17 +127,9 @@ data ABij b
     , _bijData'  :: Name -> Maybe Name
     , _bijStyle  :: Name -> Style V2 Double
     , _bijStyle' :: Name -> Style V2 Double
-    , _bijSep    :: Double
-    , _bijLabel  :: Maybe (Diagram b)
     }
 
-makeLensesWith (lensRules & generateSignatures .~ False) ''ABij
-
-bijLabel
-  :: Functor f
-  => (Maybe (Diagram b) -> f (Maybe (Diagram b)))
-  -> ABij b -> f (ABij b)
-
+makeLenses ''ABij
 
 instance Qualifiable (ABij b) where
   n .>> bij = bij
@@ -218,26 +208,30 @@ instance Default (ABij b) where
     , _bijData'  = const Nothing
     , _bijStyle  = defaultStyle
     , _bijStyle' = defaultStyle
-    , _bijSep    = 3
-    , _bijLabel  = Nothing
     }
     where
       defaultStyle = const $ mempty # dashingL [0.1,0.05] 0 # lineCap LineCapButt
 
-newtype Bij b = Bij { _bijParts :: [ABij b] }
+data Bij b = Bij { _bijParts :: [ABij b]
+                 , _bijSep    :: Double
+                 , _bijLabel  :: Maybe (Diagram b)
+                 }
 
 makeLenses ''Bij
 
 instance Singleton (Bij b) where
   type Single (Bij b) = ABij b
-  single b = Bij [b]
+  single b = Bij [b] 3 Nothing
 
 instance Par (Bij b) where
-  empty = Bij [with & bijData .~ const Nothing]
-  pars  = Bij . disjointly concat . map (^.bijParts)
+  empty    = Bij [with & bijData .~ const Nothing] 3 Nothing
+  pars  bs = Bij parts s Nothing
+    where
+      parts = disjointly concat . map (^.bijParts) $ bs
+      s     = maximum . map (^. bijSep) $ bs
 
 labelBij :: _ => String -> Bij b -> Bij b
-labelBij s = (bijParts . mapped . bijLabel) .~ Just (text s)
+labelBij s = bijLabel .~ Just (text s # fontSizeL 0.8 <> square 0.8 # lw 0)
 
 ------------------------------------------------------------
 -- Reversible things
@@ -314,6 +308,14 @@ foldA :: (a -> r) -> (a -> b -> r -> r) -> AltList a b -> r
 foldA f _ (Single a)   = f a
 foldA f g (Cons a b l) = g a b (foldA f g l)
 
+evens :: Traversal (AltList a b) (AltList a' b) a a'
+evens g (Single a)   = Single <$> g a
+evens g (Cons a b l) = Cons <$> g a <*> pure b <*> evens g l
+
+odds :: Traversal (AltList a b) (AltList a b') b b'
+odds _ (Single a)   = pure (Single a)
+odds g (Cons a b l) = Cons <$> pure a <*> g b <*> odds g l
+
 ------------------------------------------------------------
 -- Bijection complexes
 
@@ -336,19 +338,16 @@ drawBComplex = centerX . drawBComplexR 0
     drawBComplexR i (Cons ss b c) =
         hcat
         [ i .>> s1
-        , strutX thisSep <> label
+        , strutX (b ^. bijSep) <> label
         , drawBComplexR (succ i) c
         ]
         # applyAll (map (drawABij i (map fst $ names s1)) bs)
       where
         bs = b ^. bijParts
         s1 = drawSet ss
-        thisSep = case bs of
-          [] -> 0
-          _  -> maximum . map (^. bijSep) $ bs
-        label = (fromMaybe mempty . msum . reverse . map (^. bijLabel) $ bs)
+        label = (fromMaybe mempty (b ^. bijLabel))
                 # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
-                # (\d -> translateY (-(height s1 + thisSep - height d)/2) d)
+                # (\d -> translateY (-(height s1 + height d)/2) d)
 
 drawABij :: _ => Int -> [Name] -> ABij b -> Diagram b -> Diagram b
 drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bijData))) $ ns)
@@ -446,5 +445,5 @@ bc01' :: _ => BComplex b
 bc01' = bc01 +- (reversing bij0 +++ empty) -.. (a0 +++ a1)
 
 bij0, bij1 :: _ => Bij b
-bij0 = single $ mkABij a0 b0 ((`mod` 3) . succ . succ) & bijLabel .~ Just (text "$f$")
+bij0 = single $ mkABij a0 b0 ((`mod` 3) . succ . succ)
 bij1 = single $ mkABij a1 b1 id
