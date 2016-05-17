@@ -196,7 +196,7 @@ instance Default (ABij b) where
     , _bijLabel  = Nothing
     }
     where
-      defaultStyle = const $ mempty # dashingG [0.03,0.02] 0 # lineCap LineCapButt
+      defaultStyle = const $ mempty # dashingL [0.1,0.05] 0 # lineCap LineCapButt
 
 newtype Bij b = Bij { _bijParts :: [ABij b] }
 
@@ -212,11 +212,16 @@ labelBij s = (bijParts . mapped . bijLabel) .~ Just (text s)
 ------------------------------------------------------------
 -- Reversible things
 
--- instance Reversing (ABij b) where
---   reversing = 
+instance Reversing (ABij b) where
+  reversing b =
+    b & bijDomain .~ (b ^. bijRange)
+      & bijRange  .~ (b ^. bijDomain)
+      & bijData   .~ (b ^. bijData')
+      & bijData'  .~ (b ^. bijData)
+    -- bijStyle???
 
--- instance Reversing (Bij b) where
---   reversing = bijParts . mapped %~ reversing
+instance Reversing (Bij b) where
+  reversing = bijParts . mapped %~ reversing
 
 ------------------------------------------------------------
 -- Alternating lists
@@ -225,7 +230,7 @@ data AltList a b
   = Single a
   | Cons a b (AltList a b)
 
-infixr 5 .-, -., -..
+infixr 5 .-, -., -.., +-
 
 (.-) :: a -> (b, AltList a b) -> AltList a b
 a .- (b,l) = Cons a b l
@@ -235,6 +240,9 @@ a .- (b,l) = Cons a b l
 
 (-..) :: b -> a -> (b,AltList a b)
 b -.. a = (b, Single a)
+
+(+-) :: AltList a b -> (b, AltList a b) -> AltList a b
+(+-) l = uncurry (concatA l)
 
 zipWithA :: (a1 -> a2 -> a3) -> (b1 -> b2 -> b3) -> AltList a1 b1 -> AltList a2 b2 -> AltList a3 b3
 zipWithA f _ (Single x1) (Single x2)         = Single (f x1 x2)
@@ -410,7 +418,10 @@ b1 = nset 2 red
 bc0, bc1, bc01 :: BComplex b
 bc0 = [a0] .- bij0 -.. [b0]
 bc1 = [a1] .- bij1 -.. [b1]
-bc01 = [a0,a1] .- bij01 -.. [b0,b1]
+bc01 = [a0,a1] .- (bij0 `par` bij1) -.. [b0,b1]
+
+bc01' :: BComplex b
+bc01' = bc01 +- (reversing bij0 `par` empty) -.. [a0,a1]
 
 bij0, bij1 :: Bij b
 bij0 = Bij [mkABij a0 b0 ((`mod` 3) . succ . succ)]
@@ -422,7 +433,4 @@ names01 = 'X' .>> disjointly concat
                   , bij1 ^?! bijParts . _head . bijDomain
                   ]
 names02 = 'Y' .>> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
-
-bij01 :: Bij b
-bij01 = bij0 `par` bij1
 
