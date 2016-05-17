@@ -238,6 +238,25 @@ The bijection $A_0 + A_1 \bij B_0 + B_1$ may arbitrarily mix elements
 between the sets, so we cannot simply ``drop'' $A_1$ and $B_1$.  Some
 of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
 
+\section{The Gordon Complementary Bijection Principle}
+\label{sec:GCBP}
+
+\todo{Things to write about: explain GCBP. Write Haskell code for
+  computing a single direction.  Then develop small library for
+  bijections (with function in both directions).  Implementation just
+  does single-direction implementation in both directions---ugh!}
+
+\section{The Algebra of Partial Bijections}
+\label{sec:algebra}
+
+\todo{Then implement GCBP entirely at the level of partial
+  bijections.}
+
+\section{The Garsia-Milne Involution Principle}
+\label{sec:gmip}
+
+\todo{Explain GMIP and prove its equivalence to GCBP.}
+
 % \appendix
 % \section{Appendix Title}
 
