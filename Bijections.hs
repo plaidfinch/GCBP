@@ -14,7 +14,7 @@
 module Bijections where
 
 import           Control.Arrow       ((&&&))
-import           Control.Lens        (makeLenses, mapped, (^.), _2)
+import           Control.Lens        (makeLenses, makeLensesWith, mapped, (^.), _2)
 import           Control.Monad       (msum)
 import           Data.Default.Class
 import           Data.List           (find, findIndex, isSuffixOf, partition)
@@ -30,7 +30,7 @@ import           Diagrams.Prelude    hiding (dot, end, r2, start)
 -- Diagram utilities
 
 dot :: _ => Diagram b
-dot = circle 0.3 # fc black # lw none
+dot = circle 0.25 # fc black # lw none
 
 ------------------------------------------------------------
 -- Name utilities
@@ -51,42 +51,58 @@ c |@@ is = map (c |@) is
 -- an identity.
 class Par p where
   empty :: p
-  par   :: p -> p -> p
-  par x y = pars [x,y]
+  (+++) :: p -> p -> p
+  x +++ y = pars [x,y]
   pars  :: [p] -> p
-  pars = foldr par empty
+  pars = foldr (+++) empty
+
+------------------------------------------------------------
+-- Singletons
+
+class Singleton s where
+  type Single s :: *
+  single :: Single s -> s
 
 ------------------------------------------------------------
 -- Sets
 
-data ASet =
+data ASet b =
   ASet
   { _eltNames :: [Name]
   , _setColor :: Colour Double
   }
+  deriving Show
 
 $(makeLenses ''ASet)
 
-instance Qualifiable ASet where
+instance Qualifiable (ASet b) where
   n .>> s = s & eltNames %~ (n .>>)
 
-type Set = [ASet]
+newtype Set b = Set { setParts :: [ASet b] }
 
-instance Par Set where
-  empty = []
-  pars  = disjointly concat
+collapse :: Set b -> ASet b
+collapse (Set as) = ASet
+  { _eltNames = concatMap (view eltNames) as
+  , _setColor = head as ^. setColor
+  }
 
-nset :: Int -> Colour Double -> ASet
-nset n c = ASet (map toName [0::Int .. (n-1)]) c
+instance Singleton (Set b) where
+  type Single (Set b) = ASet b
+  single s = Set [s]
 
-set :: IsName n => [n] -> Colour Double -> ASet
-set ns c = ASet (map toName ns) c
+instance Par (Set b) where
+  empty = Set []
+  pars  = Set . disjointly concat . map setParts
 
-drawSet :: _ => Set -> Diagram b
-drawSet = centerY . vcat . zipWithMult (.>>) ['a'..] . map drawAtomic . annot . annot
+nset :: Int -> Colour Double -> Set b
+nset n c = single $ ASet (map toName [0::Int .. (n-1)]) c
+
+set :: IsName n => [n] -> Colour Double -> Set b
+set ns c = single $ ASet (map toName ns) c
+
+drawSet :: _ => Set b -> Diagram b
+drawSet = centerY . vcat . map drawAtomic . annot . annot . setParts
   where
-    zipWithMult _ _ [x] = [x]
-    zipWithMult f xs ys = zipWith f xs ys
     annot = reverse . zip (False : repeat True)
     drawAtomic (bot, (top, ASet nms c))
       = mconcat
@@ -117,7 +133,13 @@ data ABij b
     , _bijLabel  :: Maybe (Diagram b)
     }
 
-$(makeLenses ''ABij)
+makeLensesWith (lensRules & generateSignatures .~ False) ''ABij
+
+bijLabel
+  :: Functor f
+  => (Maybe (Diagram b) -> f (Maybe (Diagram b)))
+  -> ABij b -> f (ABij b)
+
 
 instance Qualifiable (ABij b) where
   n .>> bij = bij
@@ -162,16 +184,20 @@ bijTable tab = def
   & bijData   .~ tableToFun tab
   & bijData'  .~ tableToFun (map swap tab)
 
-mkABij :: ASet -> ASet -> (Int -> Int) -> ABij b
-mkABij s1 s2 f = def & bijDomain .~ (s1 ^. eltNames)
-                     & bijRange  .~ (s2 ^. eltNames)
-                     & bijData   .~ (\x -> do
-                         n <- findIndex (==x) (s1 ^. eltNames)
-                         (s2 ^. eltNames) !!! f n)
-                     & bijData'  .~ (\y -> do
-                         m <- findIndex (==y) (s2 ^. eltNames)
-                         n <- findIndex (\n -> f (extractInt 0 n) == m) (s1 ^. eltNames)
-                         (s1 ^. eltNames) !!! n)
+mkABij :: Set b -> Set b -> (Int -> Int) -> ABij b
+mkABij s1 s2 f
+  = def & bijDomain .~ (a1 ^. eltNames)
+        & bijRange  .~ (a2 ^. eltNames)
+        & bijData   .~ (\x -> do
+            n <- findIndex (==x) (a1 ^. eltNames)
+            (a2 ^. eltNames) !!! f n)
+        & bijData'  .~ (\y -> do
+            m <- findIndex (==y) (a2 ^. eltNames)
+            n <- findIndex (\n -> f (extractInt 0 n) == m) (a1 ^. eltNames)
+            (a1 ^. eltNames) !!! n)
+  where
+    a1 = collapse s1
+    a2 = collapse s2
 
 -- mkBij :: Set -> Set -> (Int -> Int) -> Bij
 -- mkBij ss1 ss2 f = undefined
@@ -202,6 +228,10 @@ newtype Bij b = Bij { _bijParts :: [ABij b] }
 
 makeLenses ''Bij
 
+instance Singleton (Bij b) where
+  type Single (Bij b) = ABij b
+  single b = Bij [b]
+
 instance Par (Bij b) where
   empty = Bij [with & bijData .~ const Nothing]
   pars  = Bij . disjointly concat . map (^.bijParts)
@@ -229,6 +259,10 @@ instance Reversing (Bij b) where
 data AltList a b
   = Single a
   | Cons a b (AltList a b)
+
+instance Singleton (AltList a b) where
+  type Single (AltList a b) = a
+  single = Single
 
 infixr 5 .-, -., -.., +-
 
@@ -283,7 +317,7 @@ foldA f g (Cons a b l) = g a b (foldA f g l)
 ------------------------------------------------------------
 -- Bijection complexes
 
-type BComplex b = AltList Set (Bij b)
+type BComplex b = AltList (Set b) (Bij b)
 
 labelBC :: _ => String -> BComplex b -> BComplex b
 labelBC = map2 . labelBij
@@ -291,8 +325,9 @@ labelBC = map2 . labelBij
 seqC :: BComplex b -> Bij b -> BComplex b -> BComplex b
 seqC = concatA
 
-parC :: BComplex b -> BComplex b -> BComplex b
-parC = zipWithA (++) par
+instance Par (BComplex b) where
+  empty = single empty
+  (+++) = zipWithA (+++) (+++)
 
 drawBComplex :: _ => BComplex b -> Diagram b
 drawBComplex = centerX . drawBComplexR 0
@@ -408,29 +443,21 @@ colorBij colors = bijParts . mapped %~ colorBij'
 ------------------------------------------------------------
 -- Example sets and bijections
 
-a0, b0, a1, b1 :: ASet
+a0, b0, a1, b1 :: _ => Set b
 a0 = nset 3 yellow
 b0 = nset 3 blue
 
 a1 = nset 2 green
 b1 = nset 2 red
 
-bc0, bc1, bc01 :: BComplex b
-bc0 = [a0] .- bij0 -.. [b0]
-bc1 = [a1] .- bij1 -.. [b1]
-bc01 = [a0,a1] .- (bij0 `par` bij1) -.. [b0,b1]
+bc0, bc1, bc01 :: _ => BComplex b
+bc0 = a0 .- bij0 -.. b0
+bc1 = a1 .- bij1 -.. b1
+bc01 = bc0 +++ bc1
 
-bc01' :: BComplex b
-bc01' = bc01 +- (reversing bij0 `par` empty) -.. [a0,a1]
+bc01' :: _ => BComplex b
+bc01' = bc01 +- (reversing bij0 +++ empty) -.. (a0 +++ a1)
 
-bij0, bij1 :: Bij b
-bij0 = Bij [mkABij a0 b0 ((`mod` 3) . succ . succ)]
-bij1 = Bij [mkABij a1 b1 id]
-
-names01, names02 :: [Name]
-names01 = 'X' .>> disjointly concat
-                  [ bij0 ^?! bijParts . _head . bijDomain
-                  , bij1 ^?! bijParts . _head . bijDomain
-                  ]
-names02 = 'Y' .>> (('a' |@@ [1,2]) ++ ('b' |@@ [0,1]) ++ ('a' |@@ [0]))
-
+bij0, bij1 :: _ => Bij b
+bij0 = single $ mkABij a0 b0 ((`mod` 3) . succ . succ) & bijLabel .~ Just (text "$f$")
+bij1 = single $ mkABij a1 b1 id
