@@ -208,7 +208,7 @@ that $||A_0|| = ||B_0||$.  So, if we are willing to use the law of
 excluded middle, we can say that there \emph{must exist} some
 bijection $A_0 \bij B_0$.  But what if we want to actually
 \emph{compute} a concrete bijection $A_0 \bij B_0$?  In that case, LEM
-is too big a sledgehammer. we need something more subtle.
+is too big a sledgehammer. We need something more subtle.
 
 To see why this problem is not as trivial as it may first seem,
 consider \pref{fig:subtracting-bijections}.
@@ -241,14 +241,36 @@ of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
 
+The key to subtraction is to use the input bijections to ``ping-pong''
+back and forth between sets until landing in the right place.
+Starting with an arbitrary element of $A_0$, our goal is to find an
+element of $B_0$ to match it with.  First, run it through
+$f : A_0 + A_1 \bij B_0 + B_1$.  If we land in $B_0$, we are done.
+Otherwise, we end up with an element of $B_1$.  Run it through
+$f_1 : B_0 \bij B_1$ \emph{backwards}, yielding an element of $B_0$.
+Now run $f$ again, and so on.  Keep iterating this process until
+finally landing in $B_0$; we match the original element of $A_0$ to
+the element of $B_0$ so obtained.  \pref{fig:GCBP} illustrates this
+process.  The top two elements of the (yellow) set on the upper-left
+map immediately into the two lower elements of the blue set; the third
+element of the yellow set, however, requires two iterations before
+finally landing on the uppermost element of the blue
+set. \todo{Highlight paths through the diagram}
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
     import Bijections
 
-    dia = gcbp
+    dia = vsep 1 . map centerX $ -- $
+      [ gcbp
         # labelBC (cycle ["$f$", "$f_1^{-1}$"])
         # drawBComplex
+      , hsep 3
+        [ text "$=$"
+        , drawBComplex $  -- $
+          a0 .- (single $ mkABij a0 b0 ((`mod` 3) . succ)) -.. b0  -- $
+        ]
+      ]
 
     gcbp = (a0 +++ a1) .- bij2 -.
            (b0 +++ b1) .- (empty +++ reversing bij1) -.
@@ -262,10 +284,37 @@ of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
   \label{fig:GCBP}
 \end{figure}
 
-\todo{Things to write about: explain GCBP. Write Haskell code for
-  computing a single direction.  Then develop small library for
-  bijections (with function in both directions).  Implementation just
-  does single-direction implementation in both directions---ugh!}
+A Haskell implementation is shown in \pref{fig:GCBP-uni-Haskell}.
+This implementation is somewhat simplified, since it takes $A_1 = B_1$
+with $f_1$ being the identity bijection between them, but it still
+serves to illustrate the basic idea.
+\begin{figure}[htp]
+  \centering
+  \begin{code}
+pingpong :: (a + c -> b + c) -> (a -> b)
+pingpong bij a = case bij (Left a) of
+  Left b   -> b
+  Right c  -> fixEither (iso . Right) c
+
+fixEither :: (a -> b + a) -> (a -> b)
+fixEither f a0 = case f a0 of
+  Left b   -> b
+  Right a  -> fixEither f a
+  \end{code}
+  \caption{Ping-ponging in Haskell}
+  \label{fig:GCBP-uni-Haskell}
+\end{figure}
+
+This algorithm was introduced by \todo{cite Gordon} in \todo{year}.
+
+\todo{Prove it. Explain how this proof is not easily formalized ---
+  seems to make essential use of LEM/proof by contradiction!  This is
+  strange/unsatisfactory since the whole point was to do something
+  constructive.}
+
+\todo{Then develop small library for bijections (with function in both
+  directions).  Implementation just does single-direction
+  implementation in both directions---ugh!}
 
 \section{The Algebra of Partial Bijections}
 \label{sec:algebra}
