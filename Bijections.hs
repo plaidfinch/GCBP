@@ -210,7 +210,7 @@ instance Default (ABij b) where
     , _bijStyle' = defaultStyle
     }
     where
-      defaultStyle = const $ mempty # dashingL [0.1,0.05] 0 # lineCap LineCapButt
+      defaultStyle = const $ mempty # dashingL [0.2,0.1] 0 # lineCap LineCapButt
 
 data Bij b = Bij { _bijParts :: [ABij b]
                  , _bijSep    :: Double
@@ -294,6 +294,11 @@ map2 :: (b -> c) -> AltList a b -> AltList a c
 map2 _ (Single a) = Single a
 map2 g (Cons a b l) = Cons a (g b) (map2 g l)
 
+zipWith2 :: (x -> b -> c) -> [x] -> AltList a b -> AltList a c
+zipWith2 _ _  (Single a)       = Single a
+zipWith2 _ [] (Cons a _ _)     = Single a
+zipWith2 f (x:xs) (Cons a b l) = Cons a (f x b) (zipWith2 f xs l)
+
 iterateA :: (a -> b) -> (b -> a) -> a -> AltList a b
 iterateA f g a = Cons a b (iterateA f g (g b))
   where b = f a
@@ -321,8 +326,8 @@ odds g (Cons a b l) = Cons <$> pure a <*> g b <*> odds g l
 
 type BComplex b = AltList (Set b) (Bij b)
 
-labelBC :: _ => String -> BComplex b -> BComplex b
-labelBC = map2 . labelBij
+labelBC :: _ => [String] -> BComplex b -> BComplex b
+labelBC = zipWith2 labelBij
 
 seqC :: BComplex b -> Bij b -> BComplex b -> BComplex b
 seqC = concatA

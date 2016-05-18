@@ -168,13 +168,13 @@ Then, as illustrated in \pref{fig:adding-bijections}, we can easily
 
     dia = vsep 1 . map centerX $  -- $
       [ hsep 3
-        [ drawBComplex (bc0 & labelBC "$f_0$")
+        [ drawBComplex (bc0 & labelBC ["$f_0$"])
         , text "$+$"
-        , drawBComplex (bc1 & labelBC "$f_1$")
+        , drawBComplex (bc1 & labelBC ["$f_1$"])
         ]
       , hsep 3
         [ text "$=$"
-        , drawBComplex (bc01 & labelBC "$f_0 + f_1$")
+        , drawBComplex (bc01 & labelBC ["$f_0 + f_1$"])
         ]
       ]
   \end{diagram}
@@ -200,12 +200,12 @@ So we can define the \emph{sum} of two bijections.  What about the
 This comes up in combinatorics, when \todo{finish}.  \todo{Also definition of
 virtual species, XXX other places.}
 
-Certainly we can say that $A_0$ and $B_0$ have the same size. The
-existence of the bijections $f$ and $f_1$ tells us that
-$||A_0 + A_1|| = ||B_0 + B_1||$ and $||A_1|| = ||B_1||$; since, in
-general, $||X + Y|| = ||X|| + ||Y||$, we can just subtract sizes to
-conclude that $||A_0|| = ||B_0||$.  So, if we are willing to use the
-law of excluded middle, we can say that there \emph{must exist} some
+Certainly $A_0$ and $B_0$ have the same size. The existence of the
+bijections $f$ and $f_1$ tells us that $||A_0 + A_1|| = ||B_0 + B_1||$
+and $||A_1|| = ||B_1||$; since, in general,
+$||X + Y|| = ||X|| + ||Y||$, we can just subtract sizes to conclude
+that $||A_0|| = ||B_0||$.  So, if we are willing to use the law of
+excluded middle, we can say that there \emph{must exist} some
 bijection $A_0 \bij B_0$.  But what if we want to actually
 \emph{compute} a concrete bijection $A_0 \bij B_0$?  In that case, LEM
 is too big a sledgehammer. we need something more subtle.
@@ -219,13 +219,13 @@ consider \pref{fig:subtracting-bijections}.
 
     dia = vsep 1 . map centerX $  -- $
       [ hsep 3
-        [ drawBComplex (bc2 # labelBC "$f$")
+        [ drawBComplex (bc2 # labelBC ["$f$"])
         , text "$-$"
-        , drawBComplex (bc1 # labelBC "$f_1$")
+        , drawBComplex (bc1 # labelBC ["$f_1$"])
         ]
       , hsep 3
         [ text "$=$"
-        , drawBComplex ((a0 .- empty -.. b0) # labelBC "?")
+        , drawBComplex ((a0 .- empty -.. b0) # labelBC ["?"])
         ]
       ]
     bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
@@ -240,6 +240,27 @@ of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
 
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
+
+\begin{figure}[htp]
+  \centering
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = gcbp
+        # labelBC (cycle ["$f$", "$f_1^{-1}$"])
+        # drawBComplex
+
+    gcbp = (a0 +++ a1) .- bij2 -.
+           (b0 +++ b1) .- (empty +++ reversing bij1) -.
+           (a0 +++ a1) .- bij2 -.
+           (b0 +++ b1) .- (empty +++ reversing bij1) -.
+           (a0 +++ a1) .- bij2 -..
+           (b0 +++ b1)
+    bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ) -- $
+  \end{diagram}
+  \caption{Ping-ponging}
+  \label{fig:GCBP}
+\end{figure}
 
 \todo{Things to write about: explain GCBP. Write Haskell code for
   computing a single direction.  Then develop small library for
