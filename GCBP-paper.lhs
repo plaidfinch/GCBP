@@ -254,7 +254,7 @@ Starting with an arbitrary element of $A_0$, our goal is to find an
 element of $B_0$ to match it with.  First, run it through
 $f : A_0 + A_1 \bij B_0 + B_1$.  If we land in $B_0$, we are done.
 Otherwise, we end up with an element of $B_1$.  Run it through
-$f_1 : B_0 \bij B_1$ \emph{backwards}, yielding an element of $B_0$.
+$f_1 : A_1 \bij B_1$ \emph{backwards}, yielding an element of $A_1$.
 Now run $f$ again, and so on.  Keep iterating this process until
 finally landing in $B_0$; we match the original element of $A_0$ to
 the element of $B_0$ so obtained.  \pref{fig:GCBP} illustrates this
