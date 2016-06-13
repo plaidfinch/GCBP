@@ -196,10 +196,14 @@ type (+) = Either
 We can see that $(f + g)$ is a bijection as long as $f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
-\emph{difference}?  That is, given
-\[ f : A_0 + A_1 \bij B_0 + B_1 \] and
-\[ f_1 : A_1 \bij B_1, \] can we compute some
-\[ f_0 : A_0 \bij B_0? \]
+\emph{difference}?  That is, given bijections $f$ and $f_1$ with
+\begin{align*}
+  f   &: A_0 + A_1 \bij B_0 +B_1  \\
+  f_1 &: \makebox[\widthof{$A_0+A_1$}][r]{$A_1$}
+         \bij
+         \makebox[\widthof{$B_0+B_1$}][r]{$B_1$},
+\end{align*} can we compute some
+\[ f_0 : \makebox[\widthof{$A_0+A_1$}][l]{$A_0$} \bij \makebox[\widthof{$B_0+B_1$}][l]{$B_0$}? \]
 This comes up in combinatorics, when \todo{finish}.  \todo{Also definition of
 virtual species, XXX other places.}
 
