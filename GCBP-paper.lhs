@@ -297,17 +297,17 @@ with $f_1$ being the identity bijection between them, but it still
 serves to illustrate the basic idea.
 \begin{figure}[htp]
   \centering
-  \begin{code}
-pingpong :: (a + c -> b + c) -> (a -> b)
+\begin{code}
+pingpong :: (a0 + c -> b0 + c) -> (a0 -> b0)
 pingpong bij a = case bij (Left a) of
   Left b   -> b
-  Right c  -> fixEither (iso . Right) c
+  Right c  -> fixEither (bij . Right) c
 
-fixEither :: (a -> b + a) -> (a -> b)
-fixEither f a0 = case f a0 of
+fixEither :: (c -> a0 + c) -> (c -> a0)
+fixEither f a = case f a of
   Left b   -> b
-  Right a  -> fixEither f a
-  \end{code}
+  Right a' -> fixEither f a'
+\end{code}
   \caption{Ping-ponging in Haskell}
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
