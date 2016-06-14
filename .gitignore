@@ -20,10 +20,12 @@ cabal.sandbox.config
 *.pdf
 *.ptb
 
+*.agdai
+*~
+
 .diagrams_cache/
 diagrams/
 
 GCBP-paper.tex
 Test
 Test.png
-
