@@ -196,10 +196,14 @@ type (+) = Either
 We can see that $(f + g)$ is a bijection as long as $f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
-\emph{difference}?  That is, given
-\[ f : A_0 + A_1 \bij B_0 + B_1 \] and
-\[ f_1 : A_1 \bij B_1, \] can we compute some
-\[ f_0 : A_0 \bij B_0? \]
+\emph{difference}?  That is, given bijections $f$ and $f_1$ with
+\begin{align*}
+  f   &: A_0 + A_1 \bij B_0 +B_1  \\
+  f_1 &: \makebox[\widthof{$A_0+A_1$}][r]{$A_1$}
+         \bij
+         \makebox[\widthof{$B_0+B_1$}][r]{$B_1$},
+\end{align*} can we compute some
+\[ f_0 : \makebox[\widthof{$A_0+A_1$}][l]{$A_0$} \bij \makebox[\widthof{$B_0+B_1$}][l]{$B_0$}? \]
 This comes up in combinatorics, when \todo{finish}.  \todo{Also definition of
 virtual species, XXX other places.}
 
@@ -250,7 +254,7 @@ Starting with an arbitrary element of $A_0$, our goal is to find an
 element of $B_0$ to match it with.  First, run it through
 $f : A_0 + A_1 \bij B_0 + B_1$.  If we land in $B_0$, we are done.
 Otherwise, we end up with an element of $B_1$.  Run it through
-$f_1 : B_0 \bij B_1$ \emph{backwards}, yielding an element of $B_0$.
+$f_1 : A_1 \bij B_1$ \emph{backwards}, yielding an element of $A_1$.
 Now run $f$ again, and so on.  Keep iterating this process until
 finally landing in $B_0$; we match the original element of $A_0$ to
 the element of $B_0$ so obtained.  \pref{fig:GCBP} illustrates this
@@ -293,17 +297,17 @@ with $f_1$ being the identity bijection between them, but it still
 serves to illustrate the basic idea.
 \begin{figure}[htp]
   \centering
-  \begin{code}
-pingpong :: (a + c -> b + c) -> (a -> b)
+\begin{code}
+pingpong :: (a0 + c -> b0 + c) -> (a0 -> b0)
 pingpong bij a = case bij (Left a) of
   Left b   -> b
-  Right c  -> fixEither (iso . Right) c
+  Right c  -> fixEither (bij . Right) c
 
-fixEither :: (a -> b + a) -> (a -> b)
-fixEither f a0 = case f a0 of
+fixEither :: (c -> a0 + c) -> (c -> a0)
+fixEither f a = case f a of
   Left b   -> b
-  Right a  -> fixEither f a
-  \end{code}
+  Right a' -> fixEither f a'
+\end{code}
   \caption{Ping-ponging in Haskell}
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
