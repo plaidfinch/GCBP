@@ -113,7 +113,10 @@ infix 4 _⊑_
 
 ⊑-mono-right : {A B C : Set} (f g : A ⇀ B) (h : B ⇀ C)
   → f ⊑ g → h • f ⊑ h • g
-⊑-mono-right f g h f⊑g a = {!!}
+⊑-mono-right f g h f⊑g a with f a | g a | f⊑g a
+... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl (h y)
+... | just _  | nothing | ()
+... | nothing | _       | _               = tt
 
 ----------------------------------------------------------------------
 -- Partial bijections
