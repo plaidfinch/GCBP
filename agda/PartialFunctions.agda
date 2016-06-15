@@ -2,10 +2,11 @@ module PartialFunctions where
 
 open import Level renaming (zero to lzero)
 
-open import Function using (const)
+open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 
 open import Data.Empty
 open import Data.Unit
+open import Data.Sum
 
 open import Data.Maybe
 open import Category.Monad
@@ -69,6 +70,17 @@ infixr 9 _•_
 
 •-right-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → f • id ≡ f
 •-right-id {ℓ} f = funext ℓ ℓ (λ _ → refl)
+
+∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} (f : A ⇀ B) → ∅ • f ≡ (∅ {B = C})
+∅-left-zero {ℓ} f = funext ℓ ℓ ∅-left-zero-pt
+  where
+    ∅-left-zero-pt : ∀ a → (∅ • f) a ≡ ∅ a
+    ∅-left-zero-pt a with f a
+    ... | nothing = refl
+    ... | just _  = refl
+
+∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) → f • ∅ ≡ (∅ {A = A})
+∅-right-zero {ℓ} f = funext ℓ ℓ (λ _ → refl)
 
 ----------------------------------------------------------------------
 -- Definedness partial order for partial functions
