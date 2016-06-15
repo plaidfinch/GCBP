@@ -16,10 +16,24 @@ open import Category.Monad
 open import Relation.Binary.PropositionalEquality
 open import Relation.Binary.Core
 
+----------------------------------------------------------------------
+
+-- Assume function extensionality, just to get nicer proofs.  We won't
+-- need the computational content of the proofs.
+postulate
+  funext : (a b : Level) → Extensionality a b
+
+----------------------------------------------------------------------
+-- Partial functions
+----------------------------------------------------------------------
+
 _⇀_ : ∀ {ℓ} → Set ℓ → Set ℓ → Set ℓ
 A ⇀ B = A → Maybe B
 
--- Is associativity of _<=<_ recorded anywhere?
+-- Identity and composition for partial functions.
+id : ∀ {ℓ} {A : Set ℓ} → (A ⇀ A)
+id = just
+
 _•_ : ∀ {ℓ} {A B C : Set ℓ} → (B ⇀ C) → (A ⇀ B) → (A ⇀ C)
 _•_ = _<=<_
   where
@@ -27,10 +41,7 @@ _•_ = _<=<_
 
 infixr 9 _•_
 
--- Assume function extensionality, just to get nicer proofs.  We won't
--- need the computational content of the proofs.
-postulate
-  funext : (a b : Level) → Extensionality a b
+-- Partial functions form a category.
 
 •-assoc-pt : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B) (a : A)
         → ((f • g) • h) a ≡ (f • (g • h)) a
@@ -44,9 +55,6 @@ postulate
         → (f • g) • h ≡ f • (g • h)
 •-assoc {ℓ} f g h = funext ℓ ℓ (•-assoc-pt f g h)
 
-id : ∀ {ℓ} {A : Set ℓ} → (A ⇀ A)
-id = just
-
 •-left-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → id • f ≡ f
 •-left-id {ℓ} {A} f = funext ℓ ℓ •-left-id-pt
   where
@@ -58,10 +66,18 @@ id = just
 •-right-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → f • id ≡ f
 •-right-id {ℓ} f = funext ℓ ℓ (λ _ → refl)
 
+----------------------------------------------------------------------
+-- Definedness partial order for partial functions
+----------------------------------------------------------------------
+
+-- Definedness partial order for Maybe
+
 _⊑M_ : {B : Set} → Rel (Maybe B) lzero
 just a ⊑M just b  = a ≡ b
 just x ⊑M nothing = ⊥
 nothing ⊑M b      = ⊤
+
+infix 4 _⊑M_
 
 ⊑M-refl : {B : Set} (b : Maybe B) → b ⊑M b
 ⊑M-refl nothing  = tt
@@ -72,16 +88,22 @@ nothing ⊑M b      = ⊤
 ⊑M-trans (just x) nothing z () y⊑z
 ⊑M-trans nothing y z x⊑y y⊑z = tt
 
+-- Order for partial functions is just pointwise lifting of order on Maybe
+
 _⊑_ : {A B : Set} → Rel (A ⇀ B) lzero
 f ⊑ g = ∀ a → f a ⊑M g a
 
 infix 4 _⊑_
+
+-- ⊑ is reflexive & transitive
 
 ⊑-refl : {A B : Set} (f : A ⇀ B) → f ⊑ f
 ⊑-refl f = λ a → ⊑M-refl (f a)
 
 ⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h → f ⊑ h
 ⊑-trans f g h f⊑g g⊑h = λ a → ⊑M-trans (f a) (g a) (h a) (f⊑g a) (g⊑h a)
+
+-- ...and also monotonic wrt. composition
 
 ⊑-mono-left : {A B C : Set} (f g : B ⇀ C) (h : A ⇀ B)
   → f ⊑ g → f • h ⊑ g • h
@@ -93,7 +115,9 @@ infix 4 _⊑_
   → f ⊑ g → h • f ⊑ h • g
 ⊑-mono-right f g h f⊑g a = {!!}
 
-------------------------------------------------------------
+----------------------------------------------------------------------
+-- Partial bijections
+----------------------------------------------------------------------
 
 record _⇌_ (A B : Set) : Set where
   field
