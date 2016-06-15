@@ -158,37 +158,37 @@ f ⁻¹ = record
     module f = _⇌_ f
 
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
-_∘_ {A} {_} {C} g f = record
+_∘_ {A} {B} {C} g f = record
   { fwd = g.fwd • f.fwd
   ; bwd = f.bwd • g.bwd
-  ; left-id  = ∘-left-id
-  ; right-id = ∘-right-id
+  ; left-id  = ∘-id f g
+  ; right-id = ∘-id (g ⁻¹) (f ⁻¹)
   }
   where
     module f = _⇌_ f
     module g = _⇌_ g
 
-    ∘-left-id : (f.bwd • g.bwd) • (g.fwd • f.fwd) ⊑ id
-    ∘-left-id = begin
-      ((f.bwd • g.bwd) • (g.fwd • f.fwd))
-                                              ≡⟨ sym (•-assoc (f.bwd • g.bwd) g.fwd f.fwd ) ⟩
-      ((f.bwd • g.bwd) • g.fwd) • f.fwd
-                                              ≡⟨ cong (λ h → h • f.fwd)
-                                                     (•-assoc f.bwd g.bwd g.fwd) ⟩
-      (f.bwd • (g.bwd • g.fwd)) • f.fwd
-                                              ⊑⟨ ⊑-mono-left _ _ f.fwd
-                                                ( ⊑-mono-right _ _ f.bwd
-                                                    g.left-id
+    ∘-id : {A B C : Set} → (h : A ⇌ B) → (k : B ⇌ C)
+         → (_⇌_.bwd h • _⇌_.bwd k) • (_⇌_.fwd k • _⇌_.fwd h) ⊑ id
+    ∘-id {A} h k = begin
+      ((h.bwd • k.bwd) • (k.fwd • h.fwd))
+                                              ≡⟨ sym (•-assoc (h.bwd • k.bwd) k.fwd h.fwd ) ⟩
+      ((h.bwd • k.bwd) • k.fwd) • h.fwd
+                                              ≡⟨ cong (λ h → h • h.fwd)
+                                                     (•-assoc h.bwd k.bwd k.fwd) ⟩
+      (h.bwd • (k.bwd • k.fwd)) • h.fwd
+                                              ⊑⟨ ⊑-mono-left _ _ h.fwd
+                                                ( ⊑-mono-right _ _ h.bwd
+                                                    k.left-id
                                                 )
                                               ⟩
-      (f.bwd • id) • f.fwd
-                                              ≡⟨ cong (λ h → h • f.fwd) (•-right-id _) ⟩
-      f.bwd • f.fwd
-                                              ⊑⟨ f.left-id ⟩
+      (h.bwd • id) • h.fwd
+                                              ≡⟨ cong (λ h → h • h.fwd) (•-right-id _) ⟩
+      h.bwd • h.fwd
+                                              ⊑⟨ h.left-id ⟩
       id ∎
 
       where
+        open module h = _⇌_ h
+        open module k = _⇌_ k
         open Pre (⊑-Preorder A A)
-
-    ∘-right-id : (g.fwd • f.fwd) • (f.bwd • g.bwd) ⊑ id
-    ∘-right-id = {!!}
