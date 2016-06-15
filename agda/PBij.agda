@@ -147,6 +147,16 @@ record _⇌_ (A B : Set) : Set where
     left-id  : bwd • fwd ⊑ id
     right-id : fwd • bwd ⊑ id
 
+_⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
+f ⁻¹ = record
+  { fwd      = f.bwd
+  ; bwd      = f.fwd
+  ; left-id  = f.right-id
+  ; right-id = f.left-id
+  }
+  where
+    module f = _⇌_ f
+
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
 _∘_ {A} {_} {C} g f = record
   { fwd = g.fwd • f.fwd
