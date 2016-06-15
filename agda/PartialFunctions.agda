@@ -13,14 +13,6 @@ open import Category.Monad
 
 open import Relation.Binary
 open import Relation.Binary.Core
-open import Relation.Binary.PropositionalEquality
-
-----------------------------------------------------------------------
-
--- Assume function extensionality, just to get nicer proofs.  We won't
--- need the computational content of the proofs.
-postulate
-  funext : (a b : Level) → Extensionality a b
 
 ----------------------------------------------------------------------
 -- Partial functions
@@ -31,9 +23,43 @@ A ⇀ B = A → Maybe B
 
 infix 1 _⇀_
 
+------------------------------------------------------------
+-- Equivalence of partial functions
+
+-- Equivalence of partial functions is defined pointwise.
+_≈_ : ∀ {ℓ} {A B : Set ℓ} → Rel (A ⇀ B) ℓ
+f ≈ g = ∀ a → f a ≡ g a
+
+infix 0 _≈_
+
+≈-refl : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f ≈ f
+≈-refl = λ _ → refl
+
+≈-sym : ∀ {ℓ} {A B : Set ℓ} {f g : A ⇀ B} → f ≈ g → g ≈ f
+≈-sym f≈g a rewrite f≈g a = refl
+
+≈-trans : ∀ {ℓ} {A B : Set ℓ} {f g h : A ⇀ B} → f ≈ g → g ≈ h → f ≈ h
+≈-trans f≈g g≈h a rewrite f≈g a | g≈h a = refl
+
+isEquivalence : ∀ {ℓ} {A B : Set ℓ} → IsEquivalence (_≈_ {ℓ} {A} {B})
+isEquivalence = record
+  { refl  = ≈-refl
+  ; sym   = ≈-sym
+  ; trans = ≈-trans
+  }
+
+-- ≈-cong : ∀ {ℓ} {A B C D : Set ℓ} (q : (A ⇀ B) → (C ⇀ D)) {f g} → f ≈ g → q f ≈ q g
+-- ≈-cong q f≈g a = {!!}
+
+------------------------------------------------------------
+-- Some special partial functions
+
 -- The totally undefined partial function.
 ∅ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B)
 ∅ = const nothing
+
+------------------------------------------------------------
+-- The category of partial functions
 
 -- Identity and composition for partial functions.
 id : ∀ {ℓ} {A : Set ℓ} → (A ⇀ A)
@@ -46,41 +72,29 @@ _•_ = _<=<_
 
 infixr 9 _•_
 
--- Partial functions form a category.
-
-•-assoc-pt : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B) (a : A)
-        → ((f • g) • h) a ≡ (f • (g • h)) a
-•-assoc-pt f g h a with h a
+•-assoc : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B)
+        → (f • g) • h ≈ f • (g • h)
+•-assoc _ g h a with h a
 ... | nothing = refl
 ... | just b  with g b
 ... | nothing = refl
 ... | just c  = refl
 
-•-assoc : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B)
-        → (f • g) • h ≡ f • (g • h)
-•-assoc {ℓ} f g h = funext ℓ ℓ (•-assoc-pt f g h)
+•-left-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → id • f ≈ f
+•-left-id f a with f a
+... | nothing = refl
+... | just _  = refl
 
-•-left-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → id • f ≡ f
-•-left-id {ℓ} {A} f = funext ℓ ℓ •-left-id-pt
-  where
-    •-left-id-pt : ∀ a → (id • f) a ≡ f a
-    •-left-id-pt a with f a
-    ... | nothing = refl
-    ... | just _  = refl
+•-right-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → f • id ≈ f
+•-right-id f _ = refl
 
-•-right-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → f • id ≡ f
-•-right-id {ℓ} f = funext ℓ ℓ (λ _ → refl)
+∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} (f : A ⇀ B) → ∅ • f ≈ (∅ {B = C})
+∅-left-zero f a with f a
+... | nothing = refl
+... | just _  = refl
 
-∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} (f : A ⇀ B) → ∅ • f ≡ (∅ {B = C})
-∅-left-zero {ℓ} f = funext ℓ ℓ ∅-left-zero-pt
-  where
-    ∅-left-zero-pt : ∀ a → (∅ • f) a ≡ ∅ a
-    ∅-left-zero-pt a with f a
-    ... | nothing = refl
-    ... | just _  = refl
-
-∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) → f • ∅ ≡ (∅ {A = A})
-∅-right-zero {ℓ} f = funext ℓ ℓ (λ _ → refl)
+∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) → f • ∅ ≈ (∅ {A = A})
+∅-right-zero f _ = refl
 
 ----------------------------------------------------------------------
 -- Definedness partial order for partial functions
@@ -95,9 +109,9 @@ nothing ⊑M b      = ⊤
 
 infix 4 _⊑M_
 
-⊑M-refl : {B : Set} (b : Maybe B) → b ⊑M b
-⊑M-refl nothing  = tt
-⊑M-refl (just _) = refl
+⊑M-refl : {B : Set} {b : Maybe B} → b ⊑M b
+⊑M-refl {b = nothing}  = tt
+⊑M-refl {b = just _ } = refl
 
 ⊑M-trans : {A : Set} (x y z : Maybe A) → x ⊑M y → y ⊑M z → x ⊑M z
 ⊑M-trans (just x) (just y) z x⊑y y⊑z rewrite x⊑y = y⊑z
@@ -113,8 +127,8 @@ infix 4 _⊑_
 
 -- ⊑ is reflexive & transitive
 
-⊑-refl : {A B : Set} (f : A ⇀ B) → f ⊑ f
-⊑-refl f = λ a → ⊑M-refl (f a)
+⊑-refl : {A B : Set} {f : A ⇀ B} → f ⊑ f
+⊑-refl = λ _ → ⊑M-refl
 
 ⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h → f ⊑ h
 ⊑-trans f g h f⊑g g⊑h = λ a → ⊑M-trans (f a) (g a) (h a) (f⊑g a) (g⊑h a)
@@ -122,17 +136,17 @@ infix 4 _⊑_
 ⊑-Preorder : Set → Set → Preorder lzero lzero lzero
 ⊑-Preorder A B = record
   { Carrier = A ⇀ B
-  ; _≈_ = _≡_
+  ; _≈_ = _≈_
   ; _∼_ = _⊑_
   ; isPreorder = record
     { isEquivalence = isEquivalence
-    ; reflexive = ⊑-reflexive
-    ; trans = λ {i} {j} {k} → ⊑-trans i j k
+    ; reflexive     = ⊑-reflexive
+    ; trans         = λ {i} {j} {k} → ⊑-trans i j k
     }
   }
   where
-    ⊑-reflexive : _≡_ ⇒ _⊑_
-    ⊑-reflexive {_} {j} i≡j rewrite i≡j = ⊑-refl j
+    ⊑-reflexive : _≈_ ⇒ _⊑_
+    ⊑-reflexive i≈j a rewrite (i≈j a) = ⊑M-refl
 
 -- ...and also monotonic wrt. composition
 
@@ -145,6 +159,6 @@ infix 4 _⊑_
 ⊑-mono-right : {A B C : Set} (f g : A ⇀ B) (h : B ⇀ C)
   → f ⊑ g → h • f ⊑ h • g
 ⊑-mono-right f g h f⊑g a with f a | g a | f⊑g a
-... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl (h y)
+... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl
 ... | just _  | nothing | ()
 ... | nothing | _       | _               = tt
