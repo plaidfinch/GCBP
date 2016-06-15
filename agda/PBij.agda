@@ -140,6 +140,11 @@ infix 4 _⊑_
 -- Partial bijections
 ----------------------------------------------------------------------
 
+-- A partial bijection is a pair of partial functions f and g between
+-- sets A and B such that both f∘g and g∘f are bounded above by the
+-- identity function.  That is, f∘g can be undefined on some values
+-- but it must be the identity for those values on which it is
+-- defined.
 record _⇌_ (A B : Set) : Set where
   field
     fwd      : A → Maybe B
@@ -147,6 +152,16 @@ record _⇌_ (A B : Set) : Set where
     left-id  : bwd • fwd ⊑ id
     right-id : fwd • bwd ⊑ id
 
+-- The totally undefined partial bijection.
+∅ : {A B : Set} → A ⇌ B
+∅ = record
+  { fwd      = const nothing
+  ; bwd      = const nothing
+  ; left-id  = const tt
+  ; right-id = const tt
+  }
+
+-- Inverting a partial bijection.
 _⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
 f ⁻¹ = record
   { fwd      = f.bwd
@@ -157,6 +172,7 @@ f ⁻¹ = record
   where
     module f = _⇌_ f
 
+-- Composing partial bijections.
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
 _∘_ {A} {B} {C} g f = record
   { fwd = g.fwd • f.fwd
