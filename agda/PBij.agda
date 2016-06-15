@@ -67,6 +67,11 @@ nothing ⊑M b      = ⊤
 ⊑M-refl nothing  = tt
 ⊑M-refl (just _) = refl
 
+⊑M-trans : {A : Set} (x y z : Maybe A) → x ⊑M y → y ⊑M z → x ⊑M z
+⊑M-trans (just x) (just y) z x⊑y y⊑z rewrite x⊑y = y⊑z
+⊑M-trans (just x) nothing z () y⊑z
+⊑M-trans nothing y z x⊑y y⊑z = tt
+
 _⊑_ : {A B : Set} → Rel (A ⇀ B) lzero
 f ⊑ g = ∀ a → f a ⊑M g a
 
@@ -75,8 +80,18 @@ infix 4 _⊑_
 ⊑-refl : {A B : Set} (f : A ⇀ B) → f ⊑ f
 ⊑-refl f = λ a → ⊑M-refl (f a)
 
-⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h
-⊑-trans f g h f⊑g = {!!}
+⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h → f ⊑ h
+⊑-trans f g h f⊑g g⊑h = λ a → ⊑M-trans (f a) (g a) (h a) (f⊑g a) (g⊑h a)
+
+⊑-mono-left : {A B C : Set} (f g : B ⇀ C) (h : A ⇀ B)
+  → f ⊑ g → f • h ⊑ g • h
+⊑-mono-left f g h f⊑g a with h a
+... | just b  = f⊑g b
+... | nothing = tt
+
+⊑-mono-right : {A B C : Set} (f g : A ⇀ B) (h : B ⇀ C)
+  → f ⊑ g → h • f ⊑ h • g
+⊑-mono-right f g h f⊑g a = {!!}
 
 ------------------------------------------------------------
 
