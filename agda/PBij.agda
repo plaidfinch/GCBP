@@ -13,8 +13,11 @@ open import Data.Sum
 open import Data.Maybe
 open import Category.Monad
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary
 open import Relation.Binary.Core
+open import Relation.Binary.PropositionalEquality
+import Relation.Binary.PreorderReasoning as Pre
+  renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ ; _≈⟨_⟩_ to _≡⟨_⟩_ ; _≈⟨⟩_ to _≡⟨⟩_ )
 
 ----------------------------------------------------------------------
 
@@ -103,6 +106,21 @@ infix 4 _⊑_
 ⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h → f ⊑ h
 ⊑-trans f g h f⊑g g⊑h = λ a → ⊑M-trans (f a) (g a) (h a) (f⊑g a) (g⊑h a)
 
+⊑-Preorder : Set → Set → Preorder lzero lzero lzero
+⊑-Preorder A B = record
+  { Carrier = A ⇀ B
+  ; _≈_ = _≡_
+  ; _∼_ = _⊑_
+  ; isPreorder = record
+    { isEquivalence = isEquivalence
+    ; reflexive = ⊑-reflexive
+    ; trans = λ {i} {j} {k} → ⊑-trans i j k
+    }
+  }
+  where
+    ⊑-reflexive : _≡_ ⇒ _⊑_
+    ⊑-reflexive {_} {j} i≡j rewrite i≡j = ⊑-refl j
+
 -- ...and also monotonic wrt. composition
 
 ⊑-mono-left : {A B C : Set} (f g : B ⇀ C) (h : A ⇀ B)
@@ -130,7 +148,7 @@ record _⇌_ (A B : Set) : Set where
     right-id : fwd • bwd ⊑ id
 
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
-g ∘ f = record
+_∘_ {A} {_} {C} g f = record
   { fwd = g.fwd • f.fwd
   ; bwd = f.bwd • g.bwd
   ; left-id  = ∘-left-id
@@ -141,21 +159,26 @@ g ∘ f = record
     module g = _⇌_ g
 
     ∘-left-id : (f.bwd • g.bwd) • (g.fwd • f.fwd) ⊑ id
-    ∘-left-id = {!!}
+    ∘-left-id = begin
+      ((f.bwd • g.bwd) • (g.fwd • f.fwd))
+                                              ≡⟨ sym (•-assoc (f.bwd • g.bwd) g.fwd f.fwd ) ⟩
+      ((f.bwd • g.bwd) • g.fwd) • f.fwd
+                                              ≡⟨ cong (λ h → h • f.fwd)
+                                                     (•-assoc f.bwd g.bwd g.fwd) ⟩
+      (f.bwd • (g.bwd • g.fwd)) • f.fwd
+                                              ⊑⟨ ⊑-mono-left _ _ f.fwd
+                                                ( ⊑-mono-right _ _ f.bwd
+                                                    g.left-id
+                                                )
+                                              ⟩
+      (f.bwd • id) • f.fwd
+                                              ≡⟨ cong (λ h → h • f.fwd) (•-right-id _) ⟩
+      f.bwd • f.fwd
+                                              ⊑⟨ f.left-id ⟩
+      id ∎
 
-      {-
-           (f.bwd • g.bwd) • (g.fwd • f.fwd)
-         ≡ { •-assoc }
-           ((f.bwd • g.bwd) • g.fwd) • f.fwd
-         ≡ { •-assoc }
-           (f.bwd • (g.bwd • g.fwd)) • f.fwd
-         ⊑ { g.left-id , monotonicity }
-           (f.bwd • id) • f.fwd
-         ≡ { id is right identity }
-           f.bwd • f.fwd
-         ⊑
-           id
-      -}
+      where
+        open Pre (⊑-Preorder A A)
 
     ∘-right-id : (g.fwd • f.fwd) • (f.bwd • g.bwd) ⊑ id
     ∘-right-id = {!!}
