@@ -162,3 +162,10 @@ f + g = record
     +-left-id f g (inj₂ a₁) | just b₁ | q with bwd g b₁
     +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
     +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = refl
+
+∘-abides-+ :
+  {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
+  (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
+  → (f ∘ g) + (h ∘ k) ≡ (f + h) ∘ (g + k)
+∘-abides-+ f g h k =
+  ⇌-≡ {!!} {!!}
