@@ -138,11 +138,11 @@ _∘_ {A} {B} {C} g f = record
   where
     open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = D} {B = A})
 
--- ∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≡ f
--- ∘-left-id f = ⇌-≡ (•-left-id (fwd f)) refl
+∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≋ f
+∘-left-id f = •-left-id (fwd f) , (λ _ → PropEq.refl)
 
--- ∘-right-id : {A B : Set} (f : A ⇌ B) → f ∘ id ≡ f
--- ∘-right-id f = ⇌-≡ refl (•-left-id (bwd f))
+∘-right-id : {A B : Set} (f : A ⇌ B) → f ∘ id ≋ f
+∘-right-id f = (λ _ → PropEq.refl) , •-left-id (bwd f)
 
 ----------------------------------------------------------------------
 -- Sums
