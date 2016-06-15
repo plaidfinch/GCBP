@@ -28,6 +28,8 @@ postulate
 _⇀_ : ∀ {ℓ} → Set ℓ → Set ℓ → Set ℓ
 A ⇀ B = A → Maybe B
 
+infix 1 _⇀_
+
 -- The totally undefined partial function.
 ∅ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B)
 ∅ = const nothing

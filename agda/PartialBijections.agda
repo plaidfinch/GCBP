@@ -2,9 +2,9 @@
 
 module PartialBijections where
 
-open import Function using (const) renaming (_∘_ to _∘f_)
+open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 open import Data.Unit
-open import Data.Sum
+open import Data.Sum as Sum
 open import Data.Maybe as Maybe
 
 open import Relation.Binary.PropositionalEquality
@@ -139,11 +139,26 @@ inr = record
   ; right-id = [ const tt , (λ _ → refl) ]
   }
 
+pullMaybe : {A B : Set} → Maybe A ⊎ Maybe B ⇀ A ⊎ B
+pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
+
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
 f + g = record
-  { fwd      = [ (λ a₀ → Maybe.map inj₁ (fwd f a₀)) , (λ a₁ → Maybe.map inj₂ (fwd g a₁)) ]
-  ; bwd      = [ (λ b₀ → Maybe.map inj₁ (bwd f b₀)) , (λ b₁ → Maybe.map inj₂ (bwd g b₁)) ]
-  ; left-id  = {!!}
-  ; right-id = {!!}
+  { fwd      = pullMaybe ∘ᶠ Sum.map (fwd f) (fwd g)
+  ; bwd      = pullMaybe ∘ᶠ Sum.map (bwd f) (bwd g)
+  ; left-id  = +-left-id f g
+  ; right-id = +-left-id (f ⁻¹) (g ⁻¹)
   }
-
+  where
+    .+-left-id : {A₀ B₀ A₁ B₁ : Set} → (f : A₀ ⇌ B₀) → (g : A₁ ⇌ B₁)
+      → (pullMaybe ∘ᶠ Sum.map (bwd f) (bwd g)) • (pullMaybe ∘ᶠ Sum.map (fwd f) (fwd g)) ⊑ PFun.id
+    +-left-id f g (inj₁ a₀) with fwd f a₀ | left-id f a₀
+    +-left-id f g (inj₁ a₀) | nothing | _ = tt
+    +-left-id f g (inj₁ a₀) | just b₀ | _ with bwd f b₀
+    +-left-id f g (inj₁ a₀) | just b₀ | _ | nothing = tt
+    +-left-id f g (inj₁ a₀) | just b₀ | a₀'≡a₀ | just a₀' rewrite a₀'≡a₀ = refl
+    +-left-id f g (inj₂ a₁) with fwd g a₁ | left-id g a₁
+    +-left-id f g (inj₂ a₁) | nothing | _ = tt
+    +-left-id f g (inj₂ a₁) | just b₁ | q with bwd g b₁
+    +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
+    +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = refl
