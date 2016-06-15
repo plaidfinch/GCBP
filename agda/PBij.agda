@@ -76,7 +76,7 @@ infix 4 _⊑_
 ⊑-refl f = λ a → ⊑M-refl (f a)
 
 ⊑-trans : {A B : Set} (f g h : A ⇀ B) → f ⊑ g → g ⊑ h
-⊑-trans f g h f⊑g
+⊑-trans f g h f⊑g = {!!}
 
 ------------------------------------------------------------
 
