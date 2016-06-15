@@ -7,11 +7,12 @@ open import Data.Unit
 open import Data.Sum as Sum
 open import Data.Maybe as Maybe
 
-open import Relation.Binary.PropositionalEquality
+open import Relation.Binary.Core using (module IsEquivalence)
+import Relation.Binary.Core as PropEq
 import Relation.Binary.PreorderReasoning as Pre
-  renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ ; _≈⟨_⟩_ to _≡⟨_⟩_ ; _≈⟨⟩_ to _≡⟨⟩_ )
+  renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
 
-open import PartialFunctions hiding (∅ ; id)
+open import PartialFunctions hiding (∅ ; id ; inl ; inr)
 import PartialFunctions as PFun
 
 ----------------------------------------------------------------------
@@ -49,8 +50,8 @@ id : {A : Set} → A ⇌ A
 id = record
   { fwd      = PFun.id
   ; bwd      = PFun.id
-  ; left-id  = λ _ → refl
-  ; right-id = λ _ → refl
+  ; left-id  = λ _ → PropEq.refl
+  ; right-id = λ _ → PropEq.refl
   }
 
 -- Inverting a partial bijection.
@@ -63,6 +64,11 @@ f ⁻¹ = record
   }
   where
     module f = _⇌_ f
+
+≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f • h ≈ g • h
+≈-cong-left h f≈g a with h a
+≈-cong-left h f≈g a | nothing = PropEq.refl
+≈-cong-left h f≈g a | just b  = f≈g b
 
 -- Composing partial bijections.
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
@@ -80,10 +86,10 @@ _∘_ {A} {B} {C} g f = record
          → (_⇌_.bwd h • _⇌_.bwd k) • (_⇌_.fwd k • _⇌_.fwd h) ⊑ PFun.id
     ∘-id {A} h k = begin
       ((h.bwd • k.bwd) • (k.fwd • h.fwd))
-                                              ≡⟨ sym (•-assoc (h.bwd • k.bwd) k.fwd h.fwd ) ⟩
+                                              ≈⟨ sym (•-assoc (h.bwd • k.bwd) k.fwd h.fwd ) ⟩
       ((h.bwd • k.bwd) • k.fwd) • h.fwd
-                                              ≡⟨ cong (λ h → h • h.fwd)
-                                                     (•-assoc h.bwd k.bwd k.fwd) ⟩
+                                              ≈⟨ ≈-cong-left h.fwd
+                                                  (•-assoc h.bwd k.bwd k.fwd) ⟩
       (h.bwd • (k.bwd • k.fwd)) • h.fwd
                                               ⊑⟨ ⊑-mono-left _ _ h.fwd
                                                 ( ⊑-mono-right _ _ h.bwd
@@ -91,7 +97,7 @@ _∘_ {A} {B} {C} g f = record
                                                 )
                                               ⟩
       (h.bwd • PFun.id) • h.fwd
-                                              ≡⟨ cong (λ h → h • h.fwd) (•-right-id _) ⟩
+                                              ≈⟨ ≈-cong-left h.fwd (•-right-id _) ⟩
       h.bwd • h.fwd
                                               ⊑⟨ h.left-id ⟩
       PFun.id ∎
@@ -100,24 +106,26 @@ _∘_ {A} {B} {C} g f = record
         open module h = _⇌_ h
         open module k = _⇌_ k
         open Pre (⊑-Preorder A A)
+        open module PFEquiv = IsEquivalence (isEquivalence {A = A} {B = A})
+
 
 -- To prove two partial bijections equal, it suffices to respectively
 -- prove their forward and backward directions equal
-⇌-≡ : {A B : Set} {f g : A ⇌ B} → fwd f ≡ fwd g → bwd f ≡ bwd g → f ≡ g
-⇌-≡ {f = PBij fwdf bwdf _ _} {g = PBij fwdg bwdg _ _} fwd≡ bwd≡ rewrite fwd≡ | bwd≡ = refl
+-- ⇌-≈ : {A B : Set} {f g : A ⇌ B} → fwd f ≈ fwd g → bwd f ≈ bwd g → f ≈ g
+-- ⇌-≈ {f = PBij fwdf bwdf _ _} {g = PBij fwdg bwdg _ _} fwd≡ bwd≡ rewrite fwd≡ | bwd≡ = refl
 
--- Partial bijections form a category.
-∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
-  → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
-∘-assoc f g h =
-  ⇌-≡ (     •-assoc (fwd f) (fwd g) (fwd h) )
-      (sym (•-assoc (bwd h) (bwd g) (bwd f)))
+-- -- Partial bijections form a category.
+-- ∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
+--   → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
+-- ∘-assoc f g h =
+--   ⇌-≡ (     •-assoc (fwd f) (fwd g) (fwd h) )
+--       (sym (•-assoc (bwd h) (bwd g) (bwd f)))
 
-∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≡ f
-∘-left-id f = ⇌-≡ (•-left-id (fwd f)) refl
+-- ∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≡ f
+-- ∘-left-id f = ⇌-≡ (•-left-id (fwd f)) refl
 
-∘-right-id : {A B : Set} (f : A ⇌ B) → f ∘ id ≡ f
-∘-right-id f = ⇌-≡ refl (•-left-id (bwd f))
+-- ∘-right-id : {A B : Set} (f : A ⇌ B) → f ∘ id ≡ f
+-- ∘-right-id f = ⇌-≡ refl (•-left-id (bwd f))
 
 ----------------------------------------------------------------------
 -- Sums
@@ -127,16 +135,16 @@ inl : {A B : Set} → (A ⇌ A ⊎ B)
 inl = record
   { fwd      = λ a → just (inj₁ a)
   ; bwd      = [ just , const nothing ]
-  ; left-id  = λ _ → refl
-  ; right-id = [ (λ _ → refl) , const tt ]
+  ; left-id  = λ _ → PropEq.refl
+  ; right-id = [ (λ _ → PropEq.refl) , const tt ]
   }
 
 inr : {A B : Set} → (B ⇌ A ⊎ B)
 inr = record
   { fwd      = λ b → just (inj₂ b)
   ; bwd      = [ const nothing , just ]
-  ; left-id  = λ _ → refl
-  ; right-id = [ const tt , (λ _ → refl) ]
+  ; left-id  = λ _ → PropEq.refl
+  ; right-id = [ const tt , (λ _ → PropEq.refl) ]
   }
 
 pullMaybe : {A B : Set} → Maybe A ⊎ Maybe B ⇀ A ⊎ B
@@ -156,16 +164,16 @@ f + g = record
     +-left-id f g (inj₁ a₀) | nothing | _ = tt
     +-left-id f g (inj₁ a₀) | just b₀ | _ with bwd f b₀
     +-left-id f g (inj₁ a₀) | just b₀ | _ | nothing = tt
-    +-left-id f g (inj₁ a₀) | just b₀ | a₀'≡a₀ | just a₀' rewrite a₀'≡a₀ = refl
+    +-left-id f g (inj₁ a₀) | just b₀ | a₀'≡a₀ | just a₀' rewrite a₀'≡a₀ = PropEq.refl
     +-left-id f g (inj₂ a₁) with fwd g a₁ | left-id g a₁
     +-left-id f g (inj₂ a₁) | nothing | _ = tt
     +-left-id f g (inj₂ a₁) | just b₁ | q with bwd g b₁
     +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
-    +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = refl
+    +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = PropEq.refl
 
-∘-abides-+ :
-  {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
-  (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
-  → (f ∘ g) + (h ∘ k) ≡ (f + h) ∘ (g + k)
-∘-abides-+ f g h k =
-  ⇌-≡ {!!} {!!}
+-- ∘-abides-+ :
+--   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
+--   (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
+--   → (f ∘ g) + (h ∘ k) ≡ (f + h) ∘ (g + k)
+-- ∘-abides-+ f g h k =
+--   ⇌-≡ {!!} {!!}
