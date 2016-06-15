@@ -2,17 +2,21 @@
 
 module PartialBijections where
 
+open import Level renaming (zero to lzero)
+
 open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 open import Data.Unit
 open import Data.Sum as Sum
+open import Data.Product as Prod
 open import Data.Maybe as Maybe
 
+open import Relation.Binary
 open import Relation.Binary.Core using (module IsEquivalence)
 import Relation.Binary.Core as PropEq
 import Relation.Binary.PreorderReasoning as Pre
   renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
 
-open import PartialFunctions hiding (∅ ; id ; inl ; inr)
+open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence)
 import PartialFunctions as PFun
 
 ----------------------------------------------------------------------
@@ -36,6 +40,26 @@ infix 1 _⇌_
 
 open _⇌_
 
+----------------------------------------------------------------------
+-- Equivalence of partial bijections
+----------------------------------------------------------------------
+
+_≋_ : {A B : Set} → Rel (A ⇌ B) lzero
+f ≋ g = (fwd f ≈ fwd g) × (bwd f ≈ bwd g)
+
+infix 0 _≋_
+
+isEquivalence : ∀ {A B : Set} → IsEquivalence (_≋_ {A} {B})
+isEquivalence = record
+  { refl  = ≈-refl , ≈-refl
+  ; sym   = Prod.map ≈-sym ≈-sym
+  ; trans = Prod.zip ≈-trans ≈-trans
+  }
+
+----------------------------------------------------------------------
+-- Special partial bijections
+----------------------------------------------------------------------
+
 -- The totally undefined partial bijection.
 ∅ : {A B : Set} → A ⇌ B
 ∅ = record
@@ -44,6 +68,10 @@ open _⇌_
   ; left-id  = const tt
   ; right-id = const tt
   }
+
+----------------------------------------------------------------------
+-- The category of partial bijections
+----------------------------------------------------------------------
 
 -- The identity partial bijection.
 id : {A : Set} → A ⇌ A
@@ -64,11 +92,6 @@ f ⁻¹ = record
   }
   where
     module f = _⇌_ f
-
-≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f • h ≈ g • h
-≈-cong-left h f≈g a with h a
-≈-cong-left h f≈g a | nothing = PropEq.refl
-≈-cong-left h f≈g a | just b  = f≈g b
 
 -- Composing partial bijections.
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
@@ -106,20 +129,14 @@ _∘_ {A} {B} {C} g f = record
         open module h = _⇌_ h
         open module k = _⇌_ k
         open Pre (⊑-Preorder A A)
-        open module PFEquiv = IsEquivalence (isEquivalence {A = A} {B = A})
+        open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
 
-
--- To prove two partial bijections equal, it suffices to respectively
--- prove their forward and backward directions equal
--- ⇌-≈ : {A B : Set} {f g : A ⇌ B} → fwd f ≈ fwd g → bwd f ≈ bwd g → f ≈ g
--- ⇌-≈ {f = PBij fwdf bwdf _ _} {g = PBij fwdg bwdg _ _} fwd≡ bwd≡ rewrite fwd≡ | bwd≡ = refl
-
--- -- Partial bijections form a category.
--- ∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
---   → (f ∘ g) ∘ h ≡ f ∘ (g ∘ h)
--- ∘-assoc f g h =
---   ⇌-≡ (     •-assoc (fwd f) (fwd g) (fwd h) )
---       (sym (•-assoc (bwd h) (bwd g) (bwd f)))
+∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
+  → (f ∘ g) ∘ h ≋ f ∘ (g ∘ h)
+∘-assoc {A = A} {D = D} f g h =
+  •-assoc (fwd f) (fwd g) (fwd h) , sym (•-assoc (bwd h) (bwd g) (bwd f))
+  where
+    open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = D} {B = A})
 
 -- ∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≡ f
 -- ∘-left-id f = ⇌-≡ (•-left-id (fwd f)) refl

@@ -48,8 +48,7 @@ isEquivalence = record
   ; trans = ≈-trans
   }
 
--- ≈-cong : ∀ {ℓ} {A B C D : Set ℓ} (q : (A ⇀ B) → (C ⇀ D)) {f g} → f ≈ g → q f ≈ q g
--- ≈-cong q f≈g a = {!!}
+-- for congruence, see ≈-cong-left below
 
 ------------------------------------------------------------
 -- Some special partial functions
@@ -95,6 +94,13 @@ infixr 9 _•_
 
 ∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) → f • ∅ ≈ (∅ {A = A})
 ∅-right-zero f _ = refl
+
+-- The following limited congruence principle has been enough so far.
+
+≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f • h ≈ g • h
+≈-cong-left h f≈g a with h a
+≈-cong-left h f≈g a | nothing = refl
+≈-cong-left h f≈g a | just b  = f≈g b
 
 ----------------------------------------------------------------------
 -- Definedness partial order for partial functions
