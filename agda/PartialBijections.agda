@@ -17,6 +17,7 @@ import Relation.Binary.PreorderReasoning as Pre
   renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
 
 open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence)
+                             renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
 
 ----------------------------------------------------------------------
@@ -120,7 +121,7 @@ _∘_ {A} {B} {C} g f = record
                                                 )
                                               ⟩
       (h.bwd • PFun.id) • h.fwd
-                                              ≈⟨ ≈-cong-left h.fwd (•-right-id _) ⟩
+                                              ≈⟨ ≈-cong-left h.fwd •-right-id ⟩
       h.bwd • h.fwd
                                               ⊑⟨ h.left-id ⟩
       PFun.id ∎
@@ -138,11 +139,11 @@ _∘_ {A} {B} {C} g f = record
   where
     open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = D} {B = A})
 
-∘-left-id : {A B : Set} (f : A ⇌ B) → id ∘ f ≋ f
-∘-left-id f = •-left-id (fwd f) , (λ _ → PropEq.refl)
+∘-left-id : {A B : Set} {f : A ⇌ B} → id ∘ f ≋ f
+∘-left-id = •-left-id , (λ _ → PropEq.refl)
 
-∘-right-id : {A B : Set} (f : A ⇌ B) → f ∘ id ≋ f
-∘-right-id f = (λ _ → PropEq.refl) , •-left-id (bwd f)
+∘-right-id : {A B : Set} {f : A ⇌ B} → f ∘ id ≋ f
+∘-right-id = (λ _ → PropEq.refl) , •-left-id
 
 ∘⁻¹ : {A B C : Set} {f : B ⇌ C} {g : A ⇌ B} → (f ∘ g) ⁻¹ ≋ (g ⁻¹ ∘ f ⁻¹)
 ∘⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
@@ -167,19 +168,16 @@ inr = record
   ; right-id = [ const tt , (λ _ → PropEq.refl) ]
   }
 
-pullMaybe : {A B : Set} → Maybe A ⊎ Maybe B ⇀ A ⊎ B
-pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
-
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
 f + g = record
-  { fwd      = pullMaybe ∘ᶠ Sum.map (fwd f) (fwd g)
-  ; bwd      = pullMaybe ∘ᶠ Sum.map (bwd f) (bwd g)
+  { fwd      = fwd f ⇀+ fwd g
+  ; bwd      = bwd f ⇀+ bwd g
   ; left-id  = +-left-id f g
   ; right-id = +-left-id (f ⁻¹) (g ⁻¹)
   }
   where
     .+-left-id : {A₀ B₀ A₁ B₁ : Set} → (f : A₀ ⇌ B₀) → (g : A₁ ⇌ B₁)
-      → (pullMaybe ∘ᶠ Sum.map (bwd f) (bwd g)) • (pullMaybe ∘ᶠ Sum.map (fwd f) (fwd g)) ⊑ PFun.id
+      → (bwd f ⇀+ bwd g) • (fwd f ⇀+ fwd g) ⊑ PFun.id
     +-left-id f g (inj₁ a₀) with fwd f a₀ | left-id f a₀
     +-left-id f g (inj₁ a₀) | nothing | _ = tt
     +-left-id f g (inj₁ a₀) | just b₀ | _ with bwd f b₀
@@ -193,30 +191,10 @@ f + g = record
 
 ∘-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
-  (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
+  {f : B₀ ⇌ C₀} {g : A₀ ⇌ B₀} {h : B₁ ⇌ C₁} {k : A₁ ⇌ B₁}
   → (f ∘ g) + (h ∘ k) ≋ (f + h) ∘ (g + k)
-∘-abides-+ f g h k = abidesL , abidesR
-  where
-    abidesL : fwd ((f ∘ g) + (h ∘ k)) ≈ fwd ((f + h) ∘ (g + k))
-    abidesL (inj₁ a₀) with fwd g a₀
-    abidesL (inj₁ _ ) | nothing = PropEq.refl
-    abidesL (inj₁ _ ) | just b₀ with fwd f b₀
-    abidesL (inj₁ _ ) | just _ | nothing = PropEq.refl
-    abidesL (inj₁ _ ) | just _ | just _  = PropEq.refl
-    abidesL (inj₂ a₁) with fwd k a₁
-    abidesL (inj₂ _ ) | nothing = PropEq.refl
-    abidesL (inj₂ _ ) | just b₁ with fwd h b₁
-    abidesL (inj₂ _ ) | just _ | nothing = PropEq.refl
-    abidesL (inj₂ _ ) | just _ | just _  = PropEq.refl
+∘-abides-+ = •-abides-+ , •-abides-+
 
-    abidesR : bwd ((f ∘ g) + (h ∘ k)) ≈ bwd ((f + h) ∘ (g + k))
-    abidesR (inj₁ c₀) with bwd f c₀
-    abidesR (inj₁ _ ) | nothing = PropEq.refl
-    abidesR (inj₁ _ ) | just b₀ with bwd g b₀
-    abidesR (inj₁ _ ) | just _ | nothing = PropEq.refl
-    abidesR (inj₁ _ ) | just _ | just _  = PropEq.refl
-    abidesR (inj₂ c₁) with bwd h c₁
-    abidesR (inj₂ _ ) | nothing = PropEq.refl
-    abidesR (inj₂ _ ) | just b₁ with bwd k b₁
-    abidesR (inj₂ _ ) | just _ | nothing = PropEq.refl
-    abidesR (inj₂ _ ) | just _ | just _  = PropEq.refl
+-- +⁻¹ :
+--   {A₀ B₀ A₁ B₁ : Set}
+--   (f : A₀ ⇌ B₀) (g : A₁ ⇌ B₁

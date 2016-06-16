@@ -6,9 +6,10 @@ open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 
 open import Data.Empty
 open import Data.Unit
-open import Data.Sum
+open import Data.Sum as Sum
 
-open import Data.Maybe
+open import Data.Maybe as Maybe
+
 open import Category.Monad
 
 open import Relation.Binary
@@ -67,7 +68,7 @@ id = just
 _•_ : ∀ {ℓ} {A B C : Set ℓ} → (B ⇀ C) → (A ⇀ B) → (A ⇀ C)
 _•_ = _<=<_
   where
-    open RawMonad Data.Maybe.monad
+    open RawMonad Maybe.monad
 
 infixr 9 _•_
 
@@ -79,21 +80,21 @@ infixr 9 _•_
 ... | nothing = refl
 ... | just c  = refl
 
-•-left-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → id • f ≈ f
-•-left-id f a with f a
+•-left-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → id • f ≈ f
+•-left-id {f = f} a with f a
 ... | nothing = refl
 ... | just _  = refl
 
-•-right-id : ∀ {ℓ} {A B : Set ℓ} (f : A ⇀ B) → f • id ≈ f
-•-right-id f _ = refl
+•-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f • id ≈ f
+•-right-id _ = refl
 
-∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} (f : A ⇀ B) → ∅ • f ≈ (∅ {B = C})
-∅-left-zero f a with f a
+∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} {f : A ⇀ B} → ∅ • f ≈ (∅ {B = C})
+∅-left-zero {f = f} a with f a
 ... | nothing = refl
 ... | just _  = refl
 
-∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) → f • ∅ ≈ (∅ {A = A})
-∅-right-zero f _ = refl
+∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} {f : B ⇀ C} → f • ∅ ≈ (∅ {A = A})
+∅-right-zero _ = refl
 
 -- The following limited congruence principle has been enough so far.
 
@@ -179,3 +180,23 @@ inl a = just (inj₁ a)
 inr : ∀ {ℓ} {A B : Set ℓ} → (B ⇀ A ⊎ B)
 inr b = just (inj₂ b)
 
+pullMaybe : {A B : Set} → Maybe A ⊎ Maybe B ⇀ A ⊎ B
+pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
+
+_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇀ B₀) → (A₁ ⇀ B₁) → (A₀ ⊎ A₁ ⇀ B₀ ⊎ B₁)
+f + g = pullMaybe ∘ᶠ Sum.map f g
+
+•-abides-+ :
+  {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
+  {f : B₀ ⇀ C₀} {g : A₀ ⇀ B₀} {h : B₁ ⇀ C₁} {k : A₁ ⇀ B₁}
+  → (f • g) + (h • k) ≈ (f + h) • (g + k)
+•-abides-+ {g = g} (inj₁ a) with g a
+•-abides-+         (inj₁ _) | nothing = refl
+•-abides-+ {f = f} (inj₁ _) | just b with f b
+•-abides-+         (inj₁ _) | just _ | just _  = refl
+•-abides-+         (inj₁ _) | just _ | nothing = refl
+•-abides-+ {k = k} (inj₂ a) with k a
+•-abides-+         (inj₂ _) | nothing = refl
+•-abides-+ {h = h} (inj₂ _) | just b with h b
+•-abides-+         (inj₂ _) | just _ | just _  = refl
+•-abides-+         (inj₂ _) | just _ | nothing = refl
