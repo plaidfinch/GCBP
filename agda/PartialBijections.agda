@@ -106,7 +106,7 @@ _∘_ {A} {B} {C} g f = record
     module g = _⇌_ g
 
     .∘-id : {A B C : Set} → (h : A ⇌ B) → (k : B ⇌ C)
-         → (_⇌_.bwd h • _⇌_.bwd k) • (_⇌_.fwd k • _⇌_.fwd h) ⊑ PFun.id
+         → (bwd h • bwd k) • (fwd k • fwd h) ⊑ PFun.id
     ∘-id {A} h k = begin
       ((h.bwd • k.bwd) • (k.fwd • h.fwd))
                                               ≈⟨ sym (•-assoc (h.bwd • k.bwd) k.fwd h.fwd ) ⟩
