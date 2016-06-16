@@ -188,9 +188,32 @@ f + g = record
     +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
     +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = PropEq.refl
 
--- ∘-abides-+ :
---   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
---   (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
---   → (f ∘ g) + (h ∘ k) ≡ (f + h) ∘ (g + k)
--- ∘-abides-+ f g h k =
---   ⇌-≡ {!!} {!!}
+∘-abides-+ :
+  {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
+  (f : B₀ ⇌ C₀) (g : A₀ ⇌ B₀) (h : B₁ ⇌ C₁) (k : A₁ ⇌ B₁)
+  → (f ∘ g) + (h ∘ k) ≋ (f + h) ∘ (g + k)
+∘-abides-+ f g h k = abidesL , abidesR
+  where
+    abidesL : fwd ((f ∘ g) + (h ∘ k)) ≈ fwd ((f + h) ∘ (g + k))
+    abidesL (inj₁ a₀) with fwd g a₀
+    abidesL (inj₁ _ ) | nothing = PropEq.refl
+    abidesL (inj₁ _ ) | just b₀ with fwd f b₀
+    abidesL (inj₁ _ ) | just _ | nothing = PropEq.refl
+    abidesL (inj₁ _ ) | just _ | just _  = PropEq.refl
+    abidesL (inj₂ a₁) with fwd k a₁
+    abidesL (inj₂ _ ) | nothing = PropEq.refl
+    abidesL (inj₂ _ ) | just b₁ with fwd h b₁
+    abidesL (inj₂ _ ) | just _ | nothing = PropEq.refl
+    abidesL (inj₂ _ ) | just _ | just _  = PropEq.refl
+
+    abidesR : bwd ((f ∘ g) + (h ∘ k)) ≈ bwd ((f + h) ∘ (g + k))
+    abidesR (inj₁ c₀) with bwd f c₀
+    abidesR (inj₁ _ ) | nothing = PropEq.refl
+    abidesR (inj₁ _ ) | just b₀ with bwd g b₀
+    abidesR (inj₁ _ ) | just _ | nothing = PropEq.refl
+    abidesR (inj₁ _ ) | just _ | just _  = PropEq.refl
+    abidesR (inj₂ c₁) with bwd h c₁
+    abidesR (inj₂ _ ) | nothing = PropEq.refl
+    abidesR (inj₂ _ ) | just b₁ with bwd k b₁
+    abidesR (inj₂ _ ) | just _ | nothing = PropEq.refl
+    abidesR (inj₂ _ ) | just _ | just _  = PropEq.refl
