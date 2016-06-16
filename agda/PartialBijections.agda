@@ -195,6 +195,35 @@ f + g = record
   → (f ∘ g) + (h ∘ k) ≋ (f + h) ∘ (g + k)
 ∘-abides-+ = •-abides-+ , •-abides-+
 
--- +⁻¹ :
---   {A₀ B₀ A₁ B₁ : Set}
---   (f : A₀ ⇌ B₀) (g : A₁ ⇌ B₁
++⁻¹ :
+  {A₀ B₀ A₁ B₁ : Set} {f : A₀ ⇌ B₀} {g : A₁ ⇌ B₁} →
+  (f + g) ⁻¹ ≋ f ⁻¹ + g ⁻¹
++⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
+
+----------------------------------------------------------------------
+-- Merge
+----------------------------------------------------------------------
+
+_⋎_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
+f ⋎ g = record
+  { fwd = merge f g
+  ; bwd = merge (g ⁻¹) (f ⁻¹)
+  ; left-id  = foo
+  ; right-id = {!!}
+  }
+  where
+    merge : {A B : Set} (f g : A ⇌ B) → (A ⇀ B)
+    merge f _ a with fwd f a
+    merge _ _ _ | just b = just b
+    merge _ g a | nothing with fwd g a
+    merge _ _ _ | nothing | nothing = nothing
+    merge f _ _ | nothing | just ga with bwd f ga
+    merge _ _ _ | nothing | just ga | just _ = nothing
+    merge _ _ _ | nothing | just ga | nothing = just ga
+
+    foo : merge (g ⁻¹) (f ⁻¹) • merge f g ⊑ PFun.id
+    foo a with fwd f a
+    foo a | just b with bwd g b
+    foo a | just b | just x = {!!}
+    foo a | just b | nothing = {!!}
+    foo a | nothing = {!!}
