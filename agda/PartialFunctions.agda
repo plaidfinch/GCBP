@@ -55,7 +55,7 @@ isEquivalence = record
 ------------------------------------------------------------
 -- Subsets
 
--- A subset of a set A can be identified with a partial function A ⇀ A.
+-- A subset of a set A can be thought of as a partial function A ⇀ A.
 Subset : ∀ {ℓ} → Set ℓ → Set ℓ
 Subset A = A ⇀ A
 
@@ -211,12 +211,22 @@ dom⊑id {f = f} a with f a
 dom⊑id a | just _  = refl
 dom⊑id a | nothing = tt
 
+----------------------------------------------------------------------
+-- Some lemmas about subsets
+----------------------------------------------------------------------
+
 •† : ∀ {A : Set} {X Y : Subset A} → (X † • Y †) ⊑ (X • Y) †
 •† {Y = Y} a with Y a
 •†         a | just _ = tt
 •† {X = X} a | nothing with X a
 •†         a | nothing | just _  = tt
 •†         a | nothing | nothing = refl
+
+subset-idem : {A : Set} {X : Subset A} → X ⊑ id → X • X ≈ X
+subset-idem {X = X} X⊑id a with X a | inspect X a
+subset-idem         X⊑id a | nothing  | _       = refl
+subset-idem {X = X} X⊑id a | just a'  | [ eq ] with X⊑id a
+subset-idem {X = X} X⊑id a | just _   | [ eq ] | Xa⊑ rewrite eq | Xa⊑ = eq
 
 ----------------------------------------------------------------------
 -- Sums
