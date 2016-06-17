@@ -53,14 +53,27 @@ isEquivalence = record
 -- for congruence, see ≈-cong-left below
 
 ------------------------------------------------------------
+-- Subsets
+
+-- A subset of a set A can be identified with a partial function A ⇀ A.
+Subset : ∀ {ℓ} → Set ℓ → Set ℓ
+Subset A = A ⇀ A
+
+-- Complement of a subset.
+_† : ∀ {ℓ} {A : Set ℓ} → Subset A → Subset A
+(A †) a with A a
+... | just _  = nothing
+... | nothing = just a
+
+------------------------------------------------------------
 -- Some special partial functions
 
 -- The totally undefined partial function.
 ∅ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B)
 ∅ = const nothing
 
--- dom f is the identity on the domain of f, and undefined elsewhere.
-dom : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → (A ⇀ A)
+-- The domain of f is the subset of A on which it is defined.
+dom : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → Subset A
 dom f a with f a
 dom f a | just _  = just a
 dom f a | nothing = nothing
@@ -197,6 +210,13 @@ dom⊑id : {A B : Set} {f : A ⇀ B} → dom f ⊑ id
 dom⊑id {f = f} a with f a
 dom⊑id a | just _  = refl
 dom⊑id a | nothing = tt
+
+•† : ∀ {A : Set} {X Y : Subset A} → (X † • Y †) ⊑ (X • Y) †
+•† {Y = Y} a with Y a
+•†         a | just _ = tt
+•† {X = X} a | nothing with X a
+•†         a | nothing | just _  = tt
+•†         a | nothing | nothing = refl
 
 ----------------------------------------------------------------------
 -- Sums
