@@ -14,6 +14,7 @@ open import Category.Monad
 
 open import Relation.Binary
 open import Relation.Binary.Core
+open import Relation.Binary.PropositionalEquality using ([_] ; inspect)
 
 ----------------------------------------------------------------------
 -- Partial functions
@@ -58,6 +59,20 @@ isEquivalence = record
 ∅ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B)
 ∅ = const nothing
 
+-- dom f is the identity on the domain of f, and undefined elsewhere.
+dom : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → (A ⇀ A)
+dom f a with f a
+dom f a | just _  = just a
+dom f a | nothing = nothing
+
+domdom : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → dom (dom f) ≈ dom f
+domdom {f = f} a with f a
+domdom a | just _  = refl
+domdom a | nothing = refl
+
+-- Note that given our choice of representation, the range of a
+-- partial function is not computable.
+
 ------------------------------------------------------------
 -- The category of partial functions
 
@@ -96,12 +111,20 @@ infixr 9 _•_
 ∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} {f : B ⇀ C} → f • ∅ ≈ (∅ {A = A})
 ∅-right-zero _ = refl
 
--- The following limited congruence principle has been enough so far.
+dom-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f • dom f ≈ f
+dom-right-id {f = f} a with f a | inspect f a
+dom-right-id a | just _  | [ fa≡b ] = fa≡b
+dom-right-id a | nothing | _        = refl
+
+-- The following limited congruence principles have been enough so far.
 
 ≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f • h ≈ g • h
 ≈-cong-left h f≈g a with h a
 ≈-cong-left h f≈g a | nothing = refl
 ≈-cong-left h f≈g a | just b  = f≈g b
+
+≈-cong-right : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) {g h : A ⇀ B} → g ≈ h → f • g ≈ f • h
+≈-cong-right f g≈h a rewrite g≈h a = refl
 
 ----------------------------------------------------------------------
 -- Definedness partial order for partial functions
@@ -169,6 +192,11 @@ infix 4 _⊑_
 ... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl
 ... | just _  | nothing | ()
 ... | nothing | _       | _               = tt
+
+dom⊑id : {A B : Set} {f : A ⇀ B} → dom f ⊑ id
+dom⊑id {f = f} a with f a
+dom⊑id a | just _  = refl
+dom⊑id a | nothing = tt
 
 ----------------------------------------------------------------------
 -- Sums

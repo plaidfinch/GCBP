@@ -16,7 +16,7 @@ import Relation.Binary.Core as PropEq
 import Relation.Binary.PreorderReasoning as Pre
   renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
 
-open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence)
+open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence ; dom)
                              renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
 
@@ -69,6 +69,33 @@ isEquivalence = record
   ; left-id  = const tt
   ; right-id = const tt
   }
+
+dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
+dom {A} f = record
+  { fwd      = PFun.dom (fwd f)
+  ; bwd      = PFun.dom (fwd f)
+  ; left-id  = dom•dom {f = fwd f}
+  ; right-id = dom•dom {f = fwd f}
+  }
+  where
+    dom•dom : {A B : Set} {f : A ⇀ B} → PFun.dom f • PFun.dom f ⊑ PFun.id
+    dom•dom {A = A} {f = f} = begin
+      PFun.dom f • PFun.dom f
+                                              ≈⟨ ≈-cong-right (PFun.dom f)
+                                                   {_} {PFun.dom (PFun.dom f)}
+                                                   (sym domdom)
+                                               ⟩
+      PFun.dom f • PFun.dom (PFun.dom f)
+                                              ≈⟨ dom-right-id ⟩
+      PFun.dom f
+                                              ⊑⟨ dom⊑id ⟩
+      PFun.id ∎
+
+      where
+        open Pre (⊑-Preorder A A)
+        open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
+
+-- rng
 
 ----------------------------------------------------------------------
 -- The category of partial bijections
