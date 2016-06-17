@@ -95,8 +95,6 @@ dom {A} f = record
         open Pre (⊑-Preorder A A)
         open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
 
--- rng
-
 ----------------------------------------------------------------------
 -- The category of partial bijections
 ----------------------------------------------------------------------
@@ -120,6 +118,9 @@ f ⁻¹ = record
   }
   where
     module f = _⇌_ f
+
+rng : {A B : Set} → (A ⇌ B) → (B ⇌ B)
+rng f = dom (f ⁻¹)
 
 -- Composing partial bijections.
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
