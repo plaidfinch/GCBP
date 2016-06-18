@@ -193,15 +193,15 @@ infix 4 _⊑_
 
 -- ...and also monotonic wrt. composition
 
-⊑-mono-left : {A B C : Set} (f g : B ⇀ C) (h : A ⇀ B)
+⊑-mono-left : {A B C : Set} (h : A ⇀ B) {f g : B ⇀ C}
   → f ⊑ g → f • h ⊑ g • h
-⊑-mono-left f g h f⊑g a with h a
+⊑-mono-left h f⊑g a with h a
 ... | just b  = f⊑g b
 ... | nothing = tt
 
-⊑-mono-right : {A B C : Set} (f g : A ⇀ B) (h : B ⇀ C)
+⊑-mono-right : {A B C : Set} (h : B ⇀ C) {f g : A ⇀ B}
   → f ⊑ g → h • f ⊑ h • g
-⊑-mono-right f g h f⊑g a with f a | g a | f⊑g a
+⊑-mono-right h {f} {g} f⊑g a with f a | g a | f⊑g a
 ... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl
 ... | just _  | nothing | ()
 ... | nothing | _       | _               = tt
@@ -227,6 +227,11 @@ subset-idem {X = X} X⊑id a with X a | inspect X a
 subset-idem         X⊑id a | nothing  | _       = refl
 subset-idem {X = X} X⊑id a | just a'  | [ eq ] with X⊑id a
 subset-idem {X = X} X⊑id a | just _   | [ eq ] | Xa⊑ rewrite eq | Xa⊑ = eq
+
+†⊑ : ∀ {A : Set} {X : Subset A} → X ⊑ id → X † ⊑ id
+†⊑ {X = X} X⊑id a with X a
+†⊑ X⊑id a | just _  = tt
+†⊑ X⊑id a | nothing = refl
 
 ----------------------------------------------------------------------
 -- Sums
