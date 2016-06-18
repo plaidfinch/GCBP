@@ -232,21 +232,19 @@ f + g = record
 -- Merge
 ----------------------------------------------------------------------
 
--- (A • f • G) • (G • f ⁻¹ • A)
--- Lemma:  G • G = G  for G a subset
--- G • f ⊑ f  for subset G, since  G • f ⊑ id • f ≈ f  (given G ⊑ id)
-
 _\\_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
 _\\_ {A} {B} f g = record
   { fwd      = fwd (rng g) † • fwd f • fwd (dom g) †
   ; bwd      = bwd (dom g) † • bwd f • bwd (rng g) †
-  ; left-id  = {!!}
-  ; right-id = {!!}
+  ; left-id  = thereAndBack {X = bwd (dom g) †} {Y = bwd (rng g) †} {f = f ⁻¹}
+                 (†⊑ dom⊑id) (†⊑ dom⊑id)
+  ; right-id = thereAndBack {X = fwd (rng g) †} {Y = fwd (dom g) †} {f = f}
+                 (†⊑ dom⊑id) (†⊑ dom⊑id)
   }
   where
-    .foo : {C D : Set} {X : Subset D} {Y : Subset C} {f : C ⇌ D}
+    .thereAndBack : {C D : Set} {X : Subset D} {Y : Subset C} {f : C ⇌ D}
         → X ⊑ PFun.id → Y ⊑ PFun.id → (X • fwd f • Y) • (Y • bwd f • X) ⊑ PFun.id
-    foo {C} {D} {X} {Y} {f} X⊑id Y⊑id = begin
+    thereAndBack {C} {D} {X} {Y} {f} X⊑id Y⊑id = begin
       (X • fwd f • Y) • (Y • bwd f • X)
                                               ≈⟨⟩
       (X • (fwd f • Y)) • (Y • (bwd f • X))
