@@ -232,10 +232,71 @@ f + g = record
 -- Merge
 ----------------------------------------------------------------------
 
+-- (A • f • G) • (G • f ⁻¹ • A)
+-- Lemma:  G • G = G  for G a subset
+-- G • f ⊑ f  for subset G, since  G • f ⊑ id • f ≈ f  (given G ⊑ id)
+
+_\\_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
+_\\_ {A} {B} f g = record
+  { fwd      = fwd (rng g) † • fwd f • fwd (dom g) †
+  ; bwd      = bwd (dom g) † • bwd f • bwd (rng g) †
+  ; left-id  = {!!}
+  ; right-id = {!!}
+  }
+  where
+    .foo : {C D : Set} {X : Subset D} {Y : Subset C} {f : C ⇌ D}
+        → X ⊑ PFun.id → Y ⊑ PFun.id → (X • fwd f • Y) • (Y • bwd f • X) ⊑ PFun.id
+    foo {C} {D} {X} {Y} {f} X⊑id Y⊑id = begin
+      (X • fwd f • Y) • (Y • bwd f • X)
+                                              ≈⟨⟩
+      (X • (fwd f • Y)) • (Y • (bwd f • X))
+                                              ≈⟨ ≈-cong-left (Y • bwd f • X)
+                                                  (EqC⇀D.sym (•-assoc _ _ Y))
+                                               ⟩
+      ((X • fwd f) • Y) • (Y • (bwd f • X))
+                                              ≈⟨ •-assoc _ _ (Y • (bwd f • X)) ⟩
+      (X • fwd f) • (Y • (Y • (bwd f • X)))
+                                              ≈⟨ ≈-cong-right (X • fwd f)
+                                                  (EqD⇀C.sym (•-assoc _ _ (bwd f • X)))
+                                               ⟩
+      (X • fwd f) • ((Y • Y) • (bwd f • X))
+                                              ≈⟨ ≈-cong-right (X • fwd f)
+                                                  (≈-cong-left (bwd f • X)
+                                                    (subset-idem Y⊑id))
+                                               ⟩
+      (X • fwd f) • (Y • (bwd f • X))
+                                              ⊑⟨ ⊑-mono-right (X • fwd f)
+                                                  (⊑-mono-left (bwd f • X) Y⊑id)
+                                               ⟩
+      (X • fwd f) • (PFun.id • (bwd f • X))
+                                              ≈⟨ ≈-cong-right (X • fwd f)
+                                                  (•-left-id {f = bwd f • X})
+                                               ⟩
+      (X • fwd f) • (bwd f • X)
+                                              ≈⟨ •-assoc _ _ (bwd f • X) ⟩
+      X • (fwd f • (bwd f • X))
+                                              ≈⟨ ≈-cong-right X (EqD⇀D.sym (•-assoc _ _ X)) ⟩
+      X • ((fwd f • bwd f) • X)
+                                              ⊑⟨ ⊑-mono-right X (⊑-mono-left X
+                                                  (right-id f)) ⟩
+      X • (PFun.id • X)
+                                              ≈⟨ ≈-cong-right X (•-left-id {f = X}) ⟩
+      X • X
+                                              ≈⟨ subset-idem X⊑id ⟩
+      X
+                                              ⊑⟨ X⊑id ⟩
+      PFun.id ∎
+      where
+        open Pre (⊑-Preorder D D)
+        module EqC⇀D = IsEquivalence (PFun.isEquivalence {A = C} {B = D})
+        module EqD⇀C = IsEquivalence (PFun.isEquivalence {A = D} {B = C})
+        module EqD⇀D = IsEquivalence (PFun.isEquivalence {A = D} {B = D})
+
+
 _⋎_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
 f ⋎ g = record
   { fwd = merge f g
-  ; bwd = merge (g ⁻¹) (f ⁻¹)
+  ; bwd = merge (f ⁻¹) (g ⁻¹)
   ; left-id  = foo
   ; right-id = {!!}
   }
@@ -249,7 +310,7 @@ f ⋎ g = record
     merge _ _ _ | nothing | just ga | just _ = nothing
     merge _ _ _ | nothing | just ga | nothing = just ga
 
-    foo : merge (g ⁻¹) (f ⁻¹) • merge f g ⊑ PFun.id
+    foo : merge (f ⁻¹) (g ⁻¹) • merge f g ⊑ PFun.id
     foo a with fwd f a
     foo a | just b with bwd g b
     foo a | just b | just x = {!!}
