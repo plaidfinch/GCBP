@@ -5,7 +5,9 @@ open import Level renaming (zero to lzero)
 open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 
 open import Data.Empty
+open import Relation.Nullary
 open import Data.Unit
+open import Data.Bool
 open import Data.Sum as Sum
 
 open import Data.Maybe as Maybe
@@ -50,7 +52,7 @@ isEquivalence = record
   ; trans = ≈-trans
   }
 
--- for congruence, see ≈-cong-left below
+-- for congruence, see ≈-cong-left and ≈-cong-right below
 
 ------------------------------------------------------------
 -- Subsets
@@ -140,6 +142,43 @@ dom-right-id a | nothing | _        = refl
 ≈-cong-right f g≈h a rewrite g≈h a = refl
 
 ----------------------------------------------------------------------
+-- Join
+----------------------------------------------------------------------
+
+-- Left-biased join of partial functions.
+_∣_ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → (A ⇀ B) → (A ⇀ B)
+_∣_ {ℓ} f g a = f a ∣M g a
+  where
+    open RawMonadPlus (Maybe.monadPlus {f = ℓ}) renaming (_∣_ to _∣M_)
+
+-- Join is associative.
+∣-assoc : ∀ {ℓ} {A B : Set ℓ} → (f g h : A ⇀ B) → (f ∣ g) ∣ h ≈ f ∣ (g ∣ h)
+∣-assoc f g h a with f a
+∣-assoc f g h a | just _ = refl
+∣-assoc f g h a | nothing with g a
+∣-assoc f g h a | nothing | just _  = refl
+∣-assoc f g h a | nothing | nothing = refl
+
+-- Composition distributes over join from the right...
+∣• : ∀ {ℓ} {A B C : Set ℓ} → (f g : B ⇀ C) → (h : A ⇀ B) → (f ∣ g) • h ≈ (f • h) ∣ (g • h)
+∣• f g h a with h a
+∣• f g h a | nothing = refl
+∣• f g h a | just b  with f b
+∣• f g h a | just b | just _  = refl
+∣• f g h a | just b | nothing = refl
+
+-- ... but NOT from the left.  Here is a counterexample.
+¬•∣ : ¬ ({A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f • (g ∣ h) ≈ (f • g) ∣ (f • h))
+¬•∣ P with (P (λ { false → just tt ; _ → nothing })
+              (const (just true))
+              (const (just false)))
+           tt
+¬•∣ P | ()
+
+-- However, we can prove a weaker left distribution law using ⊑ in
+-- place of ≈, see below.
+
+----------------------------------------------------------------------
 -- Definedness partial order for partial functions
 ----------------------------------------------------------------------
 
@@ -210,6 +249,28 @@ dom⊑id : {A B : Set} {f : A ⇀ B} → dom f ⊑ id
 dom⊑id {f = f} a with f a
 dom⊑id a | just _  = refl
 dom⊑id a | nothing = tt
+
+-- Composition does not distribute over ∣ from the left (see
+-- counterexample above), but we can say that distributing can only
+-- make things more defined.
+•∣ : {A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f • (g ∣ h) ⊑ (f • g) ∣ (f • h)
+•∣ f g h a with g a | h a
+•∣ f g h a | nothing | _ = ⊑M-refl
+•∣ f g h a | just b  | _ with f b
+•∣ f g h a | just b  | _ | just _  = refl
+•∣ f g h a | just b  | _ | nothing = tt
+
+-- | ⊑ is NOT monotonic on the left with respect to ∣ ...
+¬-⊑-mono-∣-left : ¬({A B : Set} (h : A ⇀ B) {f g : A ⇀ B} → f ⊑ g → f ∣ h ⊑ g ∣ h)
+¬-⊑-mono-∣-left P
+  with P {⊤} (const (just true)) {const nothing} {const (just false)} (λ a → a) tt
+¬-⊑-mono-∣-left P | ()
+
+-- ... but it is on the right.
+⊑-mono-∣-right : {A B : Set} (h : A ⇀ B) {f g : A ⇀ B} → f ⊑ g → h ∣ f ⊑ h ∣ g
+⊑-mono-∣-right h f⊑g a with h a
+⊑-mono-∣-right h f⊑g a | just x  = refl
+⊑-mono-∣-right h f⊑g a | nothing = f⊑g a
 
 ----------------------------------------------------------------------
 -- Some lemmas about subsets

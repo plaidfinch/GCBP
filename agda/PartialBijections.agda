@@ -295,22 +295,24 @@ _⋎_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
 f ⋎ g = record
   { fwd = merge f g
   ; bwd = merge (f ⁻¹) (g ⁻¹)
-  ; left-id  = foo
+  ; left-id  = {!!}
   ; right-id = {!!}
   }
   where
     merge : {A B : Set} (f g : A ⇌ B) → (A ⇀ B)
-    merge f _ a with fwd f a
-    merge _ _ _ | just b = just b
-    merge _ g a | nothing with fwd g a
-    merge _ _ _ | nothing | nothing = nothing
-    merge f _ _ | nothing | just ga with bwd f ga
-    merge _ _ _ | nothing | just ga | just _ = nothing
-    merge _ _ _ | nothing | just ga | nothing = just ga
+    merge f g = fwd f ∣ fwd (g \\ f)
 
-    foo : merge (f ⁻¹) (g ⁻¹) • merge f g ⊑ PFun.id
-    foo a with fwd f a
-    foo a | just b with bwd g b
-    foo a | just b | just x = {!!}
-    foo a | just b | nothing = {!!}
-    foo a | nothing = {!!}
+    -- (fwd (f ⁻¹) ∣ (fwd (g ⁻¹ \\ f ⁻¹))) • (fwd f ∣ fwd (g \\ f)) ⊑ id  ?
+
+    -- How do  ∣ and • interact?
+
+    -- (f ∣ g) • (h ∣ k) ⊑ (f • h) ∣ (g • k) ?  no, think it's the
+    -- other way around.
+
+    -- (f ∣ g) • h ≈ (f • h) ∣ (g • h) ?  Yes!
+    -- but NOT from the left (only ⊑)
+
+    -- So (f ∣ g) • (h ∣ k) ≈ (f • (h ∣ k)) ∣ (g • (h ∣ k))
+    -- which in turn is ⊑ (f • (h ∣ k)) ∣ (g • h) ∣ (g • k)
+    -- since we ⊑ is a congruence with respect to the right side of ∣ (but not the left!)
+    -- Not sure if we can say any more than that.
