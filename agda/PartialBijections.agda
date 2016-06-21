@@ -290,7 +290,6 @@ _\\_ {A} {B} f g = record
         module EqD⇀C = IsEquivalence (PFun.isEquivalence {A = D} {B = C})
         module EqD⇀D = IsEquivalence (PFun.isEquivalence {A = D} {B = D})
 
-
 _⋎_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
 f ⋎ g = record
   { fwd = merge f g
@@ -304,6 +303,19 @@ f ⋎ g = record
 
     -- (fwd (f ⁻¹) ∣ (fwd (g ⁻¹ \\ f ⁻¹))) • (fwd f ∣ fwd (g \\ f)) ⊑ id  ?
 
+    --   (fwd (f ⁻¹) ∣ (fwd (g ⁻¹ \\ f ⁻¹))) • (fwd f ∣ fwd (g \\ f))
+    -- ≈
+    --   (fwd (f ⁻¹) • (fwd f ∣ fwd (g \\ f))) ∣ (fwd (g ⁻¹ \\ f ⁻¹)) • (fwd f ∣ fwd (g \\ f)))
+    -- ⊑
+    --   (fwd (f ⁻¹) • (fwd f ∣ fwd (g \\ f)))
+    --   ∣ (fwd (g ⁻¹ \\ f ⁻¹) • fwd f)
+    --   ∣ (fwd (g ⁻¹ \\ f ⁻¹) • fwd (g \\ f))
+    -- ⊑                                         { should be true? }
+    --   (fwd (f ⁻¹) • (fwd f ∣ fwd (g \\ f)))
+    --   ∣ (fwd (g ⁻¹ \\ f ⁻¹) • fwd f)
+    --   ∣ id
+
+
     -- How do  ∣ and • interact?
 
     -- (f ∣ g) • (h ∣ k) ⊑ (f • h) ∣ (g • k) ?  no, think it's the
@@ -316,3 +328,7 @@ f ⋎ g = record
     -- which in turn is ⊑ (f • (h ∣ k)) ∣ (g • h) ∣ (g • k)
     -- since we ⊑ is a congruence with respect to the right side of ∣ (but not the left!)
     -- Not sure if we can say any more than that.
+
+    -- Hmm, need to prove some lemmas about \\ too.
+
+    -- Is f ⊑ f | g?  Yes, but not sure that really helps.

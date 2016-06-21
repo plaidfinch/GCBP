@@ -272,6 +272,11 @@ dom⊑id a | nothing = tt
 ⊑-mono-∣-right h f⊑g a | just x  = refl
 ⊑-mono-∣-right h f⊑g a | nothing = f⊑g a
 
+∣-right : {A B : Set} {f g : A ⇀ B} → f ⊑ f ∣ g
+∣-right {f = f} a with f a
+∣-right a | just x  = refl
+∣-right a | nothing = tt
+
 ----------------------------------------------------------------------
 -- Some lemmas about subsets
 ----------------------------------------------------------------------
