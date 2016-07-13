@@ -19,6 +19,8 @@ cabal.sandbox.config
 *.log
 *.pdf
 *.ptb
+*.bbl
+*.blg
 
 *.agdai
 *~
