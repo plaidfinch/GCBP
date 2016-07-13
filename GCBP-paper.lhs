@@ -504,6 +504,8 @@ indirectly to \citet{garsia1981rogers}:
 \todo{Why would the situation of two related partitioned sets come up?
   There is still some part of the story I'm missing\dots}
 
+\todo{check out garsia1981method.}
+
 % \appendix
 % \section{Appendix Title}
 
