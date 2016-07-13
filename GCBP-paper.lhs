@@ -313,10 +313,10 @@ fixEither f a = case f a of
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
 
-This algorithm was introduced by \todo{cite Gordon}, who called it the
+This algorithm was introduced by \citet{gordon1983sieve}, who called it the
 \term{complementary bijection principle} \todo{note that Gordon's
   principle is actually a bit more general?  What is computational
-  content of Gordon's original paper?}
+  content of Gordon's original paper?} \todo{See notes later below}
 
 At this point, it's worth going through a careful proof of the
 bijection principle.  We must prove two things: first, that the
@@ -434,7 +434,7 @@ $||A|| = ||A_\varnothing||$, and specializing from properties to
 subsets.)
 
 The following proof is due to \citet{zeilberger1984garsia}, and
-indirectly to Garsia and Milne \todo{cite}:
+indirectly to \citet{garsia1981rogers}:
 
 \newcommand{\bigA}{\mathcal{A}}
 \newcommand{\bigAe}{\bigA_{\mathrm{even}}}
@@ -480,6 +480,15 @@ indirectly to Garsia and Milne \todo{cite}:
 \end{proof}
 
 \todo{WHAT IS A COMPUTATIONAL INTERPRETATION OF PIE?}
+
+\todo{OMG, now that I go back and reread the Gordon paper I actually
+  understand what it is doing. It's constructing a bijection in
+  exactly this sort of PIE situation---with two families of sets that
+  are ``sieve-equivalent'', that is, we have bijections $f_J : A_J
+  \bij B_J$ for each $J \subseteq P$.}
+
+\todo{Note that Gordon himself claims GCBP is equivalent to GMIP, but
+  gives no proof.}
 
 \subsection{Signed involutions and GMIP}
 \label{sec:signed-involutions}
