@@ -36,6 +36,8 @@ record _⇌_ (A B : Set) : Set where
     bwd      : B ⇀ A
     .left-id  : bwd • fwd ⊑ PFun.id
     .right-id : fwd • bwd ⊑ PFun.id
+    -- .left-def : dom fwd ≈ dom (bwd . fwd)
+    -- and vice versa
 
 infix 1 _⇌_
 
@@ -289,6 +291,14 @@ _\\_ {A} {B} f g = record
         module EqC⇀D = IsEquivalence (PFun.isEquivalence {A = C} {B = D})
         module EqD⇀C = IsEquivalence (PFun.isEquivalence {A = D} {B = C})
         module EqD⇀D = IsEquivalence (PFun.isEquivalence {A = D} {B = D})
+
+-- Try defining an alternate version of merge which requires a proof
+-- that f and g are compatible, i.e. agree where they are both defined?
+-- i.e. (f . dom g ≈ g . dom f) and (rng g . f ≈ rng f . g)
+-- Then we can just join both directions.
+
+-- To do: define compatibility for partial functions.  Then lift to
+-- compatibility for partial bijections.
 
 _⋎_ : {A B : Set} (f g : A ⇌ B) → (A ⇌ B)
 f ⋎ g = record
