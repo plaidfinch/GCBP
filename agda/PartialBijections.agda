@@ -135,10 +135,12 @@ rng f = dom (f ⁻¹)
 -- Composing partial bijections.
 _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
 _∘_ {A} {B} {C} g f = record
-  { fwd = g.fwd ∙ f.fwd
-  ; bwd = f.bwd ∙ g.bwd
-  ; left-id  = ∘-id f g
-  ; right-id = ∘-id (g ⁻¹) (f ⁻¹)
+  { fwd       = g.fwd ∙ f.fwd
+  ; bwd       = f.bwd ∙ g.bwd
+  ; left-id   = ∘-id f g
+  ; right-id  = ∘-id (g ⁻¹) (f ⁻¹)
+  ; left-def  = {!!}
+  ; right-def = {!!}
   }
   where
     module f = _⇌_ f
