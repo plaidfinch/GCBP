@@ -66,10 +66,12 @@ isEquivalence = record
 -- The totally undefined partial bijection.
 ∅ : {A B : Set} → A ⇌ B
 ∅ = record
-  { fwd      = PFun.∅
-  ; bwd      = PFun.∅
-  ; left-id  = const tt
-  ; right-id = const tt
+  { fwd       = PFun.∅
+  ; bwd       = PFun.∅
+  ; left-id   = const tt
+  ; right-id  = const tt
+  ; left-def  = const PropEq.refl
+  ; right-def = const PropEq.refl
   }
 
 dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
