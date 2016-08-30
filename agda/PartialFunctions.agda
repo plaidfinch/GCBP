@@ -95,50 +95,50 @@ domdom a | nothing = refl
 id : ∀ {ℓ} {A : Set ℓ} → (A ⇀ A)
 id = just
 
-_•_ : ∀ {ℓ} {A B C : Set ℓ} → (B ⇀ C) → (A ⇀ B) → (A ⇀ C)
-_•_ = _<=<_
+_∙_ : ∀ {ℓ} {A B C : Set ℓ} → (B ⇀ C) → (A ⇀ B) → (A ⇀ C)
+_∙_ = _<=<_
   where
     open RawMonad Maybe.monad
 
-infixr 9 _•_
+infixr 9 _∙_
 
-•-assoc : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B)
-        → (f • g) • h ≈ f • (g • h)
-•-assoc _ g h a with h a
+∙-assoc : ∀ {ℓ} {A B C D : Set ℓ} (f : C ⇀ D) (g : B ⇀ C) (h : A ⇀ B)
+        → (f ∙ g) ∙ h ≈ f ∙ (g ∙ h)
+∙-assoc _ g h a with h a
 ... | nothing = refl
 ... | just b  with g b
 ... | nothing = refl
 ... | just c  = refl
 
-•-left-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → id • f ≈ f
-•-left-id {f = f} a with f a
+∙-left-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → id ∙ f ≈ f
+∙-left-id {f = f} a with f a
 ... | nothing = refl
 ... | just _  = refl
 
-•-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f • id ≈ f
-•-right-id _ = refl
+∙-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f ∙ id ≈ f
+∙-right-id _ = refl
 
-∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} {f : A ⇀ B} → ∅ • f ≈ (∅ {B = C})
+∅-left-zero : ∀ {ℓ} {A B C : Set ℓ} {f : A ⇀ B} → ∅ ∙ f ≈ (∅ {B = C})
 ∅-left-zero {f = f} a with f a
 ... | nothing = refl
 ... | just _  = refl
 
-∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} {f : B ⇀ C} → f • ∅ ≈ (∅ {A = A})
+∅-right-zero : ∀ {ℓ} {A B C : Set ℓ} {f : B ⇀ C} → f ∙ ∅ ≈ (∅ {A = A})
 ∅-right-zero _ = refl
 
-dom-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f • dom f ≈ f
+dom-right-id : ∀ {ℓ} {A B : Set ℓ} {f : A ⇀ B} → f ∙ dom f ≈ f
 dom-right-id {f = f} a with f a | inspect f a
 dom-right-id a | just _  | [ fa≡b ] = fa≡b
 dom-right-id a | nothing | _        = refl
 
 -- The following limited congruence principles have been enough so far.
 
-≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f • h ≈ g • h
+≈-cong-left : ∀ {ℓ} {A B C : Set ℓ} (h : A ⇀ B) {f g : B ⇀ C} → f ≈ g → f ∙ h ≈ g ∙ h
 ≈-cong-left h f≈g a with h a
 ≈-cong-left h f≈g a | nothing = refl
 ≈-cong-left h f≈g a | just b  = f≈g b
 
-≈-cong-right : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) {g h : A ⇀ B} → g ≈ h → f • g ≈ f • h
+≈-cong-right : ∀ {ℓ} {A B C : Set ℓ} (f : B ⇀ C) {g h : A ⇀ B} → g ≈ h → f ∙ g ≈ f ∙ h
 ≈-cong-right f g≈h a rewrite g≈h a = refl
 
 ----------------------------------------------------------------------
@@ -160,20 +160,20 @@ _∣_ {ℓ} f g a = f a ∣M g a
 ∣-assoc f g h a | nothing | nothing = refl
 
 -- Composition distributes over join from the right...
-∣• : ∀ {ℓ} {A B C : Set ℓ} → (f g : B ⇀ C) → (h : A ⇀ B) → (f ∣ g) • h ≈ (f • h) ∣ (g • h)
-∣• f g h a with h a
-∣• f g h a | nothing = refl
-∣• f g h a | just b  with f b
-∣• f g h a | just b | just _  = refl
-∣• f g h a | just b | nothing = refl
+∣∙ : ∀ {ℓ} {A B C : Set ℓ} → (f g : B ⇀ C) → (h : A ⇀ B) → (f ∣ g) ∙ h ≈ (f ∙ h) ∣ (g ∙ h)
+∣∙ f g h a with h a
+∣∙ f g h a | nothing = refl
+∣∙ f g h a | just b  with f b
+∣∙ f g h a | just b | just _  = refl
+∣∙ f g h a | just b | nothing = refl
 
 -- ... but NOT from the left.  Here is a counterexample.
-¬•∣ : ¬ ({A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f • (g ∣ h) ≈ (f • g) ∣ (f • h))
-¬•∣ P with (P (λ { false → just tt ; _ → nothing })
+¬∙∣ : ¬ ({A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f ∙ (g ∣ h) ≈ (f ∙ g) ∣ (f ∙ h))
+¬∙∣ P with (P (λ { false → just tt ; _ → nothing })
               (const (just true))
               (const (just false)))
            tt
-¬•∣ P | ()
+¬∙∣ P | ()
 
 -- However, we can prove a weaker left distribution law using ⊑ in
 -- place of ≈, see below.
@@ -233,13 +233,13 @@ infix 4 _⊑_
 -- ...and also monotonic wrt. composition
 
 ⊑-mono-left : {A B C : Set} (h : A ⇀ B) {f g : B ⇀ C}
-  → f ⊑ g → f • h ⊑ g • h
+  → f ⊑ g → f ∙ h ⊑ g ∙ h
 ⊑-mono-left h f⊑g a with h a
 ... | just b  = f⊑g b
 ... | nothing = tt
 
 ⊑-mono-right : {A B C : Set} (h : B ⇀ C) {f g : A ⇀ B}
-  → f ⊑ g → h • f ⊑ h • g
+  → f ⊑ g → h ∙ f ⊑ h ∙ g
 ⊑-mono-right h {f} {g} f⊑g a with f a | g a | f⊑g a
 ... | just x  | just y  | x≡y rewrite x≡y = ⊑M-refl
 ... | just _  | nothing | ()
@@ -253,12 +253,12 @@ dom⊑id a | nothing = tt
 -- Composition does not distribute over ∣ from the left (see
 -- counterexample above), but we can say that distributing can only
 -- make things more defined.
-•∣ : {A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f • (g ∣ h) ⊑ (f • g) ∣ (f • h)
-•∣ f g h a with g a | h a
-•∣ f g h a | nothing | _ = ⊑M-refl
-•∣ f g h a | just b  | _ with f b
-•∣ f g h a | just b  | _ | just _  = refl
-•∣ f g h a | just b  | _ | nothing = tt
+∙∣ : {A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f ∙ (g ∣ h) ⊑ (f ∙ g) ∣ (f ∙ h)
+∙∣ f g h a with g a | h a
+∙∣ f g h a | nothing | _ = ⊑M-refl
+∙∣ f g h a | just b  | _ with f b
+∙∣ f g h a | just b  | _ | just _  = refl
+∙∣ f g h a | just b  | _ | nothing = tt
 
 -- | ⊑ is NOT monotonic on the left with respect to ∣ ...
 ¬-⊑-mono-∣-left : ¬({A B : Set} (h : A ⇀ B) {f g : A ⇀ B} → f ⊑ g → f ∣ h ⊑ g ∣ h)
@@ -281,14 +281,14 @@ dom⊑id a | nothing = tt
 -- Some lemmas about subsets
 ----------------------------------------------------------------------
 
-•† : ∀ {A : Set} {X Y : Subset A} → (X † • Y †) ⊑ (X • Y) †
-•† {Y = Y} a with Y a
-•†         a | just _ = tt
-•† {X = X} a | nothing with X a
-•†         a | nothing | just _  = tt
-•†         a | nothing | nothing = refl
+∙† : ∀ {A : Set} {X Y : Subset A} → (X † ∙ Y †) ⊑ (X ∙ Y) †
+∙† {Y = Y} a with Y a
+∙†         a | just _ = tt
+∙† {X = X} a | nothing with X a
+∙†         a | nothing | just _  = tt
+∙†         a | nothing | nothing = refl
 
-subset-idem : {A : Set} {X : Subset A} → X ⊑ id → X • X ≈ X
+subset-idem : {A : Set} {X : Subset A} → X ⊑ id → X ∙ X ≈ X
 subset-idem {X = X} X⊑id a with X a | inspect X a
 subset-idem         X⊑id a | nothing  | _       = refl
 subset-idem {X = X} X⊑id a | just a'  | [ eq ] with X⊑id a
@@ -315,17 +315,17 @@ pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇀ B₀) → (A₁ ⇀ B₁) → (A₀ ⊎ A₁ ⇀ B₀ ⊎ B₁)
 f + g = pullMaybe ∘ᶠ Sum.map f g
 
-•-abides-+ :
+∙-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
   {f : B₀ ⇀ C₀} {g : A₀ ⇀ B₀} {h : B₁ ⇀ C₁} {k : A₁ ⇀ B₁}
-  → (f • g) + (h • k) ≈ (f + h) • (g + k)
-•-abides-+ {g = g} (inj₁ a) with g a
-•-abides-+         (inj₁ _) | nothing = refl
-•-abides-+ {f = f} (inj₁ _) | just b with f b
-•-abides-+         (inj₁ _) | just _ | just _  = refl
-•-abides-+         (inj₁ _) | just _ | nothing = refl
-•-abides-+ {k = k} (inj₂ a) with k a
-•-abides-+         (inj₂ _) | nothing = refl
-•-abides-+ {h = h} (inj₂ _) | just b with h b
-•-abides-+         (inj₂ _) | just _ | just _  = refl
-•-abides-+         (inj₂ _) | just _ | nothing = refl
+  → (f ∙ g) + (h ∙ k) ≈ (f + h) ∙ (g + k)
+∙-abides-+ {g = g} (inj₁ a) with g a
+∙-abides-+         (inj₁ _) | nothing = refl
+∙-abides-+ {f = f} (inj₁ _) | just b with f b
+∙-abides-+         (inj₁ _) | just _ | just _  = refl
+∙-abides-+         (inj₁ _) | just _ | nothing = refl
+∙-abides-+ {k = k} (inj₂ a) with k a
+∙-abides-+         (inj₂ _) | nothing = refl
+∙-abides-+ {h = h} (inj₂ _) | just b with h b
+∙-abides-+         (inj₂ _) | just _ | just _  = refl
+∙-abides-+         (inj₂ _) | just _ | nothing = refl
