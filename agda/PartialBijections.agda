@@ -76,10 +76,12 @@ isEquivalence = record
 
 dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
 dom {A} f = record
-  { fwd      = PFun.dom (fwd f)
-  ; bwd      = PFun.dom (fwd f)
-  ; left-id  = dom∙dom {f = fwd f}
-  ; right-id = dom∙dom {f = fwd f}
+  { fwd       = PFun.dom (fwd f)
+  ; bwd       = PFun.dom (fwd f)
+  ; left-id   = dom∙dom {f = fwd f}
+  ; right-id  = dom∙dom {f = fwd f}
+  ; left-def  = {!!}
+  ; right-def = {!!}
   }
   where
     dom∙dom : {A B : Set} {f : A ⇀ B} → PFun.dom f ∙ PFun.dom f ⊑ PFun.id
