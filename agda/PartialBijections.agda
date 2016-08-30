@@ -214,10 +214,12 @@ inr = record
 
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
 f + g = record
-  { fwd      = fwd f ⇀+ fwd g
-  ; bwd      = bwd f ⇀+ bwd g
-  ; left-id  = +-left-id f g
-  ; right-id = +-left-id (f ⁻¹) (g ⁻¹)
+  { fwd       = fwd f ⇀+ fwd g
+  ; bwd       = bwd f ⇀+ bwd g
+  ; left-id   = +-left-id f g
+  ; right-id  = +-left-id (f ⁻¹) (g ⁻¹)
+  ; left-def  = {!!}
+  ; right-def = {!!}
   }
   where
     .+-left-id : {A₀ B₀ A₁ B₁ : Set} → (f : A₀ ⇌ B₀) → (g : A₁ ⇌ B₁)
