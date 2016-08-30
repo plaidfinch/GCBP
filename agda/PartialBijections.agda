@@ -119,10 +119,12 @@ id = record
 -- Inverting a partial bijection.
 _⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
 f ⁻¹ = record
-  { fwd      = f.bwd
-  ; bwd      = f.fwd
-  ; left-id  = f.right-id
-  ; right-id = f.left-id
+  { fwd       = f.bwd
+  ; bwd       = f.fwd
+  ; left-id   = f.right-id
+  ; right-id  = f.left-id
+  ; left-def  = f.right-def
+  ; right-def = f.left-def
   }
   where
     module f = _⇌_ f
