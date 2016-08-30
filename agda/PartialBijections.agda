@@ -194,18 +194,22 @@ _∘_ {A} {B} {C} g f = record
 
 inl : {A B : Set} → (A ⇌ A ⊎ B)
 inl = record
-  { fwd      = λ a → just (inj₁ a)
-  ; bwd      = [ just , const nothing ]
-  ; left-id  = λ _ → PropEq.refl
-  ; right-id = [ (λ _ → PropEq.refl) , const tt ]
+  { fwd       = λ a → just (inj₁ a)
+  ; bwd       = [ just , const nothing ]
+  ; left-id   = λ _ → PropEq.refl
+  ; right-id  = [ (λ _ → PropEq.refl) , const tt ]
+  ; left-def  = λ _ → PropEq.refl
+  ; right-def = [ (λ _ → PropEq.refl) , const PropEq.refl ]
   }
 
 inr : {A B : Set} → (B ⇌ A ⊎ B)
 inr = record
-  { fwd      = λ b → just (inj₂ b)
-  ; bwd      = [ const nothing , just ]
-  ; left-id  = λ _ → PropEq.refl
-  ; right-id = [ const tt , (λ _ → PropEq.refl) ]
+  { fwd       = λ b → just (inj₂ b)
+  ; bwd       = [ const nothing , just ]
+  ; left-id   = λ _ → PropEq.refl
+  ; right-id  = [ const tt , (λ _ → PropEq.refl) ]
+  ; left-def  = λ _ → PropEq.refl
+  ; right-def = [ const PropEq.refl , (λ _ → PropEq.refl) ]
   }
 
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
