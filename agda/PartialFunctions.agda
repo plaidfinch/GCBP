@@ -329,3 +329,12 @@ f + g = pullMaybe ∘ᶠ Sum.map f g
 ∙-abides-+ {h = h} (inj₂ _) | just b with h b
 ∙-abides-+         (inj₂ _) | just _ | just _  = refl
 ∙-abides-+         (inj₂ _) | just _ | nothing = refl
+
+----------------------------------------------------------------------
+-- Compatibility
+----------------------------------------------------------------------
+
+-- XXX comment
+
+Compatible : {A B : Set} → Rel (A ⇀ B) lzero
+Compatible f g = (f ∙ dom g ≈ g ∙ dom f)
