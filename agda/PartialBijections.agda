@@ -108,10 +108,12 @@ dom {A} f = record
 -- The identity partial bijection.
 id : {A : Set} → A ⇌ A
 id = record
-  { fwd      = PFun.id
-  ; bwd      = PFun.id
-  ; left-id  = λ _ → PropEq.refl
-  ; right-id = λ _ → PropEq.refl
+  { fwd       = PFun.id
+  ; bwd       = PFun.id
+  ; left-id   = λ _ → PropEq.refl
+  ; right-id  = λ _ → PropEq.refl
+  ; left-def  = λ _ → PropEq.refl
+  ; right-def = λ _ → PropEq.refl
   }
 
 -- Inverting a partial bijection.
