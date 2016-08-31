@@ -4,6 +4,7 @@ open import Level renaming (zero to lzero)
 
 open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 
+open import Data.Fin using (Fin) renaming (zero to fz ; suc to fs)
 open import Data.Empty
 open import Relation.Nullary
 open import Data.Unit
@@ -334,7 +335,31 @@ f + g = pullMaybe ∘ᶠ Sum.map f g
 -- Compatibility
 ----------------------------------------------------------------------
 
--- XXX comment
+-- Compatibility of partial functions.
+_∥_ : {A B : Set} → Rel (A ⇀ B) lzero
+f ∥ g = (f ∙ dom g ≈ g ∙ dom f)
 
-Compatible : {A B : Set} → Rel (A ⇀ B) lzero
-Compatible f g = (f ∙ dom g ≈ g ∙ dom f)
+∥-refl : {A B : Set} {f : A ⇀ B} → f ∥ f
+∥-refl = λ _ → refl
+
+-- Compatibility is NOT transitive, since being compatible says
+-- nothing about what happens *outside* the intersection of domains.
+-- So if h is compatible with g, it may still be incompatible with f
+-- on some part of the domain that is not in g's domain --- the fact
+-- that g is compatible with f says nothing about that part of the
+-- domain.
+--
+-- The counterexample is with A = B = Fin 3.  f maps 0->0, 1->1; g
+-- maps 1->1, 2->2; h maps 0->1, 2->2.
+¬∥-trans : ¬({A B : Set} {f g h : A ⇀ B} → f ∥ g → g ∥ h → f ∥ h)
+¬∥-trans P with (P {Fin 3} {Fin 3}
+                   {λ { (fs (fs fz)) → nothing ; x → just x }}
+                   {λ { fz → nothing ; x → just x }}
+                   {λ { fz → just (fs fz)
+                      ; (fs (fs fz)) → just (fs (fs fz))
+                      ; _ → nothing
+                      }}
+                   (λ { fz → refl ; (fs fz) → refl ; (fs (fs fz)) → refl ; (fs (fs (fs ()))) })
+                   (λ { fz → refl ; (fs fz) → refl ; (fs (fs fz)) → refl ; (fs (fs (fs ()))) }))
+                fz
+¬∥-trans P | ()
