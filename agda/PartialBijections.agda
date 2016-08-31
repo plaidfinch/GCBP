@@ -16,7 +16,8 @@ import Relation.Binary.Core as PropEq
 import Relation.Binary.PreorderReasoning as Pre
   renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
 
-open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence ; dom)
+open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence
+                                    ; dom ; _∥_ ; ∥-refl ; ∥-sym)
                              renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
 
@@ -245,6 +246,21 @@ f + g = record
   {A₀ B₀ A₁ B₁ : Set} {f : A₀ ⇌ B₀} {g : A₁ ⇌ B₁} →
   (f + g) ⁻¹ ≋ f ⁻¹ + g ⁻¹
 +⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
+
+----------------------------------------------------------------------
+-- Compatibility
+----------------------------------------------------------------------
+
+-- Compatibility of partial bijections.
+_∥_ : {A B : Set} → Rel (A ⇌ B) lzero
+f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
+
+∥-refl : {A B : Set} {f : A ⇌ B} → f ∥ f
+∥-refl {f = f} = PFun.∥-refl {f = fwd f}, PFun.∥-refl {f = bwd f}
+
+∥-sym : {A B : Set} {f g : A ⇌ B} → f ∥ g → g ∥ f
+∥-sym {f = f} {g = g} (x , y) = (PFun.∥-sym {f = fwd f} {g = fwd g} x)
+                              , (PFun.∥-sym {f = bwd f} {g = bwd g} y)
 
 ----------------------------------------------------------------------
 -- Merge
