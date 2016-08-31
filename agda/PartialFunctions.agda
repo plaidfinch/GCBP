@@ -17,7 +17,7 @@ open import Category.Monad
 
 open import Relation.Binary
 open import Relation.Binary.Core
-open import Relation.Binary.PropositionalEquality using ([_] ; inspect)
+open import Relation.Binary.PropositionalEquality using ([_] ; inspect ; sym)
 
 ----------------------------------------------------------------------
 -- Partial functions
@@ -341,6 +341,9 @@ f ∥ g = (f ∙ dom g ≈ g ∙ dom f)
 
 ∥-refl : {A B : Set} {f : A ⇀ B} → f ∥ f
 ∥-refl = λ _ → refl
+
+∥-sym : {A B : Set} {f g : A ⇀ B} → f ∥ g → g ∥ f
+∥-sym f∥g = λ a → sym (f∥g a)
 
 -- Compatibility is NOT transitive, since being compatible says
 -- nothing about what happens *outside* the intersection of domains.
