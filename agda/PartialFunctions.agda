@@ -366,3 +366,16 @@ f ∥ g = (f ∙ dom g ≈ g ∙ dom f)
                    (λ { fz → refl ; (fs fz) → refl ; (fs (fs fz)) → refl ; (fs (fs (fs ()))) }))
                 fz
 ¬∥-trans P | ()
+
+-- For compatible partial functions, join is commutative, i.e. unbiased.
+compat-join-commute : {A B : Set} {f g : A ⇀ B} → f ∥ g → (f ∣ g ≈ g ∣ f)
+compat-join-commute {f = f} {g = g} f∥g a with f a | g a | inspect f a | inspect g a | f∥g a
+  -- The first three cases are true without compatibility.
+compat-join-commute f∥g a | just _  | nothing | _ | _ | _ = refl
+compat-join-commute f∥g a | nothing | just _  | _ | _ | _ = refl
+compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
+  -- Compatibility says what happens where both functions are defined:
+  -- they must be equal.
+compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
+  rewrite sym eq₁ | sym eq₂ = fa≡ga
+
