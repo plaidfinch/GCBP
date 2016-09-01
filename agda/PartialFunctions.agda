@@ -94,6 +94,11 @@ domdom {f = f} a with f a
 domdom a | just _  = refl
 domdom a | nothing = refl
 
+dom-resp-≈ : ∀ {ℓ} {A B : Set ℓ} {f g : A ⇀ B} → f ≈ g → dom f ≈ dom g
+dom-resp-≈ {f = f} {g = g} f≈g a rewrite f≈g a with g a
+dom-resp-≈ f≈g a | just _  = refl
+dom-resp-≈ f≈g a | nothing = refl
+
 -- Note that given our choice of representation, the range of a
 -- partial function is not computable.
 
