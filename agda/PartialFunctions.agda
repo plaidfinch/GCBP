@@ -7,11 +7,12 @@ open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 open import Data.Fin using (Fin) renaming (zero to fz ; suc to fs)
 open import Data.Empty
 open import Relation.Nullary
-open import Data.Unit
+open import Data.Unit using (⊤ ; tt)
 open import Data.Bool
 open import Data.Sum as Sum
 
-open import Data.Maybe as Maybe
+open import Data.Maybe using (Maybe ; just ; nothing)
+import Data.Maybe as Maybe
 
 open import Category.Monad
 
@@ -51,6 +52,13 @@ isEquivalence = record
   { refl  = ≈-refl
   ; sym   = ≈-sym
   ; trans = ≈-trans
+  }
+
+setoid : ∀ {ℓ} (A B : Set ℓ) → Setoid ℓ ℓ
+setoid A B = record
+  { Carrier       = A ⇀ A
+  ; _≈_           = _≈_
+  ; isEquivalence = isEquivalence
   }
 
 -- for congruence, see ≈-cong-left and ≈-cong-right below
