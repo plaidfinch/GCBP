@@ -81,8 +81,8 @@ dom {A} f = record
   ; bwd       = PFun.dom (fwd f)
   ; left-id   = dom∙dom {f = fwd f}
   ; right-id  = dom∙dom {f = fwd f}
-  ; left-def  = {!!}
-  ; right-def = {!!}
+  ; left-def  = lemma2
+  ; right-def = lemma2
   }
   where
     dom∙dom : {A B : Set} {f : A ⇀ B} → PFun.dom f ∙ PFun.dom f ⊑ PFun.id
@@ -101,6 +101,17 @@ dom {A} f = record
       where
         open Pre (⊑-Preorder A A)
         open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
+
+    lemma2 : {A B : Set} {f : A ⇀ B}
+      → PFun.dom (PFun.dom f) ≈ PFun.dom (PFun.dom f ∙ PFun.dom f)
+    lemma2 {A = A} {f = f} = begin
+      PFun.dom (PFun.dom f)
+                                              ≈⟨ {!!} ⟩
+                                              -- dom-resp-≈ (≈-sym {!dom-right-id {f = PFun.dom f}!})
+      PFun.dom (PFun.dom f ∙ PFun.dom f) ∎
+
+      where
+        open import Relation.Binary.EqReasoning (PFun.setoid A A)
 
 ----------------------------------------------------------------------
 -- The category of partial bijections
