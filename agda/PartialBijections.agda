@@ -168,14 +168,15 @@ _∘_ {A} g f = record
 
     lemma : {A B C : Set} {f⁻¹ : B ⇀ A} {f : A ⇀ B} {g : B ⇀ C}
           → f⁻¹ ∙ f ≈ PFun.dom f → f⁻¹ ∙ PFun.dom g ∙ f ≈ PFun.dom (g ∙ f)
-    lemma {f = f} eq a with f a | inspect f a
-    lemma         eq a | nothing | _ = PropEq.refl
-    lemma {g = g} eq a | just b  | _ with g b
-    lemma         eq a | just _  | _ | nothing = PropEq.refl
-    lemma         eq a | just b  | ins e | just a' = {!!}
-    -- Pretty sure this is true.
-    -- Just need some more 'inspect' magic sauce I think.
-    -- Ugh, so annoying.
+    lemma {f = f} eq a with f a | inspect f a | eq a
+    lemma         _  _ | nothing | _       | _ = PropEq.refl
+    lemma {g = g} _  _ | just b  | ins _   | _ with g b
+    lemma         _  _ | just _  | ins _   | _   | nothing = PropEq.refl
+    lemma         _  _ | just _  | ins _   | eq₂ | just _  = eq₂
+    -- The above looks simple enough but it took me a REALLY long time
+    -- to figure out the right order to pattern-match and 'inspect'
+    -- things to make it all go through.  Proof assistants really need
+    -- a better story for this kind of thing.  Grumble grumble.
 
     .∘-left-dom : {A B C : Set} (h : A ⇌ B) (k : B ⇌ C)
                → (bwd h ∙ bwd k) ∙ fwd k ∙ fwd h ≈ PFun.dom (fwd k ∙ fwd h)
