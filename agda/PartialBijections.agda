@@ -35,14 +35,48 @@ record _⇌_ (A B : Set) : Set where
   field
     fwd        : A ⇀ B
     bwd        : B ⇀ A
-    .left-id   : bwd ∙ fwd ⊑ PFun.id
-    .right-id  : fwd ∙ bwd ⊑ PFun.id
-    .left-def  : PFun.dom fwd ≈ PFun.dom (bwd ∙ fwd)
-    .right-def : PFun.dom bwd ≈ PFun.dom (fwd ∙ bwd)
+    .left-dom   : bwd ∙ fwd ≈ PFun.dom fwd
+    .right-dom  : fwd ∙ bwd ≈ PFun.dom bwd
 
 infix 1 _⇌_
 
 open _⇌_
+
+
+-- The properties left-dom and right-dom imply both the properties we
+-- had before.  So if those properties were strong enough to properly
+-- characterize partial bijections, then this property must be as
+-- well.
+
+-- First, bwd ∙ fwd is a partial identity, that is, the forward and
+-- backwards directions match wherever they are defined.
+.⇌-left-id : {A B : Set} → (f : A ⇌ B) → bwd f ∙ fwd f ⊑ PFun.id
+⇌-left-id {A} f = begin
+  f.bwd ∙ f.fwd
+                                          ≈⟨ f.left-dom ⟩
+  PFun.dom f.fwd
+                                          ⊑⟨ dom⊑id ⟩
+  PFun.id ∎
+  where
+    open module f = _⇌_ f
+    open Pre (⊑-Preorder A A)
+    open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
+
+-- Second, the backward direction is no less defined than the forward
+-- direction.
+.⇌-left-def : {A B : Set} → (f : A ⇌ B)
+            → PFun.dom (fwd f) ≈ PFun.dom (bwd f ∙ fwd f)
+⇌-left-def {A} f = begin
+  PFun.dom f.fwd
+                                          ≈⟨ ≈-sym domdom ⟩
+  PFun.dom (PFun.dom f.fwd)
+                                          ≈⟨ dom-resp-≈ (≈-sym f.left-dom) ⟩
+  PFun.dom (f.bwd ∙ f.fwd) ∎
+  where
+    open module f = _⇌_ f
+    open import Relation.Binary.EqReasoning (PFun.setoid A A)
+
+-- The symmetric properties can be obtained by inverting.
 
 ----------------------------------------------------------------------
 -- Equivalence of partial bijections
@@ -69,20 +103,16 @@ isEquivalence = record
 ∅ = record
   { fwd       = PFun.∅
   ; bwd       = PFun.∅
-  ; left-id   = const tt
-  ; right-id  = const tt
-  ; left-def  = const PropEq.refl
-  ; right-def = const PropEq.refl
+  ; left-dom   = {!!}
+  ; right-dom  = {!!}
   }
 
 dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
 dom {A} f = record
   { fwd       = PFun.dom (fwd f)
   ; bwd       = PFun.dom (fwd f)
-  ; left-id   = dom∙dom {f = fwd f}
-  ; right-id  = dom∙dom {f = fwd f}
-  ; left-def  = lemma2
-  ; right-def = lemma2
+  ; left-dom   = {!!}
+  ; right-dom  = {!!}
   }
   where
     dom∙dom : {A B : Set} {f : A ⇀ B} → PFun.dom f ∙ PFun.dom f ⊑ PFun.id
@@ -115,10 +145,8 @@ id : {A : Set} → A ⇌ A
 id = record
   { fwd       = PFun.id
   ; bwd       = PFun.id
-  ; left-id   = λ _ → PropEq.refl
-  ; right-id  = λ _ → PropEq.refl
-  ; left-def  = λ _ → PropEq.refl
-  ; right-def = λ _ → PropEq.refl
+  ; left-dom   = λ _ → PropEq.refl
+  ; right-dom  = λ _ → PropEq.refl
   }
 
 -- Inverting a partial bijection.
@@ -126,10 +154,8 @@ _⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
 f ⁻¹ = record
   { fwd       = f.bwd
   ; bwd       = f.fwd
-  ; left-id   = f.right-id
-  ; right-id  = f.left-id
-  ; left-def  = f.right-def
-  ; right-def = f.left-def
+  ; left-dom   = f.right-dom
+  ; right-dom  = f.left-dom
   }
   where
     module f = _⇌_ f
@@ -142,40 +168,38 @@ _∘_ : {A B C : Set} → (B ⇌ C) → (A ⇌ B) → (A ⇌ C)
 _∘_ {A} {B} {C} g f = record
   { fwd       = g.fwd ∙ f.fwd
   ; bwd       = f.bwd ∙ g.bwd
-  ; left-id   = ∘-id f g
-  ; right-id  = ∘-id (g ⁻¹) (f ⁻¹)
-  ; left-def  = {!!}
-  ; right-def = {!!}
+  ; left-dom   = {!!}
+  ; right-dom  = {!!}
   }
   where
     module f = _⇌_ f
     module g = _⇌_ g
 
-    .∘-id : {A B C : Set} → (h : A ⇌ B) → (k : B ⇌ C)
-         → (bwd h ∙ bwd k) ∙ (fwd k ∙ fwd h) ⊑ PFun.id
-    ∘-id {A} h k = begin
-      ((h.bwd ∙ k.bwd) ∙ (k.fwd ∙ h.fwd))
-                                              ≈⟨ sym (∙-assoc (h.bwd ∙ k.bwd) k.fwd h.fwd ) ⟩
-      ((h.bwd ∙ k.bwd) ∙ k.fwd) ∙ h.fwd
-                                              ≈⟨ ≈-cong-left h.fwd
-                                                  (∙-assoc h.bwd k.bwd k.fwd) ⟩
-      (h.bwd ∙ (k.bwd ∙ k.fwd)) ∙ h.fwd
-                                              ⊑⟨ ⊑-mono-left _ _ h.fwd
-                                                ( ⊑-mono-right _ _ h.bwd
-                                                    k.left-id
-                                                )
-                                              ⟩
-      (h.bwd ∙ PFun.id) ∙ h.fwd
-                                              ≈⟨ ≈-cong-left h.fwd ∙-right-id ⟩
-      h.bwd ∙ h.fwd
-                                              ⊑⟨ h.left-id ⟩
-      PFun.id ∎
+    -- .∘-id : {A B C : Set} → (h : A ⇌ B) → (k : B ⇌ C)
+    --      → (bwd h ∙ bwd k) ∙ (fwd k ∙ fwd h) ⊑ PFun.id
+    -- ∘-id {A} h k = begin
+    --   ((h.bwd ∙ k.bwd) ∙ (k.fwd ∙ h.fwd))
+    --                                           ≈⟨ sym (∙-assoc (h.bwd ∙ k.bwd) k.fwd h.fwd ) ⟩
+    --   ((h.bwd ∙ k.bwd) ∙ k.fwd) ∙ h.fwd
+    --                                           ≈⟨ ≈-cong-left h.fwd
+    --                                               (∙-assoc h.bwd k.bwd k.fwd) ⟩
+    --   (h.bwd ∙ (k.bwd ∙ k.fwd)) ∙ h.fwd
+    --                                           ⊑⟨ ⊑-mono-left _ _ h.fwd
+    --                                             ( ⊑-mono-right _ _ h.bwd
+    --                                                 k.left-id
+    --                                             )
+    --                                           ⟩
+    --   (h.bwd ∙ PFun.id) ∙ h.fwd
+    --                                           ≈⟨ ≈-cong-left h.fwd ∙-right-id ⟩
+    --   h.bwd ∙ h.fwd
+    --                                           ⊑⟨ h.left-id ⟩
+    --   PFun.id ∎
 
-      where
-        open module h = _⇌_ h
-        open module k = _⇌_ k
-        open Pre (⊑-Preorder A A)
-        open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
+    --   where
+    --     open module h = _⇌_ h
+    --     open module k = _⇌_ k
+    --     open Pre (⊑-Preorder A A)
+    --     open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
 
 ∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
   → (f ∘ g) ∘ h ≋ f ∘ (g ∘ h)
@@ -201,44 +225,38 @@ inl : {A B : Set} → (A ⇌ A ⊎ B)
 inl = record
   { fwd       = λ a → just (inj₁ a)
   ; bwd       = [ just , const nothing ]
-  ; left-id   = λ _ → PropEq.refl
-  ; right-id  = [ (λ _ → PropEq.refl) , const tt ]
-  ; left-def  = λ _ → PropEq.refl
-  ; right-def = [ (λ _ → PropEq.refl) , const PropEq.refl ]
+  ; left-dom   = λ _ → PropEq.refl
+  ; right-dom  = {!!}
   }
 
 inr : {A B : Set} → (B ⇌ A ⊎ B)
 inr = record
   { fwd       = λ b → just (inj₂ b)
   ; bwd       = [ const nothing , just ]
-  ; left-id   = λ _ → PropEq.refl
-  ; right-id  = [ const tt , (λ _ → PropEq.refl) ]
-  ; left-def  = λ _ → PropEq.refl
-  ; right-def = [ const PropEq.refl , (λ _ → PropEq.refl) ]
+  ; left-dom  = λ _ → PropEq.refl
+  ; right-dom  = {!!}
   }
 
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
 f + g = record
   { fwd       = fwd f ⇀+ fwd g
   ; bwd       = bwd f ⇀+ bwd g
-  ; left-id   = +-left-id f g
-  ; right-id  = +-left-id (f ⁻¹) (g ⁻¹)
-  ; left-def  = {!!}
-  ; right-def = {!!}
+  ; left-dom  = {!!}
+  ; right-dom = {!!}
   }
   where
-    .+-left-id : {A₀ B₀ A₁ B₁ : Set} → (f : A₀ ⇌ B₀) → (g : A₁ ⇌ B₁)
-      → (bwd f ⇀+ bwd g) ∙ (fwd f ⇀+ fwd g) ⊑ PFun.id
-    +-left-id f g (inj₁ a₀) with fwd f a₀ | left-id f a₀
-    +-left-id f g (inj₁ a₀) | nothing | _ = tt
-    +-left-id f g (inj₁ a₀) | just b₀ | _ with bwd f b₀
-    +-left-id f g (inj₁ a₀) | just b₀ | _ | nothing = tt
-    +-left-id f g (inj₁ a₀) | just b₀ | a₀'≡a₀ | just a₀' rewrite a₀'≡a₀ = PropEq.refl
-    +-left-id f g (inj₂ a₁) with fwd g a₁ | left-id g a₁
-    +-left-id f g (inj₂ a₁) | nothing | _ = tt
-    +-left-id f g (inj₂ a₁) | just b₁ | q with bwd g b₁
-    +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
-    +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = PropEq.refl
+    -- .+-left-id : {A₀ B₀ A₁ B₁ : Set} → (f : A₀ ⇌ B₀) → (g : A₁ ⇌ B₁)
+    --   → (bwd f ⇀+ bwd g) ∙ (fwd f ⇀+ fwd g) ⊑ PFun.id
+    -- +-left-id f g (inj₁ a₀) with fwd f a₀ | left-id f a₀
+    -- +-left-id f g (inj₁ a₀) | nothing | _ = tt
+    -- +-left-id f g (inj₁ a₀) | just b₀ | _ with bwd f b₀
+    -- +-left-id f g (inj₁ a₀) | just b₀ | _ | nothing = tt
+    -- +-left-id f g (inj₁ a₀) | just b₀ | a₀'≡a₀ | just a₀' rewrite a₀'≡a₀ = PropEq.refl
+    -- +-left-id f g (inj₂ a₁) with fwd g a₁ | left-id g a₁
+    -- +-left-id f g (inj₂ a₁) | nothing | _ = tt
+    -- +-left-id f g (inj₂ a₁) | just b₁ | q with bwd g b₁
+    -- +-left-id f g (inj₂ a₁) | just b₁ | _ | nothing = tt
+    -- +-left-id f g (inj₂ a₁) | just b₁ | a₁'≡a₁ | just a₁' rewrite a₁'≡a₁ = PropEq.refl
 
 ∘-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
