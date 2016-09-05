@@ -301,5 +301,10 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 -- i.e. (f . dom g ≈ g . dom f) and (rng g . f ≈ rng f . g)
 -- Then we can just join both directions.
 
--- To do: define compatibility for partial functions.  Then lift to
--- compatibility for partial bijections.
+_⋎_ : {A B : Set} (f g : A ⇌ B) → {{compat : f ∥ g}} → (A ⇌ B)
+_⋎_ f g {{cr , cl}} = record
+  { fwd       = fwd f ∣ fwd g
+  ; bwd       = bwd f ∣ bwd g
+  ; left-dom  = {!!}
+  ; right-dom = {!!}
+  }
