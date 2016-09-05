@@ -18,7 +18,7 @@ open import Category.Monad
 
 open import Relation.Binary
 open import Relation.Binary.Core
-open import Relation.Binary.PropositionalEquality using ([_] ; inspect ; sym)
+open import Relation.Binary.PropositionalEquality using ([_] ; inspect ; sym ; cong)
 
 ----------------------------------------------------------------------
 -- Partial functions
@@ -343,6 +343,20 @@ f + g = pullMaybe ∘ᶠ Sum.map f g
 ∙-abides-+ {h = h} (inj₂ _) | just b with h b
 ∙-abides-+         (inj₂ _) | just _ | just _  = refl
 ∙-abides-+         (inj₂ _) | just _ | nothing = refl
+
++-resp-≈ : {A₀ A₁ B₀ B₁ : Set} {f g : A₀ ⇀ B₀} {h k : A₁ ⇀ B₁}
+         → f ≈ g → h ≈ k → (f + h) ≈ (g + k)
++-resp-≈ f≈g h≈k (inj₁ a₀) rewrite (f≈g a₀) = refl
++-resp-≈ f≈g h≈k (inj₂ a₁) rewrite (h≈k a₁) = refl
+
+dom-+ : {A₀ A₁ B₀ B₁ : Set} {f : A₀ ⇀ B₀} {g : A₁ ⇀ B₁}
+      → dom (f + g) ≈ dom f + dom g
+dom-+ {f = f} (inj₁ a₀) with f a₀
+dom-+         (inj₁ a₀) | just _  = refl
+dom-+         (inj₁ a₀) | nothing = refl
+dom-+ {g = g} (inj₂ a₁) with g a₁
+dom-+         (inj₂ a₁) | just _  = refl
+dom-+         (inj₂ a₁) | nothing = refl
 
 ----------------------------------------------------------------------
 -- Compatibility
