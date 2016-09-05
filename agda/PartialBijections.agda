@@ -104,14 +104,7 @@ dom {A} f = record
 
     lemma2 : {A B : Set} {f : A ⇀ B}
       → PFun.dom (PFun.dom f) ≈ PFun.dom (PFun.dom f ∙ PFun.dom f)
-    lemma2 {A = A} {f = f} = begin
-      PFun.dom (PFun.dom f)
-                                              ≈⟨ {!!} ⟩
-                                              -- dom-resp-≈ (≈-sym {!dom-right-id {f = PFun.dom f}!})
-      PFun.dom (PFun.dom f ∙ PFun.dom f) ∎
-
-      where
-        open import Relation.Binary.EqReasoning (PFun.setoid A A)
+    lemma2 {A = A} {f = f} = dom-resp-≈ (≈-sym (subset-idem dom⊑id))
 
 ----------------------------------------------------------------------
 -- The category of partial bijections
