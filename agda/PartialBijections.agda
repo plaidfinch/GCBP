@@ -105,16 +105,16 @@ isEquivalence = record
 ∅ = record
   { fwd       = PFun.∅
   ; bwd       = PFun.∅
-  ; left-dom   = const PropEq.refl
-  ; right-dom  = const PropEq.refl
+  ; left-dom  = const PropEq.refl
+  ; right-dom = const PropEq.refl
   }
 
 dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
 dom {A} f = record
   { fwd       = PFun.dom (fwd f)
   ; bwd       = PFun.dom (fwd f)
-  ; left-dom   = dom∙dom
-  ; right-dom  = dom∙dom
+  ; left-dom  = dom∙dom
+  ; right-dom = dom∙dom
   }
   where
     dom∙dom : {A B : Set} {f : A ⇀ B} → PFun.dom f ∙ PFun.dom f ≈ PFun.dom (PFun.dom f)
@@ -136,8 +136,8 @@ id : {A : Set} → A ⇌ A
 id = record
   { fwd       = PFun.id
   ; bwd       = PFun.id
-  ; left-dom   = λ _ → PropEq.refl
-  ; right-dom  = λ _ → PropEq.refl
+  ; left-dom  = λ _ → PropEq.refl
+  ; right-dom = λ _ → PropEq.refl
   }
 
 -- Inverting a partial bijection.
@@ -145,8 +145,8 @@ _⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
 f ⁻¹ = record
   { fwd       = f.bwd
   ; bwd       = f.fwd
-  ; left-dom   = f.right-dom
-  ; right-dom  = f.left-dom
+  ; left-dom  = f.right-dom
+  ; right-dom = f.left-dom
   }
   where
     module f = _⇌_ f
