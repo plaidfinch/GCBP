@@ -241,12 +241,30 @@ inr = record
   }
 
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
-f + g = record
-  { fwd       = fwd f ⇀+ fwd g
-  ; bwd       = bwd f ⇀+ bwd g
-  ; left-dom  = [ {!!} , {!!} ]
-  ; right-dom = [ {!!} , {!!} ]
+_+_ {A₀} {B₀} {A₁} {B₁} f g = record
+  { fwd       = f.fwd ⇀+ g.fwd
+  ; bwd       = f.bwd ⇀+ g.bwd
+  ; left-dom  = +-left-dom f g
+  ; right-dom = +-left-dom (f ⁻¹) (g ⁻¹)
   }
+  where
+    module f = _⇌_ f
+    module g = _⇌_ g
+
+    .+-left-dom : {C₀ C₁ D₀ D₁ : Set} → (h : C₀ ⇌ D₀) → (k : C₁ ⇌ D₁)
+               → (bwd h ⇀+ bwd k) ∙ (fwd h ⇀+ fwd k) ≈ PFun.dom (fwd h ⇀+ fwd k)
+    +-left-dom {C₀} {C₁} h k = begin
+      (h.bwd ⇀+ k.bwd) ∙ (h.fwd ⇀+ k.fwd)
+                                        ≈⟨ ≈-sym ∙-abides-+ ⟩
+      (h.bwd ∙ h.fwd) ⇀+ (k.bwd ∙ k.fwd)
+                                        ≈⟨ +-resp-≈ h.left-dom k.left-dom ⟩
+      PFun.dom h.fwd ⇀+ PFun.dom k.fwd
+                                        ≈⟨ ≈-sym dom-+ ⟩
+      PFun.dom (h.fwd ⇀+ k.fwd) ∎
+      where
+        module h = _⇌_ h
+        module k = _⇌_ k
+        open import Relation.Binary.EqReasoning (PFun.setoid (C₀ ⊎ C₁) (C₀ ⊎ C₁))
 
 ∘-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
