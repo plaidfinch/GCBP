@@ -192,6 +192,20 @@ _∣_ {ℓ} f g a = f a ∣M g a
 -- However, we can prove a weaker left distribution law using ⊑ in
 -- place of ≈, see below.
 
+dom-∣ : ∀ {ℓ} {A B : Set ℓ} {f g : A ⇀ B} → dom (f ∣ g) ≈ dom f ∣ dom g
+dom-∣ {f = f} a with f a
+dom-∣         _ | just _ = refl
+dom-∣ {g = g} a | nothing with g a
+dom-∣         _ | nothing | just _  = refl
+dom-∣         _ | nothing | nothing = refl
+
+∣-resp-≈ : ∀ {ℓ} {A B : Set ℓ} {f g h k : A ⇀ B} → f ≈ g → h ≈ k → (f ∣ h) ≈ (g ∣ k)
+∣-resp-≈ {f = f} {g = g} f≈g h≈k a with f a | g a | f≈g a | h≈k a
+∣-resp-≈ f≈g h≈k a | just _  | just _  | eq₁ | _   = eq₁
+∣-resp-≈ f≈g h≈k a | just _  | nothing | ()  | _
+∣-resp-≈ f≈g h≈k a | nothing | just _  | ()  | _
+∣-resp-≈ f≈g h≈k a | nothing | nothing | _   | eq₂ = eq₂
+
 ----------------------------------------------------------------------
 -- Definedness partial order for partial functions
 ----------------------------------------------------------------------
