@@ -420,3 +420,25 @@ compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
 compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
   rewrite sym eq₁ | sym eq₂ = fa≡ga
 
+
+-- Is this even true??
+-- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
+--                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k)
+-- ∣-abides-∙-compat = {!!}
+
+
+-- Hmmm... NO, it isn't true!
+
+¬∣-abides-∙-compat :
+  ¬( {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
+     → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k))
+¬∣-abides-∙-compat P
+  with P {Bool} {Bool} {Bool}
+         {f = λ { false → just false ; _ → nothing }}
+         {h = λ { true → just true ; _ → nothing }}
+         {g = λ { true → just true ; _ → nothing }}
+         {k = λ { false → just false ; _ → nothing }}
+         (λ { false → refl ; true → refl })
+         (λ { false → refl ; true → refl })
+         true
+¬∣-abides-∙-compat P | ()

@@ -302,9 +302,31 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 -- Then we can just join both directions.
 
 _⋎_ : {A B : Set} (f g : A ⇌ B) → {{compat : f ∥ g}} → (A ⇌ B)
-_⋎_ f g {{cr , cl}} = record
-  { fwd       = fwd f ∣ fwd g
-  ; bwd       = bwd f ∣ bwd g
+_⋎_ {A} f g {{cr , cl}} = record
+  { fwd       = f.fwd ∣ g.fwd
+  ; bwd       = f.bwd ∣ g.bwd
   ; left-dom  = {!!}
+
+  -- The following proof doesn't work since ∣-abides-∙-compat is false
+  -- (see counterexample in PartialFunctions.agda)
+
+  -- ; left-dom  = begin
+  --     f.bwd ∣ g.bwd ∙ f.fwd ∣ g.fwd
+  --                                       ≈⟨ ≈-sym
+  --                                           (∣-abides-∙-compat
+  --                                             {f = f.bwd} {h = g.bwd} {g = f.fwd} {k = g.fwd}
+  --                                             cl cr
+  --                                           )
+  --                                        ⟩
+  --     (f.bwd ∙ f.fwd) ∣ (g.bwd ∙ g.fwd)
+  --                                       ≈⟨ ∣-resp-≈ f.left-dom g.left-dom ⟩
+  --     PFun.dom f.fwd ∣ PFun.dom g.fwd
+  --                                       ≈⟨ ≈-sym (dom-∣ {f = f.fwd}) ⟩
+  --     PFun.dom (f.fwd ∣ g.fwd) ∎
   ; right-dom = {!!}
   }
+  where
+    module f = _⇌_ f
+    module g = _⇌_ g
+    open import Relation.Binary.EqReasoning (PFun.setoid A A)
+
