@@ -458,3 +458,14 @@ compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | f
 -- ∣-abides-∙-compat c⁻¹ c a | just b | q | r | s | t | just x | [ eq ] | nothing | [ eq₁ ] | y = {!!}
 -- ∣-abides-∙-compat c⁻¹ c a | just b | q | r | s | t | nothing | v | w | x | y = {!!}
 -- ∣-abides-∙-compat c⁻¹ c a | nothing | q | just x | s | t = {!!}
+
+-- More blerg
+
+-- ∣-abides-∙-compat : {A B : Set} {f g : A ⇀ B} {f⁻¹ g⁻¹ : B ⇀ A}
+--                   → f⁻¹ ∥ g⁻¹ → f ∥ g
+--                   → (f⁻¹ ∣ g⁻¹) ∙ (f ∣ g) ≈ (dom f ∣ dom g)
+-- ∣-abides-∙-compat {f = f} c c⁻¹ a with f a | inspect f a
+-- ∣-abides-∙-compat {f⁻¹ = f⁻¹} c c⁻¹ a | just fx | _ with f⁻¹ fx | inspect f⁻¹ fx
+-- ∣-abides-∙-compat c c⁻¹ a | just fx | [ eq₁ ] | just ffx | [ eq ] rewrite (sym eq) = {!!}
+-- ∣-abides-∙-compat c c⁻¹ a | just fx | eq₁ | nothing | eq₂ = {!!}
+-- ∣-abides-∙-compat c c⁻¹ a | nothing | eq₁ = {!!}
