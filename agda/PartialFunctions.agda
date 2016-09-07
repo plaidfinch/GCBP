@@ -442,3 +442,19 @@ compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | f
          (λ { false → refl ; true → refl })
          true
 ¬∣-abides-∙-compat P | ()
+
+-- Another attempt
+
+-- blerg
+
+-- ∣-abides-∙-compat : {A B : Set} {f g : A ⇀ B} {f⁻¹ g⁻¹ : B ⇀ A}
+--                   → f⁻¹ ∥ g⁻¹ → f ∥ g
+--                   → (f⁻¹ ∣ g⁻¹) ∙ (f ∣ g) ≈ (dom f ∣ dom g)
+-- ∣-abides-∙-compat {f = f} {g = g} c⁻¹ c a with f a | inspect f a | g a | inspect g a | c a
+-- ∣-abides-∙-compat c⁻¹ c a | nothing | q | nothing | s | t = refl
+-- ∣-abides-∙-compat {f⁻¹ = f⁻¹} {g⁻¹ = g⁻¹} c⁻¹ c a | just b | q | r | s | t
+--   with f⁻¹ b | inspect f⁻¹ b | g⁻¹ b | inspect g⁻¹ b | c⁻¹ b
+-- ∣-abides-∙-compat c⁻¹ c a | just b | q | r | s | t | just x | [ eq ] | just x₁ | [ eq₁ ] | y = {!!}
+-- ∣-abides-∙-compat c⁻¹ c a | just b | q | r | s | t | just x | [ eq ] | nothing | [ eq₁ ] | y = {!!}
+-- ∣-abides-∙-compat c⁻¹ c a | just b | q | r | s | t | nothing | v | w | x | y = {!!}
+-- ∣-abides-∙-compat c⁻¹ c a | nothing | q | just x | s | t = {!!}
