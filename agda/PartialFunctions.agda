@@ -303,16 +303,16 @@ subset-idem {X = X} X⊑id a | just _   | [ eq ] | Xa⊑ rewrite eq | Xa⊑ = eq
 -- Sums
 ----------------------------------------------------------------------
 
-inl : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ A ⊎ B)
+inl : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ (A ⊎ B))
 inl a = just (inj₁ a)
 
-inr : ∀ {ℓ} {A B : Set ℓ} → (B ⇀ A ⊎ B)
+inr : ∀ {ℓ} {A B : Set ℓ} → (B ⇀ (A ⊎ B))
 inr b = just (inj₂ b)
 
-pullMaybe : {A B : Set} → Maybe A ⊎ Maybe B ⇀ A ⊎ B
+pullMaybe : {A B : Set} → (Maybe A ⊎ Maybe B) ⇀ (A ⊎ B)
 pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
 
-_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇀ B₀) → (A₁ ⇀ B₁) → (A₀ ⊎ A₁ ⇀ B₀ ⊎ B₁)
+_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇀ B₀) → (A₁ ⇀ B₁) → ((A₀ ⊎ A₁) ⇀ (B₀ ⊎ B₁))
 f + g = pullMaybe ∘ᶠ Sum.map f g
 
 •-abides-+ :

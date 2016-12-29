@@ -175,14 +175,14 @@ _∘_ {A} {B} {C} g f = record
 ∘-right-id : {A B : Set} {f : A ⇌ B} → f ∘ id ≋ f
 ∘-right-id = (λ _ → PropEq.refl) , •-left-id
 
-∘⁻¹ : {A B C : Set} {f : B ⇌ C} {g : A ⇌ B} → (f ∘ g) ⁻¹ ≋ (g ⁻¹ ∘ f ⁻¹)
+∘⁻¹ : {A B C : Set} {f : B ⇌ C} {g : A ⇌ B} → (f ∘ g) ⁻¹ ≋ ((g ⁻¹) ∘ (f ⁻¹))
 ∘⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
 
 ----------------------------------------------------------------------
 -- Sums
 ----------------------------------------------------------------------
 
-inl : {A B : Set} → (A ⇌ A ⊎ B)
+inl : {A B : Set} → (A ⇌ (A ⊎ B))
 inl = record
   { fwd      = λ a → just (inj₁ a)
   ; bwd      = [ just , const nothing ]
@@ -190,7 +190,7 @@ inl = record
   ; right-id = [ (λ _ → PropEq.refl) , const tt ]
   }
 
-inr : {A B : Set} → (B ⇌ A ⊎ B)
+inr : {A B : Set} → (B ⇌ (A ⊎ B))
 inr = record
   { fwd      = λ b → just (inj₂ b)
   ; bwd      = [ const nothing , just ]
@@ -198,7 +198,7 @@ inr = record
   ; right-id = [ const tt , (λ _ → PropEq.refl) ]
   }
 
-_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
+_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → ((A₀ ⊎ A₁) ⇌ (B₀ ⊎ B₁))
 f + g = record
   { fwd      = fwd f ⇀+ fwd g
   ; bwd      = bwd f ⇀+ bwd g
@@ -227,7 +227,7 @@ f + g = record
 
 +⁻¹ :
   {A₀ B₀ A₁ B₁ : Set} {f : A₀ ⇌ B₀} {g : A₁ ⇌ B₁} →
-  (f + g) ⁻¹ ≋ f ⁻¹ + g ⁻¹
+  ((f + g) ⁻¹) ≋ (f ⁻¹) + (g ⁻¹)
 +⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
 
 ----------------------------------------------------------------------
