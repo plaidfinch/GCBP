@@ -234,10 +234,10 @@ infix 4 _⊑M_
 ⊑M-trans nothing y z x⊑y y⊑z = tt
 
 ⊑M-antisym : {A : Set} (x y : Maybe A) → x ⊑M y → y ⊑M x → x ≡ y
-⊑M-antisym (just x) (just .x) refl y⊑x = refl
-⊑M-antisym (just x) nothing () y⊑x
-⊑M-antisym nothing (just x) x⊑y ()
-⊑M-antisym nothing nothing x⊑y y⊑x = refl
+⊑M-antisym (just _) (just _) refl _  = refl
+⊑M-antisym (just _) nothing  ()
+⊑M-antisym nothing  (just x)  _    ()
+⊑M-antisym nothing  nothing   _    _ = refl
 
 -- Order for partial functions is just pointwise lifting of order on Maybe
 
