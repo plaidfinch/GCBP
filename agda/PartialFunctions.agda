@@ -159,6 +159,10 @@ dom-right-id a | nothing | _        = refl
 -- Join
 ----------------------------------------------------------------------
 
+-- Need a better version: give it two pfuns + proof of compatibility,
+-- and get back their merge + a proof that both input pfuns are
+-- sub-pfuns of the result, or both compatible with it, or something like that
+
 -- Left-biased join of partial functions.
 _∣_ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → (A ⇀ B) → (A ⇀ B)
 _∣_ {ℓ} f g a = f a ∣M g a
@@ -183,7 +187,8 @@ _∣_ {ℓ} f g a = f a ∣M g a
 
 -- ... but NOT from the left.  Here is a counterexample.
 ¬∙∣ : ¬ ({A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f ∙ (g ∣ h) ≈ (f ∙ g) ∣ (f ∙ h))
-¬∙∣ P with (P (λ { false → just tt ; _ → nothing })
+¬∙∣ P with (P {⊤} {Bool} {⊤}
+              (λ { false → just tt ; _ → nothing })
               (const (just true))
               (const (just false)))
            tt
@@ -257,6 +262,9 @@ infix 4 _⊑_
   where
     ⊑-reflexive : _≈_ ⇒ _⊑_
     ⊑-reflexive i≈j a rewrite (i≈j a) = ⊑M-refl
+
+⊑-antisym : {A B : Set} (f g : A ⇀ B) → f ⊑ g → g ⊑ f → f ≈ g
+⊑-antisym = {!!}
 
 -- ...and also monotonic wrt. composition
 
@@ -420,19 +428,22 @@ compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
 compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
   rewrite sym eq₁ | sym eq₂ = fa≡ga
 
+-- XXX A nice lemma to have, we convinced ourselves it is true.
+-- Should give it a better name.
+foo : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
+foo f h g k f∥h g∥k = {!!}
 
 -- Is this even true??
 -- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
 --                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k)
 -- ∣-abides-∙-compat = {!!}
 
-
 -- Hmmm... NO, it isn't true!
 
-¬∣-abides-∙-compat :
+¬∣-abides-∙-compat-≈ :
   ¬( {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
      → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k))
-¬∣-abides-∙-compat P
+¬∣-abides-∙-compat-≈ P
   with P {Bool} {Bool} {Bool}
          {f = λ { false → just false ; _ → nothing }}
          {h = λ { true → just true ; _ → nothing }}
@@ -441,7 +452,17 @@ compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | f
          (λ { false → refl ; true → refl })
          (λ { false → refl ; true → refl })
          true
-¬∣-abides-∙-compat P | ()
+¬∣-abides-∙-compat-≈ P | ()
+
+
+-- XXX But the above is probably true when weakened to ⊑.  Prove this!
+
+∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
+                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ⊑ (f ∣ h) ∙ (g ∣ k)
+∣-abides-∙-compat = {!!}
+
+
+
 
 -- Another attempt
 
