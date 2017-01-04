@@ -177,7 +177,7 @@ _∣_ {ℓ} f g a = f a ∣M g a
 ∣∙ : ∀ {ℓ} {A B C : Set ℓ} → (f g : B ⇀ C) → (h : A ⇀ B) → (f ∣ g) ∙ h ≈ (f ∙ h) ∣ (g ∙ h)
 ∣∙ f g h a with h a
 ∣∙ f g h a | nothing = refl
-∣∙ f g h a | just b  with f b
+∣∙ f g h a | just b with f b
 ∣∙ f g h a | just b | just _  = refl
 ∣∙ f g h a | just b | nothing = refl
 
