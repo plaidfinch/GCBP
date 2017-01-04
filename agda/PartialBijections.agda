@@ -151,7 +151,7 @@ f ⁻¹ = record
   where
     module f = _⇌_ f
 
-rng : {A B : Set} → (A ⇌ B) → (B ⇌ B)
+rng : {A B : Set } → (A ⇌ B) → (B ⇌ B)
 rng f = dom (f ⁻¹)
 
 -- Composing partial bijections.
