@@ -159,6 +159,10 @@ dom-right-id a | nothing | _        = refl
 -- Join
 ----------------------------------------------------------------------
 
+-- Need a better version: give it two pfuns + proof of compatibility,
+-- and get back their merge + a proof that both input pfuns are
+-- sub-pfuns of the result, or both compatible with it, or something like that
+
 -- Left-biased join of partial functions.
 _∣_ : ∀ {ℓ} {A B : Set ℓ} → (A ⇀ B) → (A ⇀ B) → (A ⇀ B)
 _∣_ {ℓ} f g a = f a ∣M g a
@@ -183,7 +187,8 @@ _∣_ {ℓ} f g a = f a ∣M g a
 
 -- ... but NOT from the left.  Here is a counterexample.
 ¬∙∣ : ¬ ({A B C : Set} → (f : B ⇀ C) → (g h : A ⇀ B) → f ∙ (g ∣ h) ≈ (f ∙ g) ∣ (f ∙ h))
-¬∙∣ P with (P (λ { false → just tt ; _ → nothing })
+¬∙∣ P with (P {⊤} {Bool} {⊤}
+              (λ { false → just tt ; _ → nothing })
               (const (just true))
               (const (just false)))
            tt
