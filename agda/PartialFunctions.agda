@@ -262,7 +262,7 @@ infix 4 _⊑_
   ; isPreorder = record
     { isEquivalence = isEquivalence
     ; reflexive     = ⊑-reflexive
-    ; trans         = λ {i} {j} {k} → ⊑-trans i j k
+    ; trans         = ⊑-trans _ _ _
     }
   }
   where
@@ -271,6 +271,17 @@ infix 4 _⊑_
 
 ⊑-antisym : {A B : Set} (f g : A ⇀ B) → f ⊑ g → g ⊑ f → f ≈ g
 ⊑-antisym f g f⊑g g⊑f = λ a → ⊑M-antisym (f a) (g a) (f⊑g a) (g⊑f a)
+
+⊑-Poset : Set → Set → Poset lzero lzero lzero
+⊑-Poset A B = record
+  { Carrier        = A ⇀ B
+  ; _≈_            = _≈_
+  ; _≤_            = _⊑_
+  ; isPartialOrder = record
+    { isPreorder = Preorder.isPreorder (⊑-Preorder A B)
+    ; antisym    = ⊑-antisym _ _
+    }
+  }
 
 -- ...and also monotonic wrt. composition
 
