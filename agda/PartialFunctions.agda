@@ -445,10 +445,26 @@ compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
 compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
   rewrite sym eq₁ | sym eq₂ = fa≡ga
 
--- XXX A nice lemma to have, we convinced ourselves it is true.
--- Should give it a better name.
-foo : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
-foo f h g k f∥h g∥k = {!!}
+-- Compatibility is preserved under composition.
+∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
+∥-∙r f g k g∥k a with g a | k a | inspect g a | inspect k a | g∥k a
+∥-∙r f g k g∥k a | nothing | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka = refl
+∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka
+∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ga≡ = refl
+∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
+∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ga
+∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ka≡ = refl
+∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
+∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka | f ga | inspect f ka | inspect f ga
+∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | just x₁ | [ fka≡ ] | [ fga≡ ] rewrite ga≡ka = refl
+∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | nothing | [ fka≡ ] | [ fga≡ ] rewrite ga≡ = fga≡
+∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | just x | [ fka≡ ] | [ fga≡ ] rewrite ka≡ = sym fka≡
+∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | nothing | [ fka≡ ] | [ fga≡ ] = refl
+
+-- uggghhh.  There has got to be a better way than the above.
+
+∥-∙ : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
+∥-∙ f h g k f∥h g∥k a = {!!}
 
 -- Is this even true??
 -- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
