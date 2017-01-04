@@ -181,7 +181,7 @@ _∣_ {ℓ} f g a = f a ∣M g a
 ∣∙ : ∀ {ℓ} {A B C : Set ℓ} → (f g : B ⇀ C) → (h : A ⇀ B) → (f ∣ g) ∙ h ≈ (f ∙ h) ∣ (g ∙ h)
 ∣∙ f g h a with h a
 ∣∙ f g h a | nothing = refl
-∣∙ f g h a | just b  with f b
+∣∙ f g h a | just b with f b
 ∣∙ f g h a | just b | just _  = refl
 ∣∙ f g h a | just b | nothing = refl
 
@@ -233,6 +233,12 @@ infix 4 _⊑M_
 ⊑M-trans (just x) nothing z () y⊑z
 ⊑M-trans nothing y z x⊑y y⊑z = tt
 
+⊑M-antisym : {A : Set} (x y : Maybe A) → x ⊑M y → y ⊑M x → x ≡ y
+⊑M-antisym (just x) (just .x) refl y⊑x = refl
+⊑M-antisym (just x) nothing () y⊑x
+⊑M-antisym nothing (just x) x⊑y ()
+⊑M-antisym nothing nothing x⊑y y⊑x = refl
+
 -- Order for partial functions is just pointwise lifting of order on Maybe
 
 _⊑_ : {A B : Set} → Rel (A ⇀ B) lzero
@@ -264,7 +270,7 @@ infix 4 _⊑_
     ⊑-reflexive i≈j a rewrite (i≈j a) = ⊑M-refl
 
 ⊑-antisym : {A B : Set} (f g : A ⇀ B) → f ⊑ g → g ⊑ f → f ≈ g
-⊑-antisym = {!!}
+⊑-antisym f g f⊑g g⊑f = λ a → ⊑M-antisym (f a) (g a) (f⊑g a) (g⊑f a)
 
 -- ...and also monotonic wrt. composition
 
