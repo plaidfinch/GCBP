@@ -263,6 +263,9 @@ infix 4 _⊑_
     ⊑-reflexive : _≈_ ⇒ _⊑_
     ⊑-reflexive i≈j a rewrite (i≈j a) = ⊑M-refl
 
+⊑-antisym : {A B : Set} (f g : A ⇀ B) → f ⊑ g → g ⊑ f → f ≈ g
+⊑-antisym = {!!}
+
 -- ...and also monotonic wrt. composition
 
 ⊑-mono-left : {A B C : Set} (h : A ⇀ B) {f g : B ⇀ C}
@@ -425,19 +428,22 @@ compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
 compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
   rewrite sym eq₁ | sym eq₂ = fa≡ga
 
+-- XXX A nice lemma to have, we convinced ourselves it is true.
+-- Should give it a better name.
+foo : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
+foo f h g k f∥h g∥k = {!!}
 
 -- Is this even true??
 -- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
 --                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k)
 -- ∣-abides-∙-compat = {!!}
 
-
 -- Hmmm... NO, it isn't true!
 
-¬∣-abides-∙-compat :
+¬∣-abides-∙-compat-≈ :
   ¬( {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
      → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k))
-¬∣-abides-∙-compat P
+¬∣-abides-∙-compat-≈ P
   with P {Bool} {Bool} {Bool}
          {f = λ { false → just false ; _ → nothing }}
          {h = λ { true → just true ; _ → nothing }}
@@ -446,7 +452,17 @@ compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | f
          (λ { false → refl ; true → refl })
          (λ { false → refl ; true → refl })
          true
-¬∣-abides-∙-compat P | ()
+¬∣-abides-∙-compat-≈ P | ()
+
+
+-- XXX But the above is probably true when weakened to ⊑.  Prove this!
+
+∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
+                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ⊑ (f ∣ h) ∙ (g ∣ k)
+∣-abides-∙-compat = {!!}
+
+
+
 
 -- Another attempt
 
