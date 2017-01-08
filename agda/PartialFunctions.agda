@@ -445,23 +445,52 @@ compat-join-commute f∥g a | nothing | nothing | _ | _ | _ = refl
 compat-join-commute f∥g a | just b₁ | just b₂ | [ eq₁ ]  | [ eq₂ ] | fa≡ga
   rewrite sym eq₁ | sym eq₂ = fa≡ga
 
--- Compatibility is preserved under composition.
-∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
-∥-∙r f g k g∥k a with g a | k a | inspect g a | inspect k a | g∥k a
-∥-∙r f g k g∥k a | nothing | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka = refl
-∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka
-∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ga≡ = refl
-∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
-∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ga
-∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ka≡ = refl
-∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
-∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka | f ga | inspect f ka | inspect f ga
-∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | just x₁ | [ fka≡ ] | [ fga≡ ] rewrite ga≡ka = refl
-∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | nothing | [ fka≡ ] | [ fga≡ ] rewrite ga≡ = fga≡
-∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | just x | [ fka≡ ] | [ fga≡ ] rewrite ka≡ = sym fka≡
-∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | nothing | [ fka≡ ] | [ fga≡ ] = refl
+-- View on the results of compatible partial functions.
+data _-∥-_ {B : Set} : Maybe B → Maybe B → Set where
+  None  :           nothing -∥- nothing
+  Left  : (b : B) → just b  -∥- nothing
+  Right : (b : B) → nothing -∥- just b
+  Both  : (b : B) → just b  -∥- just b
 
--- uggghhh.  There has got to be a better way than the above.
+viewCompat : {A B : Set} (f g : A ⇀ B) → f ∥ g → (a : A) → (f a) -∥- (g a)
+viewCompat f g f∥g a with f a | g a | inspect f a | inspect g a | f∥g a
+viewCompat f g f∥g a | nothing | nothing | _ | _ | _ = None
+viewCompat f g f∥g a | nothing | just b  | _ | _ | _ = Right b
+viewCompat f g f∥g a | just b  | nothing | _ | _ | _ = Left b
+viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
+  rewrite sym eqf | sym eqg | fa≡ga | eqf = Both b₁
+
+-- Compatibility is preserved under composition on the left.
+
+-- This proof is horrendous.
+-- ∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
+-- ∥-∙r f g k g∥k a with g a | k a | inspect g a | inspect k a | g∥k a
+-- ∥-∙r f g k g∥k a | nothing | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka = refl
+-- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka
+-- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ga≡ = refl
+-- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
+-- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ga
+-- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ka≡ = refl
+-- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
+-- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka | f ga | inspect f ka | inspect f ga
+-- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | just x₁ | [ fka≡ ] | [ fga≡ ] rewrite ga≡ka = refl
+-- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | nothing | [ fka≡ ] | [ fga≡ ] rewrite ga≡ = fga≡
+-- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | just x | [ fka≡ ] | [ fga≡ ] rewrite ka≡ = sym fka≡
+-- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | nothing | [ fka≡ ] | [ fga≡ ] = refl
+
+-- This is slightly better but still not good enough.
+∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
+∥-∙r f g k g∥k a with g a | k a | g∥k a | viewCompat g k g∥k a
+∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b with f b
+∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b | just x rewrite g≡k = refl
+∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b | nothing = refl
+∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b with f b
+∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b | just x rewrite (sym g≡k) = refl
+∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b | nothing = refl
+∥-∙r f g k g∥k a | nothing | .nothing | g≡k | None = refl
+∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b with f b
+∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | just x rewrite g≡k = refl
+∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | nothing = refl
 
 ∥-∙ : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
 ∥-∙ f h g k f∥h g∥k a = {!!}
