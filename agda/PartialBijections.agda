@@ -296,36 +296,31 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 -- Merge
 ----------------------------------------------------------------------
 
--- Try defining an alternate version of merge which requires a proof
--- that f and g are compatible, i.e. agree where they are both defined?
--- i.e. (f . dom g ≈ g . dom f) and (rng g . f ≈ rng f . g)
--- Then we can just join both directions.
+-- We can merge two compatible partial bijections.
 
 _⋎_ : {A B : Set} (f g : A ⇌ B) → {{compat : f ∥ g}} → (A ⇌ B)
 _⋎_ {A} f g {{cr , cl}} = record
-  { fwd       = f.fwd ∣ g.fwd
-  ; bwd       = f.bwd ∣ g.bwd
-  ; left-dom  = {!!}
+  { fwd       = fwd f ∣ fwd g
+  ; bwd       = bwd f ∣ bwd g
 
-  -- The following proof doesn't work since ∣-abides-∙-compat is false
-  -- (see counterexample in PartialFunctions.agda)
-
-  -- ; left-dom  = begin
-  --     f.bwd ∣ g.bwd ∙ f.fwd ∣ g.fwd
-  --                                       ≈⟨ ≈-sym
-  --                                           (∣-abides-∙-compat
-  --                                             {f = f.bwd} {h = g.bwd} {g = f.fwd} {k = g.fwd}
-  --                                             cl cr
-  --                                           )
-  --                                        ⟩
-  --     (f.bwd ∙ f.fwd) ∣ (g.bwd ∙ g.fwd)
-  --                                       ≈⟨ ∣-resp-≈ f.left-dom g.left-dom ⟩
-  --     PFun.dom f.fwd ∣ PFun.dom g.fwd
-  --                                       ≈⟨ ≈-sym (dom-∣ {f = f.fwd}) ⟩
-  --     PFun.dom (f.fwd ∣ g.fwd) ∎
-  ; right-dom = {!!}
+  ; left-dom  = ⋎-left-dom f g {{cr , cl}}
+  ; right-dom = ⋎-left-dom (f ⁻¹) (g ⁻¹) {{cl , cr}}
   }
   where
-    module f = _⇌_ f
-    module g = _⇌_ g
-    open import Relation.Binary.EqReasoning (PFun.setoid A A)
+    .⋎-left-dom : ∀ {A B} (f g : A ⇌ B) → ⦃ compat : f ∥ g ⦄ → (bwd f ∣ bwd g) ∙ (fwd f ∣ fwd g) ≈ PFun.dom (fwd f ∣ fwd g)
+    ⋎-left-dom {A} {B} f g {{cr , cl}} = begin
+      f.bwd ∣ g.bwd ∙ f.fwd ∣ g.fwd
+                                        ≈⟨ ≈-sym (∣-abides-∙-compat-inv _ _ _ _
+                                                    cl cr (left-dom f) (left-dom g))
+                                         ⟩
+      (f.bwd ∙ f.fwd) ∣ (g.bwd ∙ g.fwd)
+                                        ≈⟨ ∣-resp-≈ f.left-dom g.left-dom ⟩
+      PFun.dom f.fwd ∣ PFun.dom g.fwd
+                                        ≈⟨ ≈-sym (dom-∣ {f = f.fwd}) ⟩
+      PFun.dom (f.fwd ∣ g.fwd) ∎
+      where
+        open import Relation.Binary.EqReasoning (PFun.setoid A A)
+        module f = _⇌_ f
+        module g = _⇌_ g
+
+

@@ -571,3 +571,21 @@ viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
 -- ∣-abides-∙-compat c c⁻¹ a | just fx | [ eq₁ ] | just ffx | [ eq ] rewrite (sym eq) = {!!}
 -- ∣-abides-∙-compat c c⁻¹ a | just fx | eq₁ | nothing | eq₂ = {!!}
 -- ∣-abides-∙-compat c c⁻¹ a | nothing | eq₁ = {!!}
+
+∣-abides-∙-compat-inv : {A B : Set} (f h : B ⇀ A) (g k : A ⇀ B)
+                      → f ∥ h → g ∥ k → (f ∙ g ≈ dom g) → (h ∙ k ≈ dom k) → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k)
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a with g a | inspect g a | k a | inspect k a | g∥k a | viewCompat g k g∥k a
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | _ | just .b | _ | g≡k | Both .b = refl
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | _ | nothing | _ | g≡k | p with f b | h b | inspect h b | f∥h b | viewCompat f h f∥h b
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | _ | nothing | _ | g≡k | p | just x | hb | _ | f≡h | q = refl
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | [ g≡ ] | nothing | _ | g≡k | p | nothing | just x | [ h≡ ] | f≡h | q with fg a
+... | fga rewrite g≡ | fga with f≡h
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | [ g≡ ] | nothing | _ | g≡k | p | nothing | just x | [ h≡ ] | f≡h | q | fga | ()
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | just b | _ | nothing | _ | g≡k | p | nothing | nothing | [ h≡ ] | f≡h | q = refl
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | _ | just b | _ | g≡k | p with f b | h b | inspect h b | f∥h b | viewCompat f h f∥h b
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | _ | just b | _ | g≡k | p | just x₁ | just .x₁ | [ h≡ ] | f≡h | Both .x₁ = refl
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | _ | just b | [ k≡ ] | g≡k | p | just x | nothing | [ h≡ ] | f≡h | q with hk a
+... | hka rewrite k≡ | hka with f≡h
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | w | just b | [ k≡ ] | g≡k | p | just x | nothing | [ h≡ ] | f≡h | q | hka | ()
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | _ | just b | _ | g≡k | p | nothing | hb | _ | f≡h | q = refl
+∣-abides-∙-compat-inv f h g k f∥h g∥k fg hk a | nothing | _ | nothing | _ | g≡k | p = refl
