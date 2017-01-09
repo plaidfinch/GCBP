@@ -492,8 +492,21 @@ viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
 ∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | just x rewrite g≡k = refl
 ∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | nothing = refl
 
+-- Compatibility is preserved under composition.  This is horrendous.
 ∥-∙ : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
-∥-∙ f h g k f∥h g∥k a = {!!}
+∥-∙ f h g k f∥h g∥k a with g a  | k a     | inspect g a | inspect k a | g∥k a | viewCompat g k g∥k a
+∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | _      | g≡k | Both .b with f b | h b | f∥h b | viewCompat f h f∥h b
+∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | [ k≡ ] | g≡k | Both .b | just x₁ | just .x₁  | f≡h | Both .x₁ rewrite g≡k | k≡ = f≡h
+∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | [ k≡ ] | g≡k | Both .b | just x  | nothing   | f≡h | Left .x rewrite k≡ = f≡h
+∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | _      | g≡k | Both .b | nothing | .nothing  | f≡h | None = refl
+∥-∙ f h g k f∥h g∥k a | just b  | just .b | [ g≡ ] | _      | g≡k | Both .b | nothing | .(just _) | f≡h | Right _ rewrite g≡ = f≡h
+∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | _      | g≡k | Left .b with f b
+∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | [ k≡ ] | g≡k | Left .b | just x rewrite k≡ = refl
+∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | _      | g≡k | Left .b | nothing = refl
+∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b with h b
+∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b | just x rewrite g≡k = refl
+∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b | nothing = refl
+∥-∙ f h g k f∥h g∥k a | nothing | nothing | _      | _      | _   | _ = refl
 
 -- Is this even true??
 -- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
