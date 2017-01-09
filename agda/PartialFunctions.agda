@@ -530,14 +530,20 @@ viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
 ¬∣-abides-∙-compat-≈ P | ()
 
 
--- XXX But the above is probably true when weakened to ⊑.  Prove this!
+-- BUT the above IS true when weakened to ⊑.
 
-∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
+∣-abides-∙-compat : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B)
                    → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ⊑ (f ∣ h) ∙ (g ∣ k)
-∣-abides-∙-compat = {!!}
-
-
-
+∣-abides-∙-compat f h g k f∥h g∥k a with g a | k a | g∥k a | viewCompat g k g∥k a
+∣-abides-∙-compat f h g k f∥h g∥k a | just b | ka | g≡k | p with f b | h b | inspect h b
+∣-abides-∙-compat f h g k f∥h g∥k a | just b | ka | g≡k | p | just x | hb | _ = refl
+∣-abides-∙-compat f h g k f∥h g∥k a | just b | just .b | g≡k | Both .b | nothing | hb | [ h≡ ] rewrite h≡ = ⊑M-refl
+∣-abides-∙-compat f h g k f∥h g∥k a | just b | nothing | g≡k | p | nothing | hb | _ = tt
+∣-abides-∙-compat f h g k f∥h g∥k a | nothing | just b | g≡k | p with f b | h b | viewCompat f h f∥h b
+∣-abides-∙-compat f h g k f∥h g∥k a | nothing | just b₁ | g≡k | p | just b | just .b | Both .b = refl
+∣-abides-∙-compat f h g k f∥h g∥k a | nothing | just b | g≡k | p | nothing | just x | q = refl
+∣-abides-∙-compat f h g k f∥h g∥k a | nothing | just b | g≡k | p | fb | nothing | q = tt
+∣-abides-∙-compat f h g k f∥h g∥k a | nothing | nothing | g≡k | p = tt
 
 -- Another attempt
 
