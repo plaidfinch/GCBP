@@ -19,7 +19,7 @@ open import Relation.Binary.PropositionalEquality using (inspect)
   renaming ([_] to ins_)
 
 open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence
-                                    ; dom ; _∥_ ; ∥-refl ; ∥-sym)
+                                    ; dom ; _∥_ ; ∥-refl ; ∥-sym ; ∥-∙ ; ∥-+)
                              renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
 
@@ -291,6 +291,16 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 ∥-sym : {A B : Set} {f g : A ⇌ B} → f ∥ g → g ∥ f
 ∥-sym {f = f} {g = g} (x , y) = (PFun.∥-sym {f = fwd f} {g = fwd g} x)
                               , (PFun.∥-sym {f = bwd f} {g = bwd g} y)
+
+∥-∘ : {A B C : Set} (f h : B ⇌ C) (g k : A ⇌ B) → f ∥ h → g ∥ k → (f ∘ g) ∥ (h ∘ k)
+∥-∘ f h g k (f∥h , f∥h⁻¹) (g∥k , g∥k⁻¹) =
+    PFun.∥-∙ (fwd f) (fwd h) (fwd g) (fwd k) f∥h g∥k
+  , PFun.∥-∙ (bwd g) (bwd k) (bwd f) (bwd h) g∥k⁻¹ f∥h⁻¹
+
+∥-+ : {A₀ A₁ B₀ B₁ : Set} (f g : A₀ ⇌ B₀) (h k : A₁ ⇌ B₁) → f ∥ g → h ∥ k → (f + h) ∥ (g + k)
+∥-+ f g h k (f∥g , f∥g⁻¹) (h∥k , h∥k⁻¹) =
+    PFun.∥-+ (fwd f) (fwd g) (fwd h) (fwd k) f∥g h∥k
+  , PFun.∥-+ (bwd f) (bwd g) (bwd h) (bwd k) f∥g⁻¹ h∥k⁻¹
 
 ----------------------------------------------------------------------
 -- Merge
