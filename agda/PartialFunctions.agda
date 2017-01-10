@@ -56,7 +56,7 @@ isEquivalence = record
 
 setoid : ∀ {ℓ} (A B : Set ℓ) → Setoid ℓ ℓ
 setoid A B = record
-  { Carrier       = A ⇀ A
+  { Carrier       = A ⇀ B
   ; _≈_           = _≈_
   ; isEquivalence = isEquivalence
   }
