@@ -308,17 +308,17 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 
 -- We can merge two compatible partial bijections.
 
-_⋎_ : {A B : Set} (f g : A ⇌ B) → {{compat : f ∥ g}} → (A ⇌ B)
-_⋎_ {A} f g {{cr , cl}} = record
+_⋎_ : {A B : Set} (f g : A ⇌ B) → ⦃ _ : f ∥ g ⦄ → (A ⇌ B)
+_⋎_ {A} f g ⦃ cl , cr ⦄ = record
   { fwd       = fwd f ∣ fwd g
   ; bwd       = bwd f ∣ bwd g
 
-  ; left-dom  = ⋎-left-dom f g {{cr , cl}}
-  ; right-dom = ⋎-left-dom (f ⁻¹) (g ⁻¹) {{cl , cr}}
+  ; left-dom  = ⋎-left-dom f g ⦃ cl , cr ⦄
+  ; right-dom = ⋎-left-dom (f ⁻¹) (g ⁻¹) ⦃ cr , cl ⦄
   }
   where
-    .⋎-left-dom : ∀ {A B} (f g : A ⇌ B) → ⦃ compat : f ∥ g ⦄ → (bwd f ∣ bwd g) ∙ (fwd f ∣ fwd g) ≈ PFun.dom (fwd f ∣ fwd g)
-    ⋎-left-dom {A} {B} f g {{cr , cl}} = begin
+    .⋎-left-dom : ∀ {A B} (f g : A ⇌ B) → ⦃ _ : f ∥ g ⦄ → (bwd f ∣ bwd g) ∙ (fwd f ∣ fwd g) ≈ PFun.dom (fwd f ∣ fwd g)
+    ⋎-left-dom {A} {B} f g ⦃ cr , cl ⦄ = begin
       f.bwd ∣ g.bwd ∙ f.fwd ∣ g.fwd
                                         ≈⟨ ≈-sym (∣-abides-∙-compat-inv _ _ _ _
                                                     cl cr (left-dom f) (left-dom g))
@@ -336,8 +336,8 @@ _⋎_ {A} f g {{cr , cl}} = record
 ⋎-abides-+ :
   {A₀ B₀ A₁ B₁ : Set}
   (f g : A₀ ⇌ B₀) (h k : A₁ ⇌ B₁)
-  → {{f∥g : f ∥ g}}
-  → {{h∥k : h ∥ k}}
-  → (f ⋎ g) + (h ⋎ k) ≋ ((f + h) ⋎ (g + k)) {{ ∥-+ f g h k f∥g h∥k }}
+  → ⦃ f∥g : f ∥ g ⦄
+  → ⦃ h∥k : h ∥ k ⦄
+  → (f ⋎ g) + (h ⋎ k) ≋ ((f + h) ⋎ (g + k)) ⦃ ∥-+ f g h k f∥g h∥k ⦄
 ⋎-abides-+ f g h k = ∣-abides-+ (fwd f) (fwd g) (fwd h) (fwd k)
                    , ∣-abides-+ (bwd f) (bwd g) (bwd h) (bwd k)
