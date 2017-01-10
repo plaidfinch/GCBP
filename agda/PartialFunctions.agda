@@ -460,6 +460,12 @@ viewCompat f g f∥g a | just b  | nothing | _ | _ | _ = Left b
 viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
   rewrite sym eqf | sym eqg | fa≡ga | eqf = Both b₁
 
+-- This lemma is the key that allows us to give a nice, algebraic
+-- proof that composition preserves compatibility.  For a long time I
+-- was at a loss as to what we could say algebraically about dom (f ∙
+-- g).  The answer is not much, *in isolation*.  But when it is
+-- composed with something else that's suitably compatible we can
+-- indeed distribute the dom operator.
 dom-∙ : ∀ {A B C : Set} (f : B ⇀ C) (g h : A ⇀ B) → h ∥ g → h ∙ dom (f ∙ g) ≈ dom f ∙ h ∙ dom g
 dom-∙ f g h h∥g a with g a | h a | inspect g a | inspect h a | viewCompat h g h∥g a
 dom-∙ f g h h∥g a | just b₁ | just b₂ | [ g≡ ] | [ h≡ ] | p with f b₁ | inspect f b₁
