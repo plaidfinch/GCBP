@@ -333,4 +333,11 @@ _⋎_ {A} f g {{cr , cl}} = record
         module f = _⇌_ f
         module g = _⇌_ g
 
-
+⋎-abides-+ :
+  {A₀ B₀ A₁ B₁ : Set}
+  (f g : A₀ ⇌ B₀) (h k : A₁ ⇌ B₁)
+  → {{f∥g : f ∥ g}}
+  → {{h∥k : h ∥ k}}
+  → (f ⋎ g) + (h ⋎ k) ≋ ((f + h) ⋎ (g + k)) {{ ∥-+ f g h k f∥g h∥k }}
+⋎-abides-+ f g h k = ∣-abides-+ (fwd f) (fwd g) (fwd h) (fwd k)
+                   , ∣-abides-+ (bwd f) (bwd g) (bwd h) (bwd k)
