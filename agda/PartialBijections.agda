@@ -18,7 +18,7 @@ import Relation.Binary.PreorderReasoning as Pre
 open import Relation.Binary.PropositionalEquality using (inspect)
   renaming ([_] to ins_)
 
-open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence
+open import PartialFunctions hiding (∅ ; id ; inl ; inr ; projl ; projr ; isEquivalence
                                     ; dom ; _∥_ ; ∥-refl ; ∥-sym ; ∥-∙ ; ∥-+)
                              renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
@@ -240,6 +240,12 @@ inr = record
   ; right-dom = [ (λ _ → PropEq.refl) , (λ _ → PropEq.refl) ]
   }
 
+projl : {A B : Set} → ((A ⊎ B) ⇌ A)
+projl = inl ⁻¹
+
+projr : {A B : Set} → ((A ⊎ B) ⇌ B)
+projr = inr ⁻¹
+
 _+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → ((A₀ ⊎ A₁) ⇌ (B₀ ⊎ B₁))
 _+_ {A₀} {B₀} {A₁} {B₁} f g = record
   { fwd       = f.fwd ⇀+ g.fwd
@@ -265,6 +271,12 @@ _+_ {A₀} {B₀} {A₁} {B₁} f g = record
         module h = _⇌_ h
         module k = _⇌_ k
         open import Relation.Binary.EqReasoning (PFun.setoid (C₀ ⊎ C₁) (C₀ ⊎ C₁))
+
+leftPartial : {A B C D : Set} → ((A ⊎ C) ⇌ (B ⊎ D)) → (A ⇌ B)
+leftPartial f = projl ∘ (f ∘ inl)
+
+rightPartial : {A B C D : Set} → ((A ⊎ C) ⇌ (B ⊎ D)) → (C ⇌ D)
+rightPartial f = projr ∘ (f ∘ inr)
 
 ∘-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}

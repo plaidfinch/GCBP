@@ -362,6 +362,14 @@ inl a = just (inj₁ a)
 inr : ∀ {ℓ} {A B : Set ℓ} → (B ⇀ (A ⊎ B))
 inr b = just (inj₂ b)
 
+projl : ∀ {ℓ} {A B : Set ℓ} → ((A ⊎ B) ⇀ A)
+projl (inj₁ a) = just a
+projl _        = nothing
+
+projr : ∀ {ℓ} {A B : Set ℓ} → ((A ⊎ B) ⇀ B)
+projr (inj₂ b) = just b
+projr _        = nothing
+
 pullMaybe : {A B : Set} → (Maybe A ⊎ Maybe B) ⇀ (A ⊎ B)
 pullMaybe = [ Maybe.map inj₁ , Maybe.map inj₂ ]
 
