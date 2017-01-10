@@ -383,6 +383,19 @@ f + g = pullMaybe ∘ᶠ Sum.map f g
 ∙-abides-+         (inj₂ _) | just _ | just _  = refl
 ∙-abides-+         (inj₂ _) | just _ | nothing = refl
 
+∣-abides-+ : {A₀ B₀ A₁ B₁ : Set}
+  (f g : A₀ ⇀ B₀) (h k : A₁ ⇀ B₁) → (f ∣ g) + (h ∣ k) ≈ (f + h) ∣ (g + k)
+∣-abides-+ f g h k (inj₁ a₀) with f a₀ | g a₀
+∣-abides-+ f g h k (inj₁ _ ) | just _  | just _  = refl
+∣-abides-+ f g h k (inj₁ _ ) | just _  | nothing = refl
+∣-abides-+ f g h k (inj₁ _ ) | nothing | just _  = refl
+∣-abides-+ f g h k (inj₁ _ ) | nothing | nothing = refl
+∣-abides-+ f g h k (inj₂ a₁) with h a₁ | k a₁
+∣-abides-+ f g h k (inj₂ _ ) | just _  | just _  = refl
+∣-abides-+ f g h k (inj₂ _ ) | just _  | nothing = refl
+∣-abides-+ f g h k (inj₂ _ ) | nothing | just _  = refl
+∣-abides-+ f g h k (inj₂ _ ) | nothing | nothing = refl
+
 +-resp-≈ : {A₀ A₁ B₀ B₁ : Set} {f g : A₀ ⇀ B₀} {h k : A₁ ⇀ B₁}
          → f ≈ g → h ≈ k → (f + h) ≈ (g + k)
 +-resp-≈ f≈g h≈k (inj₁ a₀) rewrite (f≈g a₀) = refl
