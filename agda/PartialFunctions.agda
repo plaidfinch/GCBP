@@ -460,57 +460,42 @@ viewCompat f g f∥g a | just b  | nothing | _ | _ | _ = Left b
 viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
   rewrite sym eqf | sym eqg | fa≡ga | eqf = Both b₁
 
--- Compatibility is preserved under composition on the left.
+dom-∙ : ∀ {A B C : Set} (f : B ⇀ C) (g h : A ⇀ B) → h ∥ g → h ∙ dom (f ∙ g) ≈ dom f ∙ h ∙ dom g
+dom-∙ f g h h∥g a with g a | h a | inspect g a | inspect h a | viewCompat h g h∥g a
+dom-∙ f g h h∥g a | just b₁ | just b₂ | [ g≡ ] | [ h≡ ] | p with f b₁ | inspect f b₁
+dom-∙ f g h h∥g a | just .b₁ | just .b₁ | [ g≡ ] | [ h≡ ] | Both b₁ | just c  | [ f≡ ] rewrite h≡ | f≡ = refl
+dom-∙ f g h h∥g a | just .b₁ | just .b₁ | [ g≡ ] | [ h≡ ] | Both b₁ | nothing | [ f≡ ] rewrite h≡ | f≡ = refl
+dom-∙ f g h h∥g a | just b  | nothing | [ g≡ ] | [ h≡ ] | p rewrite h≡ with f b | inspect f b
+dom-∙ f g h h∥g a | just b | nothing | [ g≡ ] | [ h≡ ] | p | just c  | [ f≡ ] = h≡
+dom-∙ f g h h∥g a | just b | nothing | [ g≡ ] | [ h≡ ] | p | nothing | [ f≡ ] = refl
+dom-∙ f g h h∥g a | nothing | ha | [ g≡ ] | [ h≡ ] | p = refl
 
--- This proof is horrendous.
--- ∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
--- ∥-∙r f g k g∥k a with g a | k a | inspect g a | inspect k a | g∥k a
--- ∥-∙r f g k g∥k a | nothing | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka = refl
--- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka
--- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ga≡ = refl
--- ∥-∙r f g k g∥k a | nothing | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
--- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ga
--- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x rewrite ka≡ = refl
--- ∥-∙r f g k g∥k a | just ga | nothing | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing = refl
--- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka with f ka | f ga | inspect f ka | inspect f ga
--- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | just x₁ | [ fka≡ ] | [ fga≡ ] rewrite ga≡ka = refl
--- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | just x | nothing | [ fka≡ ] | [ fga≡ ] rewrite ga≡ = fga≡
--- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | just x | [ fka≡ ] | [ fga≡ ] rewrite ka≡ = sym fka≡
--- ∥-∙r f g k g∥k a | just ga | just ka | [ ga≡ ] | [ ka≡ ] | ga≡ka | nothing | nothing | [ fka≡ ] | [ fga≡ ] = refl
-
--- This is slightly better but still not good enough.
-∥-∙r : {A B C : Set} (f : B ⇀ C) (g k : A ⇀ B) → g ∥ k → (f ∙ g) ∥ (f ∙ k)
-∥-∙r f g k g∥k a with g a | k a | g∥k a | viewCompat g k g∥k a
-∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b with f b
-∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b | just x rewrite g≡k = refl
-∥-∙r f g k g∥k a | just b | just .b | g≡k | Both .b | nothing = refl
-∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b with f b
-∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b | just x rewrite (sym g≡k) = refl
-∥-∙r f g k g∥k a | just b | nothing | g≡k | Left .b | nothing = refl
-∥-∙r f g k g∥k a | nothing | .nothing | g≡k | None = refl
-∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b with f b
-∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | just x rewrite g≡k = refl
-∥-∙r f g k g∥k a | nothing | .(just b) | g≡k | Right b | nothing = refl
-
--- Compatibility is preserved under composition.  This is horrendous.
+-- Composition preserves compatibility.
 ∥-∙ : {A B C : Set} (f h : B ⇀ C) (g k : A ⇀ B) → f ∥ h → g ∥ k → (f ∙ g) ∥ (h ∙ k)
-∥-∙ f h g k f∥h g∥k a with g a  | k a     | inspect g a | inspect k a | g∥k a | viewCompat g k g∥k a
-∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | _      | g≡k | Both .b with f b | h b | f∥h b | viewCompat f h f∥h b
-∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | [ k≡ ] | g≡k | Both .b | just x₁ | just .x₁  | f≡h | Both .x₁ rewrite g≡k | k≡ = f≡h
-∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | [ k≡ ] | g≡k | Both .b | just x  | nothing   | f≡h | Left .x rewrite k≡ = f≡h
-∥-∙ f h g k f∥h g∥k a | just b  | just .b | _      | _      | g≡k | Both .b | nothing | .nothing  | f≡h | None = refl
-∥-∙ f h g k f∥h g∥k a | just b  | just .b | [ g≡ ] | _      | g≡k | Both .b | nothing | .(just _) | f≡h | Right _ rewrite g≡ = f≡h
-∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | _      | g≡k | Left .b with f b
-∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | [ k≡ ] | g≡k | Left .b | just x rewrite k≡ = refl
-∥-∙ f h g k f∥h g∥k a | just b  | nothing | _      | _      | g≡k | Left .b | nothing = refl
-∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b with h b
-∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b | just x rewrite g≡k = refl
-∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b | nothing = refl
-∥-∙ f h g k f∥h g∥k a | nothing | nothing | _      | _      | _   | _ = refl
+∥-∙ {A = A} {C = C} f h g k f∥h g∥k =
+  begin
+    (f ∙ g) ∙ dom (h ∙ k)
+                                        ≈⟨ ∙-assoc _ _ (dom (h ∙ k)) ⟩
+    f ∙ (g ∙ dom (h ∙ k))
+                                        ≈⟨ ≈-cong-right f (dom-∙ h k g g∥k) ⟩
+    f ∙ (dom h ∙ g ∙ dom k)
+                                        ≈⟨ ≈-sym (∙-assoc _ _ (g ∙ dom k)) ⟩
+    (f ∙ dom h) ∙ (g ∙ dom k)
+                                        ≈⟨ ≈-cong-left (g ∙ dom k) f∥h ⟩
+    (h ∙ dom f) ∙ (g ∙ dom k)
+                                        ≈⟨ ≈-cong-right (h ∙ dom f) g∥k ⟩
+    (h ∙ dom f) ∙ (k ∙ dom g)
+                                        ≈⟨ ∙-assoc _ _ (k ∙ dom g) ⟩
+    h ∙ (dom f ∙ k ∙ dom g)
+                                        ≈⟨ ≈-cong-right h (≈-sym (dom-∙ f g k (∥-sym {f = g} g∥k))) ⟩
+    h ∙ (k ∙ dom (f ∙ g))
+                                        ≈⟨ ≈-sym (∙-assoc _ _ (dom (f ∙ g))) ⟩
+    (h ∙ k) ∙ dom (f ∙ g)
+  ∎
+  where
+    open import Relation.Binary.EqReasoning (setoid A C)
 
--- (f ∙ g) ∙ (dom (h ∙ k)) ≈ (h ∙ k) ∙ (dom (f ∙ g))
-
--- Sum preserves compatibility
+-- Sum preserves compatibility.
 ∥-+ : {A₀ A₁ B₀ B₁ : Set} (f g : A₀ ⇀ B₀) (h k : A₁ ⇀ B₁) → f ∥ g → h ∥ k → (f + h) ∥ (g + k)
 ∥-+ {A₀} {A₁} {B₀} {B₁} f g h k f∥g h∥k = begin
   (f + h) ∙ dom (g + k)
