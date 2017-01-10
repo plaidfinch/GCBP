@@ -508,6 +508,26 @@ viewCompat f g f∥g a | just b₁ | just b₂ | [ eqf ] | [ eqg ] | fa≡ga
 ∥-∙ f h g k f∥h g∥k a | nothing | just b  | _      | _      | g≡k | Right .b | nothing = refl
 ∥-∙ f h g k f∥h g∥k a | nothing | nothing | _      | _      | _   | _ = refl
 
+-- (f ∙ g) ∙ (dom (h ∙ k)) ≈ (h ∙ k) ∙ (dom (f ∙ g))
+
+-- Sum preserves compatibility
+∥-+ : {A₀ A₁ B₀ B₁ : Set} (f g : A₀ ⇀ B₀) (h k : A₁ ⇀ B₁) → f ∥ g → h ∥ k → (f + h) ∥ (g + k)
+∥-+ {A₀} {A₁} {B₀} {B₁} f g h k f∥g h∥k = begin
+  (f + h) ∙ dom (g + k)
+                                        ≈⟨ ≈-cong-right (f + h) dom-+ ⟩
+  (f + h) ∙ (dom g + dom k)
+                                        ≈⟨ ≈-sym ∙-abides-+ ⟩
+  (f ∙ dom g) + (h ∙ dom k)
+                                        ≈⟨ +-resp-≈ f∥g h∥k ⟩
+  (g ∙ dom f) + (k ∙ dom h)
+                                        ≈⟨ ∙-abides-+ ⟩
+  (g + k) ∙ (dom f + dom h)
+                                        ≈⟨ ≈-cong-right (g + k) (≈-sym dom-+) ⟩
+  (g + k) ∙ dom (f + h)
+  ∎
+  where
+    open import Relation.Binary.EqReasoning (setoid (A₀ ⊎ A₁) (B₀ ⊎ B₁))
+
 -- Is this even true??
 -- postulate ∣-abides-∙-compat : {A B C : Set} {f h : B ⇀ C} {g k : A ⇀ B}
 --                   → f ∥ h → g ∥ k → (f ∙ g) ∣ (h ∙ k) ≈ (f ∣ h) ∙ (g ∣ k)
