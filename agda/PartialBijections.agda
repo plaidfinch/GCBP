@@ -128,7 +128,7 @@ dom {A} f = record
         open import Relation.Binary.EqReasoning (PFun.setoid A A)
 
 ----------------------------------------------------------------------
--- The category of partial bijections
+-- The groupoid of partial bijections
 ----------------------------------------------------------------------
 
 -- The identity partial bijection.
