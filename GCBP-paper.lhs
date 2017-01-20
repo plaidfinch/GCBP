@@ -14,6 +14,8 @@
 %format f0
 %format f1
 
+%format >=> = ">\!=\!>"
+
 %if false
 \begin{code}
 {-# LANGUAGE TypeOperators #-}
@@ -361,7 +363,11 @@ as claimed.
 \label{sec:algebra}
 
 \todo{Then implement GCBP entirely at the level of partial
-  bijections.}
+  bijections.  First develop version that has to iterate a specific
+  number of times.  But observe that it's tricky to compute the right
+  number of iterations (and it's not idempotent after doing the right
+  number, so we can't just do ``enough'' and call it a day).
+  Solution: iterated merge!}
 
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}
@@ -505,6 +511,19 @@ indirectly to \citet{garsia1981rogers}:
   There is still some part of the story I'm missing\dots}
 
 \todo{check out garsia1981method.}
+
+\section{Efficiency}
+\label{sec:efficiency}
+
+\todo{Notice that we're doing nested calls to |(>=>)| in both
+  directions, so necessarily one direction is going to be
+  left-associated and one will be right-associated, leading to
+  quadratic behavior in one direction or the other.  Solution: compose
+  partial bijections the ``naive'' (wrong) way, $f \comp g$ and
+  $f^{-1} \comp g^{-1}$ (instead of $(g^{-1} \comp f^{-1})$).  This
+  works in this particular case because we're computing an iterated
+  composition $f^n$ so the order actually doesn't matter. (Enforcing
+  this in the type system would be tricky but possible.)}
 
 % \appendix
 % \section{Appendix Title}
