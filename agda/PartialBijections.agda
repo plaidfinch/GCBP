@@ -18,8 +18,8 @@ import Relation.Binary.PreorderReasoning as Pre
 open import Relation.Binary.PropositionalEquality using (inspect)
   renaming ([_] to ins_)
 
-open import PartialFunctions hiding (∅ ; id ; inl ; inr ; isEquivalence
-                                    ; dom ; _∥_ ; ∥-refl ; ∥-sym)
+open import PartialFunctions hiding (∅ ; id ; inl ; inr ; projl ; projr ; isEquivalence
+                                    ; dom ; _∥_ ; ∥-refl ; ∥-sym ; ∥-∙ ; ∥-+)
                              renaming (_+_ to _⇀+_)
 import PartialFunctions as PFun
 
@@ -105,16 +105,16 @@ isEquivalence = record
 ∅ = record
   { fwd       = PFun.∅
   ; bwd       = PFun.∅
-  ; left-dom   = const PropEq.refl
-  ; right-dom  = const PropEq.refl
+  ; left-dom  = const PropEq.refl
+  ; right-dom = const PropEq.refl
   }
 
 dom : {A B : Set} → (A ⇌ B) → (A ⇌ A)
 dom {A} f = record
   { fwd       = PFun.dom (fwd f)
   ; bwd       = PFun.dom (fwd f)
-  ; left-dom   = dom∙dom
-  ; right-dom  = dom∙dom
+  ; left-dom  = dom∙dom
+  ; right-dom = dom∙dom
   }
   where
     dom∙dom : {A B : Set} {f : A ⇀ B} → PFun.dom f ∙ PFun.dom f ≈ PFun.dom (PFun.dom f)
@@ -128,7 +128,7 @@ dom {A} f = record
         open import Relation.Binary.EqReasoning (PFun.setoid A A)
 
 ----------------------------------------------------------------------
--- The category of partial bijections
+-- The groupoid of partial bijections
 ----------------------------------------------------------------------
 
 -- The identity partial bijection.
@@ -136,8 +136,8 @@ id : {A : Set} → A ⇌ A
 id = record
   { fwd       = PFun.id
   ; bwd       = PFun.id
-  ; left-dom   = λ _ → PropEq.refl
-  ; right-dom  = λ _ → PropEq.refl
+  ; left-dom  = λ _ → PropEq.refl
+  ; right-dom = λ _ → PropEq.refl
   }
 
 -- Inverting a partial bijection.
@@ -145,13 +145,13 @@ _⁻¹ : {A B : Set} → (A ⇌ B) → (B ⇌ A)
 f ⁻¹ = record
   { fwd       = f.bwd
   ; bwd       = f.fwd
-  ; left-dom   = f.right-dom
-  ; right-dom  = f.left-dom
+  ; left-dom  = f.right-dom
+  ; right-dom = f.left-dom
   }
   where
     module f = _⇌_ f
 
-rng : {A B : Set} → (A ⇌ B) → (B ⇌ B)
+rng : {A B : Set } → (A ⇌ B) → (B ⇌ B)
 rng f = dom (f ⁻¹)
 
 -- Composing partial bijections.
@@ -168,14 +168,15 @@ _∘_ {A} g f = record
 
     lemma : {A B C : Set} {f⁻¹ : B ⇀ A} {f : A ⇀ B} {g : B ⇀ C}
           → f⁻¹ ∙ f ≈ PFun.dom f → f⁻¹ ∙ PFun.dom g ∙ f ≈ PFun.dom (g ∙ f)
-    lemma {f = f} eq a with f a | inspect f a
-    lemma         eq a | nothing | _ = PropEq.refl
-    lemma {g = g} eq a | just b  | _ with g b
-    lemma         eq a | just _  | _ | nothing = PropEq.refl
-    lemma         eq a | just b  | ins e | just a' = {!!}
-    -- Pretty sure this is true.
-    -- Just need some more 'inspect' magic sauce I think.
-    -- Ugh, so annoying.
+    lemma {f = f} eq a with f a | inspect f a | eq a
+    lemma         _  _ | nothing | _       | _ = PropEq.refl
+    lemma {g = g} _  _ | just b  | ins _   | _ with g b
+    lemma         _  _ | just _  | ins _   | _   | nothing = PropEq.refl
+    lemma         _  _ | just _  | ins _   | eq₂ | just _  = eq₂
+    -- The above looks simple enough but it took me a REALLY long time
+    -- to figure out the right order to pattern-match and 'inspect'
+    -- things to make it all go through.  Proof assistants really need
+    -- a better story for this kind of thing.  Grumble grumble.
 
     .∘-left-dom : {A B C : Set} (h : A ⇌ B) (k : B ⇌ C)
                → (bwd h ∙ bwd k) ∙ fwd k ∙ fwd h ≈ PFun.dom (fwd k ∙ fwd h)
@@ -216,14 +217,14 @@ _∘_ {A} g f = record
 ∘-right-id : {A B : Set} {f : A ⇌ B} → f ∘ id ≋ f
 ∘-right-id = (λ _ → PropEq.refl) , ∙-left-id
 
-∘⁻¹ : {A B C : Set} {f : B ⇌ C} {g : A ⇌ B} → (f ∘ g) ⁻¹ ≋ (g ⁻¹ ∘ f ⁻¹)
+∘⁻¹ : {A B C : Set} {f : B ⇌ C} {g : A ⇌ B} → (f ∘ g) ⁻¹ ≋ ((g ⁻¹) ∘ (f ⁻¹))
 ∘⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
 
 ----------------------------------------------------------------------
 -- Sums
 ----------------------------------------------------------------------
 
-inl : {A B : Set} → (A ⇌ A ⊎ B)
+inl : {A B : Set} → (A ⇌ (A ⊎ B))
 inl = record
   { fwd       = λ a → just (inj₁ a)
   ; bwd       = [ just , (const nothing) ]
@@ -231,7 +232,7 @@ inl = record
   ; right-dom = [ (λ _ → PropEq.refl) , (λ _ → PropEq.refl) ]
   }
 
-inr : {A B : Set} → (B ⇌ A ⊎ B)
+inr : {A B : Set} → (B ⇌ (A ⊎ B))
 inr = record
   { fwd       = λ b → just (inj₂ b)
   ; bwd       = [ const nothing , just ]
@@ -239,13 +240,43 @@ inr = record
   ; right-dom = [ (λ _ → PropEq.refl) , (λ _ → PropEq.refl) ]
   }
 
-_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → (A₀ ⊎ A₁ ⇌ B₀ ⊎ B₁)
-f + g = record
-  { fwd       = fwd f ⇀+ fwd g
-  ; bwd       = bwd f ⇀+ bwd g
-  ; left-dom  = [ {!!} , {!!} ]
-  ; right-dom = [ {!!} , {!!} ]
+projl : {A B : Set} → ((A ⊎ B) ⇌ A)
+projl = inl ⁻¹
+
+projr : {A B : Set} → ((A ⊎ B) ⇌ B)
+projr = inr ⁻¹
+
+_+_ : {A₀ B₀ A₁ B₁ : Set} → (A₀ ⇌ B₀) → (A₁ ⇌ B₁) → ((A₀ ⊎ A₁) ⇌ (B₀ ⊎ B₁))
+_+_ {A₀} {B₀} {A₁} {B₁} f g = record
+  { fwd       = f.fwd ⇀+ g.fwd
+  ; bwd       = f.bwd ⇀+ g.bwd
+  ; left-dom  = +-left-dom f g
+  ; right-dom = +-left-dom (f ⁻¹) (g ⁻¹)
   }
+  where
+    module f = _⇌_ f
+    module g = _⇌_ g
+
+    .+-left-dom : {C₀ C₁ D₀ D₁ : Set} → (h : C₀ ⇌ D₀) → (k : C₁ ⇌ D₁)
+               → (bwd h ⇀+ bwd k) ∙ (fwd h ⇀+ fwd k) ≈ PFun.dom (fwd h ⇀+ fwd k)
+    +-left-dom {C₀} {C₁} h k = begin
+      (h.bwd ⇀+ k.bwd) ∙ (h.fwd ⇀+ k.fwd)
+                                        ≈⟨ ≈-sym ∙-abides-+ ⟩
+      (h.bwd ∙ h.fwd) ⇀+ (k.bwd ∙ k.fwd)
+                                        ≈⟨ +-resp-≈ h.left-dom k.left-dom ⟩
+      PFun.dom h.fwd ⇀+ PFun.dom k.fwd
+                                        ≈⟨ ≈-sym dom-+ ⟩
+      PFun.dom (h.fwd ⇀+ k.fwd) ∎
+      where
+        module h = _⇌_ h
+        module k = _⇌_ k
+        open import Relation.Binary.EqReasoning (PFun.setoid (C₀ ⊎ C₁) (C₀ ⊎ C₁))
+
+leftPartial : {A B C D : Set} → ((A ⊎ C) ⇌ (B ⊎ D)) → (A ⇌ B)
+leftPartial f = projl ∘ (f ∘ inl)
+
+rightPartial : {A B C D : Set} → ((A ⊎ C) ⇌ (B ⊎ D)) → (C ⇌ D)
+rightPartial f = projr ∘ (f ∘ inr)
 
 ∘-abides-+ :
   {A₀ B₀ C₀ A₁ B₁ C₁ : Set}
@@ -255,7 +286,7 @@ f + g = record
 
 +⁻¹ :
   {A₀ B₀ A₁ B₁ : Set} {f : A₀ ⇌ B₀} {g : A₁ ⇌ B₁} →
-  (f + g) ⁻¹ ≋ f ⁻¹ + g ⁻¹
+  ((f + g) ⁻¹) ≋ (f ⁻¹) + (g ⁻¹)
 +⁻¹ = (λ _ → PropEq.refl) , (λ _ → PropEq.refl)
 
 ----------------------------------------------------------------------
@@ -273,14 +304,52 @@ f ∥ g = (fwd f PFun.∥ fwd g) × (bwd f PFun.∥ bwd g)
 ∥-sym {f = f} {g = g} (x , y) = (PFun.∥-sym {f = fwd f} {g = fwd g} x)
                               , (PFun.∥-sym {f = bwd f} {g = bwd g} y)
 
+∥-∘ : {A B C : Set} (f h : B ⇌ C) (g k : A ⇌ B) → f ∥ h → g ∥ k → (f ∘ g) ∥ (h ∘ k)
+∥-∘ f h g k (f∥h , f∥h⁻¹) (g∥k , g∥k⁻¹) =
+    PFun.∥-∙ (fwd f) (fwd h) (fwd g) (fwd k) f∥h g∥k
+  , PFun.∥-∙ (bwd g) (bwd k) (bwd f) (bwd h) g∥k⁻¹ f∥h⁻¹
+
+∥-+ : {A₀ A₁ B₀ B₁ : Set} (f g : A₀ ⇌ B₀) (h k : A₁ ⇌ B₁) → f ∥ g → h ∥ k → (f + h) ∥ (g + k)
+∥-+ f g h k (f∥g , f∥g⁻¹) (h∥k , h∥k⁻¹) =
+    PFun.∥-+ (fwd f) (fwd g) (fwd h) (fwd k) f∥g h∥k
+  , PFun.∥-+ (bwd f) (bwd g) (bwd h) (bwd k) f∥g⁻¹ h∥k⁻¹
+
 ----------------------------------------------------------------------
 -- Merge
 ----------------------------------------------------------------------
 
--- Try defining an alternate version of merge which requires a proof
--- that f and g are compatible, i.e. agree where they are both defined?
--- i.e. (f . dom g ≈ g . dom f) and (rng g . f ≈ rng f . g)
--- Then we can just join both directions.
+-- We can merge two compatible partial bijections.
 
--- To do: define compatibility for partial functions.  Then lift to
--- compatibility for partial bijections.
+_⋎_ : {A B : Set} (f g : A ⇌ B) → ⦃ _ : f ∥ g ⦄ → (A ⇌ B)
+_⋎_ {A} f g ⦃ cl , cr ⦄ = record
+  { fwd       = fwd f ∣ fwd g
+  ; bwd       = bwd f ∣ bwd g
+
+  ; left-dom  = ⋎-left-dom f g ⦃ cl , cr ⦄
+  ; right-dom = ⋎-left-dom (f ⁻¹) (g ⁻¹) ⦃ cr , cl ⦄
+  }
+  where
+    .⋎-left-dom : ∀ {A B} (f g : A ⇌ B) → ⦃ _ : f ∥ g ⦄ → (bwd f ∣ bwd g) ∙ (fwd f ∣ fwd g) ≈ PFun.dom (fwd f ∣ fwd g)
+    ⋎-left-dom {A} {B} f g ⦃ cr , cl ⦄ = begin
+      f.bwd ∣ g.bwd ∙ f.fwd ∣ g.fwd
+                                        ≈⟨ ≈-sym (∣-abides-∙-compat-inv _ _ _ _
+                                                    cl cr (left-dom f) (left-dom g))
+                                         ⟩
+      (f.bwd ∙ f.fwd) ∣ (g.bwd ∙ g.fwd)
+                                        ≈⟨ ∣-resp-≈ f.left-dom g.left-dom ⟩
+      PFun.dom f.fwd ∣ PFun.dom g.fwd
+                                        ≈⟨ ≈-sym (dom-∣ {f = f.fwd}) ⟩
+      PFun.dom (f.fwd ∣ g.fwd) ∎
+      where
+        open import Relation.Binary.EqReasoning (PFun.setoid A A)
+        module f = _⇌_ f
+        module g = _⇌_ g
+
+⋎-abides-+ :
+  {A₀ B₀ A₁ B₁ : Set}
+  (f g : A₀ ⇌ B₀) (h k : A₁ ⇌ B₁)
+  → ⦃ f∥g : f ∥ g ⦄
+  → ⦃ h∥k : h ∥ k ⦄
+  → (f ⋎ g) + (h ⋎ k) ≋ ((f + h) ⋎ (g + k)) ⦃ ∥-+ f g h k f∥g h∥k ⦄
+⋎-abides-+ f g h k = ∣-abides-+ (fwd f) (fwd g) (fwd h) (fwd k)
+                   , ∣-abides-+ (bwd f) (bwd g) (bwd h) (bwd k)

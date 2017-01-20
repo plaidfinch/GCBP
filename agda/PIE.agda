@@ -38,4 +38,4 @@ allSubsets-all (suc n) (outside V.∷ s) = ∈++                        (∈map 
 allSubsets-all (suc n) (inside  V.∷ s) = ++∈ (map _ (allSubsets n)) (∈map (allSubsets-all n s))
 
 SubsetFamily : (n m : ℕ) → Set
-SubsetFamily n m = Vec (Subset n) m
+SubsetFamily n m = V.Vec (Subset n) m

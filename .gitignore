@@ -21,6 +21,9 @@ cabal.sandbox.config
 *.ptb
 *.bbl
 *.blg
+.DS_Store
+diagrams-latex.sty
+shake
 
 *.agdai
 *~
