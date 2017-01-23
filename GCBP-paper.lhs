@@ -161,6 +161,8 @@ keyword1, keyword2
 
 \section{Introduction}
 
+\bay{Do we need a more compelling/less technical introduction?}
+
 Suppose we have four sets $A_0, A_1, B_0,$ and $B_1$ with bijections
 $f_0 : A_0 \bij B_0$ and $f_1 : A_1 \bij B_1$.
 Then, as illustrated in \pref{fig:adding-bijections}, we can easily
@@ -196,7 +198,8 @@ type (+) = Either
 (f0 + f1) (Left x)   = Left   (f0 x)
 (f0 + f1) (Right y)  = Right  (f1 y)
 \end{code}
-We can see that $(f + g)$ is a bijection as long as $f$ and $g$ are.
+(Note we are punning on |(+)| at the value and type levels.)  We can
+see that $(f + g)$ is a bijection as long as $f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
 \emph{difference}?  That is, given bijections $f$ and $f_1$ with
@@ -207,8 +210,6 @@ So we can define the \emph{sum} of two bijections.  What about the
          \makebox[\widthof{$B_0+B_1$}][r]{$B_1$},
 \end{align*} can we compute some
 \[ f_0 : \makebox[\widthof{$A_0+A_1$}][l]{$A_0$} \bij \makebox[\widthof{$B_0+B_1$}][l]{$B_0$}? \]
-This comes up in combinatorics, when \todo{finish}.  \todo{Also definition of
-virtual species, XXX other places.}
 
 Certainly $A_0$ and $B_0$ have the same size. The existence of the
 bijections $f$ and $f_1$ tells us that $||A_0 + A_1|| = ||B_0 + B_1||$
@@ -247,6 +248,44 @@ consider \pref{fig:subtracting-bijections}.
 The bijection $A_0 + A_1 \bij B_0 + B_1$ may arbitrarily mix elements
 between the sets, so we cannot simply ``drop'' $A_1$ and $B_1$.  Some
 of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
+
+So, why would anyone care?  This problem was first studied (and
+solved) in the context of combinatorics, where proving merely that two
+sets must have the same size is usually considered unsatisfactory: the
+goal is to exhibit an explicit bijection that serves as a
+(constructive) witness of the fact.  Subtracting bijections also comes
+up in the context of defining \term{virtual species}, where it is
+needed to prove that the sum of virtual species is
+well-defined. \bay{double-check this, link to blog post?}  \bay{say
+  something else about computational relevance?  I actually want this
+  for my other project with Jacques but hard to explain here exactly
+  where and why it comes up.}  To the extent that we want to use
+results and techniques from combinatorics and related fields in the
+context of a proof assistant based on constructive logic, a
+constructive version of subtracting bijections is important.
+
+As we will see, although there is a known algorithm for constructing
+the difference of two bijections (the \emph{Gordon complementary bijection
+principle}, or GCBP), the usual proof of the algorithm's correctness is
+itself non-constructive!  Moreover, the usual presentation of the
+algorithm is low-level and element-based (\ie ``pointful'').  Our
+contributions are as follows:
+
+\begin{itemize}
+\item We present an algebra of partial bijections and operations on
+  them.
+\item Using our algebra of partial bijections, we give a high-level,
+  constructive proof of the GCBP.  To our knowledge, this is the first
+  constructive \emph{proof} of the GCBP.
+\item We explain a related bijection principle, the \emph{Garsia-Milne
+    involution principle}, or GMIP, and prove that it is equivalent to
+  the GCBP.  The equivalence of GCBP and GMIP seems to be a
+  ``folklore'' result that is not explicitly recorded anywhere.
+\item One downside of our high-level implementation of GCBP is that
+  one direction of the computed bijection takes quadratic time; we
+  show how to optimize the implementation so that both directions run
+  in linear time, while retaining its high-level character.
+\end{itemize}
 
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
@@ -346,21 +385,52 @@ as claimed.
   whereas the right-hand side is an element of $\cod(f_1^{-1}) = A_1$,
   a contradiction.
 
-  \todo{Show it is a bijection: construct inverse by running same
-    algorithm on $f^{-1}$ and $f_1^{-1}$.}
+  It remains to show that the constructed $f_0$ is a bijection.  Note
+  that given a particular $a \in A_0$, the algorithm visits a series
+  of elements in $A_0, B_1, B_0, B_1, \dots, B_0, A_1$, finally
+  stopping when it reaches $A_1$, and assigning the resulting element
+  of $A_1$ as the output of $f_0(a)$.  We can explicitly construct the
+  inverse of $f_0$ by running the same algorithm with $f^{-1}$ and
+  $f_1^{-1}$ as input in place of $f$ and $f_1$.  That is,
+  intuitively, we build build \pref{fig:GCBP} from right to left
+  instead of left to right.  When run ``in reverse'' in this way on
+  $f_0(a)$, we can see that the algorithm will visit exactly the same
+  series of elements in reverse, stopping when it reaches the original
+  $a$ since it is the first element not in $B_0$.
 \end{proof}
 
-\todo{Prove it. Explain how this proof is not easily formalized ---
-  seems to make essential use of LEM/proof by contradiction!  This is
-  strange/unsatisfactory since the whole point was to do something
-  constructive.}
+This proof would convince any combinatorialist, but it has several
+downsides:
 
-\todo{Then develop small library for bijections (with function in both
-  directions).  Implementation just does single-direction
-  implementation in both directions---ugh!}
+\begin{itemize}
+\item It makes heavy use of ``pointwise'' reasoning, messily following
+  the fate of individual elements through an algorithm.  We would like
+  a ``higher-level'' perspective on both the algorithm and proof.
+\item Relatedly, the proof requires constructing the forward and
+  backward directions separately, and then proving that the results
+  are inverse.  It would be much more satisfying to construct both
+  directions of the bijection simultaneously, so that the resulting
+  bijection is ``correct by construction''.
+\item Finally, as hinted earlier, the proof seems to make essential
+  use of classical reasoning: the termination argument in particular
+  is a proof by contradiction.  Having an algorithm at all is still
+  better than nothing, but having a classical proof of correctness is
+  irksome: intuitively, it doesn't seem like anything fundamentally
+  non-constructive is going on.
+
+  \todo{What will we need for constructive proof of termination?
+    Termination measure etc.  Why getting rid of LEM is not entirely
+    straightforward.}
+\end{itemize}
 
 \section{The Algebra of Partial Bijections}
 \label{sec:algebra}
+
+We solve all these problems by working at a higher level, eschewing
+point-based reasoning for an algebra of bijections and \emph{partial}
+bijections which we use to directly construct---and constructively
+verify---a bijection which is the ``difference'' of two other
+bijections.
 
 \todo{Then implement GCBP entirely at the level of partial
   bijections.  First develop version that has to iterate a specific
