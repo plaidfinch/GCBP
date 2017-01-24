@@ -507,6 +507,9 @@ is ``at least as defined as'' $x$.
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}
 
+\todo{Make analogy with weak \& strong induction: one seems stronger,
+  but actually they are equivalent.}
+
 There is an alternative principle, the \term{Garsia-Milne involution
   principle} (GMIP), which allows subtracting bijections, and which
 turns out to be equivalent to the GCBP.  At first sight, however, it
