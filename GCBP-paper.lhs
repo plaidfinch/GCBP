@@ -15,6 +15,7 @@
 %format f1
 
 %format >=> = ">\!=\!>"
+%format <=< = "<\!=\!<"
 
 %if false
 \begin{code}
@@ -418,19 +419,79 @@ downsides:
   irksome: intuitively, it doesn't seem like anything fundamentally
   non-constructive is going on.
 
-  \todo{What will we need for constructive proof of termination?
-    Termination measure etc.  Why getting rid of LEM is not entirely
-    straightforward.}
+  To give a constructive proof of termination, we need some sort of
+  termination measure on which we can do well-founded induction, but
+  it is not \emph{a priori} obvious what measure to use, especially
+  when working at the level of individual elements.
 \end{itemize}
 
 \section{The Algebra of Partial Bijections}
 \label{sec:algebra}
 
-We solve all these problems by working at a higher level, eschewing
-point-based reasoning for an algebra of bijections and \emph{partial}
-bijections which we use to directly construct---and constructively
-verify---a bijection which is the ``difference'' of two other
-bijections.
+We solve all these problems at once by eschewing point-based reasoning
+in favor of a high-level algebra of \emph{partial bijections}, which
+we use to directly construct---and constructively verify---a bijection
+which is the ``difference'' of two other bijections.
+
+We need to work with \emph{partial} bijections---not just
+bijections---since we can think of the algorithm as starting with a
+completely undefined bijection and building up more and more
+information, until finishing with a total bijection.  Intuitively, a
+partial bijection between sets $A$ and $B$ is a bijection that may be
+undefined on some elements, that is, a bijection between
+\emph{subsets} of $A$ and $B$, illustrated in \pref{fig:partial-bij}.
+
+\begin{figure}[htp]
+  \centering
+  \begin{diagram}[width=50]
+    {-# LANGUAGE LambdaCase #-}
+    import Bijections
+
+    dia = drawBComplex (a .- pbij -.. b)
+      where
+        a = nset 4 yellow
+        b = nset 4 blue
+    pbij = single $ bijFun [0..3] (\case { 1 -> Just 0; 3 -> Just 3; _ -> Nothing}) -- $
+  \end{diagram}
+  \caption{A partial bijection}
+  \label{fig:partial-bij}
+\end{figure}
+
+We begin by formalizing an algebra of partial \emph{functions}, which
+forms a foundation for our partial bijections.
+
+\subsection{Partial functions}
+
+Partial functions, in turn, are built atop the familiar |Maybe| monad,
+with
+\begin{spec}
+data Maybe a = Nothing | Just a
+\end{spec}
+and \emph{Kleisli composition} defined by
+\begin{spec}
+(<=<) :: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
+f <=< g = \a -> g a >>= f
+\end{spec}
+We also define a partial order on |Maybe a| by setting $|Nothing|
+\sqsubset x$ for all |x :: Maybe a|, and taking $\sqsubseteq$ as
+the reflexive, transitive closure of $\sqsubset$ (though transitivity
+admittedly does not add much).  Intuitively, $x \sqsubseteq y$ if $y$
+is ``at least as defined as'' $x$.
+
+\todo{Partial functions: Kleisli category.  Definedness partial order
+  is pointwise.  Define sum, prove abides.  Define compatibility.
+  Define subsets as pfun $\subseteq$ id (benefit: restriction is just
+  composition).  Define dom operator.  Prove compatibility is the same
+  as $f . dom g = g . dom f$. Prove lemma involving dom of a
+  composition (with picture).  Finally, define merge of compatible
+  partial functions: use symbol $\sqcup$ since it's a join in the
+  partial order (should change Agda code to use this symbol too).}
+
+\todo{Now define partial bijections as a pair of pfuns such that left,
+  right dom laws hold.  Note equivalence to other possible set of
+  laws.  Prove composition (using nicer equational proof).}
+
+\todo{Continue...}
 
 \todo{Then implement GCBP entirely at the level of partial
   bijections.  First develop version that has to iterate a specific
