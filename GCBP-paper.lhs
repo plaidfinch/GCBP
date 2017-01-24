@@ -221,6 +221,7 @@ excluded middle, we can say that there \emph{must exist} some
 bijection $A_0 \bij B_0$.  But what if we want to actually
 \emph{compute} a concrete bijection $A_0 \bij B_0$?  In that case, LEM
 is too big a sledgehammer. We need something more subtle.
+\todo{Say something about how LEM is not computational.}
 
 To see why this problem is not as trivial as it may first seem,
 consider \pref{fig:subtracting-bijections}.
@@ -264,6 +265,9 @@ well-defined. \bay{double-check this, link to blog post?}  \bay{say
 results and techniques from combinatorics and related fields in the
 context of a proof assistant based on constructive logic, a
 constructive version of subtracting bijections is important.
+\todo{Add citations to this paragraph.} \todo{``But, perhaps most
+  saliently for this context, it's just interesting to understand how
+  it works.  If you are a functional programmer who cares about computation...''}
 
 As we will see, although there is a known algorithm for constructing
 the difference of two bijections (the \emph{Gordon complementary bijection
@@ -646,15 +650,17 @@ indirectly to \citet{garsia1981rogers}:
 \section{Efficiency}
 \label{sec:efficiency}
 
+\todo{PALINDROMES}
+
 \todo{Notice that we're doing nested calls to |(>=>)| in both
   directions, so necessarily one direction is going to be
   left-associated and one will be right-associated, leading to
   quadratic behavior in one direction or the other.  Solution: compose
   partial bijections the ``naive'' (wrong) way, $f \comp g$ and
   $f^{-1} \comp g^{-1}$ (instead of $(g^{-1} \comp f^{-1})$).  This
-  works in this particular case because we're computing an iterated
-  composition $f^n$ so the order actually doesn't matter. (Enforcing
-  this in the type system would be tricky but possible.)}
+  works in this particular case because we're computing a PALINDROME
+  so the order actually doesn't matter. (Enforcing this in the type
+  system would be tricky but possible.)}
 
 % \appendix
 % \section{Appendix Title}
