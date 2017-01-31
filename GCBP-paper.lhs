@@ -7,15 +7,9 @@
 
 %include polycode.fmt
 
-%format a0
-%format a1
-%format b0
-%format b1
-%format f0
-%format f1
-
 %format >=> = ">\!=\!>"
 %format <=< = "<\!=\!<"
+%format +++ = "+\!\!+\!\!+"
 
 %if false
 \begin{code}
@@ -147,7 +141,12 @@
 \maketitle
 
 \begin{abstract}
-This is the text of the abstract.
+  \todo{Write an abstract.}
+
+  We recommend viewing this paper as a PDF or printing it on a color
+  printer, though it should still be comprehensible in black and
+  white.  The colors have been chosen to remain distinguishable to
+  individuals with common forms of colorblindness.
 \end{abstract}
 
 \category{CR-number}{subcategory}{third-level}
@@ -164,11 +163,11 @@ keyword1, keyword2
 
 \bay{Do we need a more compelling/less technical introduction?}
 
-Suppose we have four sets $A_0, A_1, B_0,$ and $B_1$ with bijections
-$f_0 : A_0 \bij B_0$ and $f_1 : A_1 \bij B_1$.
-Then, as illustrated in \pref{fig:adding-bijections}, we can easily
-``add'' these bijections to produce a new bijection
-\[ f : A_0 + A_1 \bij B_0 + B_1 \]
+Suppose we have four finite sets $A, B, A',$ and $B'$ with bijections
+$f : A \bij A'$ and $g : B \bij B'$.  Then, as illustrated in
+\pref{fig:adding-bijections}, we can easily ``add'' these bijections
+to produce a new bijection
+\[ h : A + B \bij A' + B' \]
 (where $+$ denotes the disjoint union of sets).
 \begin{figure}[htp]
   \centering
@@ -177,51 +176,57 @@ Then, as illustrated in \pref{fig:adding-bijections}, we can easily
 
     dia = vsep 1 . map centerX $  -- $
       [ hsep 3
-        [ drawBComplex (bc0 & labelBC ["$f_0$"])
+        [ drawBComplex (bc0 & labelBC ["$f$"])
         , text "$+$"
-        , drawBComplex (bc1 & labelBC ["$f_1$"])
+        , drawBComplex (bc1 & labelBC ["$g$"])
         ]
       , hsep 3
         [ text "$=$"
-        , drawBComplex (bc01 & labelBC ["$f_0 + f_1$"])
+        , drawBComplex (bc01 & labelBC ["$f + g$"])
         ]
       ]
   \end{diagram}
   \caption{Adding bijections}
   \label{fig:adding-bijections}
 \end{figure}
-We simply take $f = f_0 + f_1$, that is, the function which applies
-$f_0$ on elements of $A_0$, and $f_1$ on elements of $A_1$. In Haskell:
+To construct $h$, we simply take $h = f + g$, that is, the function
+which applies $f$ on elements of $A$, and $g$ on elements of $B$. In
+Haskell:
 \begin{code}
 type (+) = Either
 
-(+) :: (a0 -> b0) -> (a1 -> b1) -> (a0 + a1 -> b0 + b1)
-(f0 + f1) (Left x)   = Left   (f0 x)
-(f0 + f1) (Right y)  = Right  (f1 y)
+(+) :: (a -> a') -> (b -> b') -> (a + b -> a' + b')
+(f + g) (Left x)   = Left   (f x)
+(f + g) (Right y)  = Right  (g y)
 \end{code}
-(Note we are punning on |(+)| at the value and type levels.)  We can
-see that $(f + g)$ is a bijection as long as $f$ and $g$ are.
+(Note we are punning on |(+)| at the value and type levels.  This
+function is included in the standard \verb|Control.Arrow| module with
+the name |(+++)|, but for our purposes we find it clearer to just
+define our own).  We can see that $(f + g)$ is a bijection as long as
+$f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
-\emph{difference}?  That is, given bijections $f$ and $f_1$ with
+\emph{difference}?  That is, given bijections $h$ and $g$ with
 \begin{align*}
-  f   &: A_0 + A_1 \bij B_0 +B_1  \\
-  f_1 &: \makebox[\widthof{$A_0+A_1$}][r]{$A_1$}
+  h   &: A + B \bij A' +B'  \\
+  g &: \makebox[\widthof{$A+B$}][r]{$B$}
          \bij
-         \makebox[\widthof{$B_0+B_1$}][r]{$B_1$},
+         \makebox[\widthof{$A'+B'$}][r]{$B'$},
 \end{align*} can we compute some
-\[ f_0 : \makebox[\widthof{$A_0+A_1$}][l]{$A_0$} \bij \makebox[\widthof{$B_0+B_1$}][l]{$B_0$}? \]
+\[ f : \makebox[\widthof{$A+B$}][l]{$A$} \bij \makebox[\widthof{$A'+B'$}][l]{$A'$}? \]
 
-Certainly $A_0$ and $B_0$ have the same size. The existence of the
-bijections $f$ and $f_1$ tells us that $||A_0 + A_1|| = ||B_0 + B_1||$
-and $||A_1|| = ||B_1||$; since, in general,
-$||X + Y|| = ||X|| + ||Y||$, we can just subtract sizes to conclude
-that $||A_0|| = ||B_0||$.  So, if we are willing to use the law of
-excluded middle, we can say that there \emph{must exist} some
-bijection $A_0 \bij B_0$.  But what if we want to actually
-\emph{compute} a concrete bijection $A_0 \bij B_0$?  In that case, LEM
-is too big a sledgehammer. We need something more subtle.
-\todo{Say something about how LEM is not computational.}
+Certainly $A$ and $A'$ must have the same size. The existence of the
+bijections $h$ and $g$ tells us that $||A + B|| = ||A' + B'||$ and
+$||B|| = ||B'||$; since $||A + B|| = ||A|| + ||B||$, and similarly for
+$||A' + B'||$ (keeping in mind that $+$ is \emph{disjoint} union), we
+can just subtract the second equation from the first to conclude that
+$||A|| = ||A'||$.  Since $A$ and $A'$ are finite sets with the same
+size, there \emph{must exist} some bijection $A \bij A'$.  But what if
+we want to actually \emph{compute} a concrete bijection $A \bij A'$?
+The fact that $A$ and $A'$ have the same size, in and of itself, does
+not help us actually match up their elements.  The goal is to somehow
+use the \emph{computational content} of the bijections $h$ and $g$ to
+come up with a (suitably canonical) computational definition for $h - g$.
 
 To see why this problem is not as trivial as it may first seem,
 consider \pref{fig:subtracting-bijections}.
@@ -232,13 +237,13 @@ consider \pref{fig:subtracting-bijections}.
 
     dia = vsep 1 . map centerX $  -- $
       [ hsep 3
-        [ drawBComplex (bc2 # labelBC ["$f$"])
+        [ drawBComplex (bc2 # labelBC ["$h$"])
         , text "$-$"
-        , drawBComplex (bc1 # labelBC ["$f_1$"])
+        , drawBComplex (bc1 # labelBC ["$g$"])
         ]
       , hsep 3
         [ text "$=$"
-        , drawBComplex ((a0 .- empty -.. b0) # labelBC ["?"])
+        , drawBComplex ((a0 .- empty -.. b0) # labelBC ["$h - g$?"])
         ]
       ]
     bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
@@ -247,9 +252,25 @@ consider \pref{fig:subtracting-bijections}.
   \caption{Subtracting bijections?}
   \label{fig:subtracting-bijections}
 \end{figure}
-The bijection $A_0 + A_1 \bij B_0 + B_1$ may arbitrarily mix elements
-between the sets, so we cannot simply ``drop'' $A_1$ and $B_1$.  Some
-of the elements in $A_0$ may map to elements in $B_1$, and vice versa.
+The problem is that the bijection $h : A + B \bij A' + B'$ may not
+look like a sum of bijections $f + g$.  A sum of bijections always
+keeps $A$ and $B$ separate, mapping $A$ into $A'$ and $B$ into $B'$
+(as in \pref{fig:adding-bijections}).  However, in general, a
+bijection $h : A + B \bij A' + B'$ may arbitrarily mix elements
+between the sets. In \pref{fig:subtracting-bijections}, notice how $h$
+sends some elements from $A$ (dark blue) to $B'$ (light orange) and
+likewise from $B$ (dark orange) to $A'$ (light blue). In general,
+then, we cannot do anything so simple as just ``drop'' $B$ and $B'$.
+We will somehow need to make use of $g$ as well.
+
+\bay{Should we say this here? Or put it somewhere else?}
+One slightly strange consequence to note is that if we do find a way
+to define $h - g$, we can now see that it will \emph{not} satisfy the
+identity $(h - g) + g = h$, because the left-hand side will be a sum
+of bijections, which therefore looks like two separate bijections glued
+together (as in \pref{fig:adding-bijections}), whereas $h$ itself may
+not be.  This is not a problem in and of itself, but \todo{but what?
+  We just need to be careful... we just need to be aware...}
 
 So, why would anyone care?  This problem was first studied (and
 solved) in the context of combinatorics, where proving merely that two
@@ -270,46 +291,54 @@ constructive version of subtracting bijections is important.
   it works.  If you are a functional programmer who cares about computation...''}
 
 As we will see, although there is a known algorithm for constructing
-the difference of two bijections (the \emph{Gordon complementary bijection
-principle}, or GCBP), the usual proof of the algorithm's correctness is
-itself non-constructive!  Moreover, the usual presentation of the
-algorithm is low-level and element-based (\ie ``pointful'').  Our
-contributions are as follows:
+the difference of two bijections (the \emph{Gordon complementary
+  bijection principle}, or GCBP), the usual proof of the algorithm's
+correctness is itself non-constructive!  Moreover, the usual
+presentation of the algorithm is low-level and element-based (\ie
+``pointful'').  Our contributions are as follows:
 
 \begin{itemize}
-\item We present an algebra of partial bijections and operations on
-  them.
+\item We present an algebra of partial bijections and their operations.
 \item Using our algebra of partial bijections, we give a high-level,
   constructive proof of the GCBP.  To our knowledge, this is the first
-  constructive \emph{proof} of the GCBP.
+  constructive \emph{proof} of the GCBP.  The high-level nature of the
+  construction also gives additional insight into the workings of the
+  principle.
 \item We explain a related bijection principle, the \emph{Garsia-Milne
-    involution principle}, or GMIP, and prove that it is equivalent to
+    involution principle} (GMIP), and prove that it is equivalent to
   the GCBP.  The equivalence of GCBP and GMIP seems to be a
-  ``folklore'' result that is not explicitly recorded anywhere.
+  ``folklore'' result that is not explicitly recorded anywhere, and we
+  are able to give a nice \emph{computational} explanation of their
+  equivalence, by implementing each in terms of the other.
 \item One downside of our high-level implementation of GCBP is that
-  one direction of the computed bijection takes quadratic time; we
-  show how to optimize the implementation so that both directions run
-  in linear time, while retaining its high-level character.
+  one direction of the computed bijection has quadratic performance,
+  which is not a problem with the usual low-level
+  implementation. However, we show how to optimize the implementation
+  so that both directions run in linear time, while retaining its
+  high-level character.
 \end{itemize}
 
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
 
-The key to subtraction is to use the input bijections to ``ping-pong''
-back and forth between sets until landing in the right place.
-Starting with an arbitrary element of $A_0$, our goal is to find an
-element of $B_0$ to match it with.  First, run it through
-$f : A_0 + A_1 \bij B_0 + B_1$.  If we land in $B_0$, we are done.
-Otherwise, we end up with an element of $B_1$.  Run it through
-$f_1 : A_1 \bij B_1$ \emph{backwards}, yielding an element of $A_1$.
-Now run $f$ again, and so on.  Keep iterating this process until
-finally landing in $B_0$; we match the original element of $A_0$ to
-the element of $B_0$ so obtained.  \pref{fig:GCBP} illustrates this
-process.  The top two elements of the (yellow) set on the upper-left
-map immediately into the two lower elements of the blue set; the third
-element of the yellow set, however, requires two iterations before
-finally landing on the uppermost element of the blue
-set. \todo{Highlight paths through the diagram}
+Let us return to the problem of computing some $h - g : A \bij A'$
+from $h : A + B \bij A' + B'$ and $g : B \bij B'$.  The key to
+defining $h - g$ is to use $h$ and $g$ to ``ping-pong'' back and forth
+between sets until landing in the right place.
+
+Starting with an arbitrary element of $A$, our goal is to find an
+element of $A'$ to match it with.  First, run it through
+$h : A + B \bij A' + B'$.  If we land in $A'$, we are done.
+Otherwise, we end up with an element of $B'$.  Run it through
+$g : B \bij B'$ \emph{backwards}, yielding an element of $B$.  Now run
+$h$ again, and so on.  Keep iterating this process until finally
+landing in $A'$; we match the original element of $A$ to the element
+of $A'$ so obtained.  \pref{fig:GCBP} illustrates this process.  The
+top two elements of the (dark blue) set on the upper-left map immediately
+into the two lower elements of the light blue set; the third element of the
+dark blue set, however, requires two iterations before finally landing on
+the uppermost element of the light blue set. \todo{Highlight paths through
+  the diagram}
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -317,12 +346,13 @@ set. \todo{Highlight paths through the diagram}
 
     dia = vsep 1 . map centerX $ -- $
       [ gcbp
-        # labelBC (cycle ["$f$", "$f_1^{-1}$"])
+        # labelBC (cycle ["$h$", "$\\overline{g}$"])
         # drawBComplex
       , hsep 3
         [ text "$=$"
-        , drawBComplex $  -- $
-          a0 .- (single $ mkABij a0 b0 ((`mod` 3) . succ)) -.. b0  -- $
+        , (a0 .- (single $ mkABij a0 b0 ((`mod` 3) . succ)) -.. b0) -- $
+          # labelBC ["$f$"]
+          # drawBComplex
         ]
       ]
 
@@ -339,18 +369,18 @@ set. \todo{Highlight paths through the diagram}
 \end{figure}
 
 A Haskell implementation is shown in \pref{fig:GCBP-uni-Haskell}.
-This implementation is somewhat simplified, since it takes $A_1 = B_1$
-with $f_1$ being the identity bijection between them, but it still
+This implementation is somewhat simplified, since it takes $B = B'$
+with $g$ being the identity bijection between them, but it still
 serves to illustrate the basic idea.
 \begin{figure}[htp]
   \centering
 \begin{code}
-pingpong :: (a0 + c -> b0 + c) -> (a0 -> b0)
+pingpong :: (a + c -> a' + c) -> (a -> a')
 pingpong bij a = case bij (Left a) of
   Left b   -> b
   Right c  -> fixEither (bij . Right) c
 
-fixEither :: (c -> a0 + c) -> (c -> a0)
+fixEither :: (c -> a + c) -> (c -> a)
 fixEither f a = case f a of
   Left b   -> b
   Right a' -> fixEither f a'
@@ -364,44 +394,47 @@ This algorithm was introduced by \citet{gordon1983sieve}, who called it the
   principle is actually a bit more general?  What is computational
   content of Gordon's original paper?} \todo{See notes later below}
 
-At this point, it's worth going through a careful proof of the
-bijection principle.  We must prove two things: first, that the
+At this point, it's worth going through a careful, standard proof of
+the bijection principle.  We must prove two things: first, that the
 algorithm terminates; second, that it actually produces a bijection,
-as claimed.
+as claimed.  We denote the inverse of a bijection $f : X \bij Y$ by
+$\overline{f} : Y \bij X$, and denote the composition of bijections by
+juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.
 
 \begin{proof}
-  We first prove that the algorithm terminates.  Let $a \in A_0$ and
-  consider the sequence of values in $B_0 + B_1$ generated by the
-  algorithm: \[ f(a),\;\; (f \comp f_1^{-1} \comp f)(a),\;\; (f \comp f_1^{-1}
-  \comp f \comp f_1^{-1} \comp f)(a),\;\; \dots, \] which we can write
+  We first prove that the algorithm terminates.  Let $a \in A$ and
+  consider the sequence of values in $A' + B'$ generated by the
+  algorithm: \[ h(a),\;\; h \overline g h(a),\;\; h \overline g
+  h \overline g h(a),\;\; \dots, \] which we can write
   more compactly as
-  \[ ((f \comp f_1^{-1})^n \comp f)(a) \]
-  for $n \geq 0$.  The claim is that
-  $((f \comp f_1^{-1})^n \comp f)(a) \in B_0$ for some $n$, at which
-  point the algorithm stops.  Suppose not, that is, suppose
-  $((f \comp f_1^{-1})^n \comp f)(a) \in B_1$ for all $n \geq 0$.
-  Then since $B_1$ is finite, by the pigeonhole principle there must
-  exist $0 \leq j < k$ such that \[ ((f \comp f_1^{-1})^j \comp f)(a)
-  = ((f \comp f_1^{-1})^k \comp f)(a). \]  Since $f$ and $f_1$ are
-  bijections, we may apply $(f \comp f_1^{-1})^{-j}$ to both sides,
-  obtaining \[ f(a) = ((f \comp f_1^{-1})^{k-j} \comp f)(a) = (f \comp
-  (f_1^{-1} \comp f)^{k-j})(a). \]  Finally, applying $f^{-1}$ to both
-  sides, \[ a = (f_1^{-1} \comp f)^{k-j}(a). \] But $a \in A_0$,
-  whereas the right-hand side is an element of $\cod(f_1^{-1}) = A_1$,
-  a contradiction.
+  \[ ((h \overline g)^n h)(a) \] for $n \geq 0$.  The claim is that
+  $((h \overline g)^n h)(a) \in A'$ for some $n$, at which point the
+  algorithm stops.  Suppose not, that is, suppose
+  $((h \overline g)^n h)(a) \in B'$ for all $n \geq 0$.  Then since
+  $B'$ is finite, by the pigeonhole principle there must exist
+  $0 \leq j < k$ such that
+  \[ ((h \overline g)^j h)(a) = ((h \overline g)^k h)(a). \] Since $h$
+  and $g$ are bijections, so is $(h \overline g)^j$, and we may apply
+  its inverse to both sides, obtaining
+  \[ h(a) = ((h \overline g)^{k-j} h)(a) = (h (\overline g
+    h)^{k-j})(a). \] Finally, applying $\overline h$ to both sides,
+  \[ a = (\overline g h)^{k-j}(a). \] But $a \in A$, whereas the
+  right-hand side is an element of the codomain of $\overline g$, that
+  is, $B$.  This is a contradiction, so the algorithm must in fact
+  terminate for any starting $a \in A$.
 
-  It remains to show that the constructed $f_0$ is a bijection.  Note
-  that given a particular $a \in A_0$, the algorithm visits a series
-  of elements in $A_0, B_1, B_0, B_1, \dots, B_0, A_1$, finally
-  stopping when it reaches $A_1$, and assigning the resulting element
-  of $A_1$ as the output of $f_0(a)$.  We can explicitly construct the
-  inverse of $f_0$ by running the same algorithm with $f^{-1}$ and
-  $f_1^{-1}$ as input in place of $f$ and $f_1$.  That is,
+  It remains to show that the function $f$ so constructed is a
+  bijection.  Note that given a particular $a \in A$, the algorithm
+  visits a series of elements in $A, B', B, B', \dots, B, A'$,
+  finally stopping when it reaches $A'$, and assigning the resulting
+  element of $A'$ as the output of $f(a)$.  We can explicitly construct
+  $\overline f$ by running the same algorithm with $\overline h$
+  and $\overline g$ as input in place of $h$ and $g$.  That is,
   intuitively, we build build \pref{fig:GCBP} from right to left
   instead of left to right.  When run ``in reverse'' in this way on
-  $f_0(a)$, we can see that the algorithm will visit exactly the same
+  $f(a)$, we can see that the algorithm will visit exactly the same
   series of elements in reverse, stopping when it reaches the original
-  $a$ since it is the first element not in $B_0$.
+  $a$ since it is the first element not in $B$.
 \end{proof}
 
 This proof would convince any combinatorialist, but it has several
@@ -411,6 +444,10 @@ downsides:
 \item It makes heavy use of ``pointwise'' reasoning, messily following
   the fate of individual elements through an algorithm.  We would like
   a ``higher-level'' perspective on both the algorithm and proof.
+  Note we cannot just trivially rewrite the above algorithm in terms
+  of function composition and get rid of mentions of $a$, since the
+  algorithm may iterate a different number of times for each
+  particular $a \in A$.
 \item Relatedly, the proof requires constructing the forward and
   backward directions separately, and then proving that the results
   are inverse.  It would be much more satisfying to construct both
@@ -421,7 +458,9 @@ downsides:
   is a proof by contradiction.  Having an algorithm at all is still
   better than nothing, but having a classical proof of correctness is
   irksome: intuitively, it doesn't seem like anything fundamentally
-  non-constructive is going on.
+  non-constructive is going on, and the classical proof makes it
+  problematic to implement GCBP in a proof assistant based on
+  constructive logic.
 
   To give a constructive proof of termination, we need some sort of
   termination measure on which we can do well-founded induction, but
@@ -453,8 +492,8 @@ undefined on some elements, that is, a bijection between
 
     dia = drawBComplex (a .- pbij -.. b)
       where
-        a = nset 4 yellow
-        b = nset 4 blue
+        a = nset 4 (colors!!0)
+        b = nset 4 (colors!!1)
     pbij = single $ bijFun [0..3] (\case { 1 -> Just 0; 3 -> Just 3; _ -> Nothing}) -- $
   \end{diagram}
   \caption{A partial bijection}
@@ -608,7 +647,7 @@ indirectly to \citet{garsia1981rogers}:
   acts as the identity if $a$ has no properties.  We observe the
   following:
   \begin{itemize}
-  \item $\alpha$ is an involution, that is, $\alpha \comp \alpha =
+  \item $\alpha$ is an involution, that is, $\alpha^2 =
     \id$, and hence $\alpha$ is a permutation of $\bigA$.
   \item $\alpha$ always sends odd-size $J$ to even-size $J$, and vice
     versa---except when $a$ has no properties (in which case $J =
@@ -660,7 +699,8 @@ indirectly to \citet{garsia1981rogers}:
   left-associated and one will be right-associated, leading to
   quadratic behavior in one direction or the other.  Solution: compose
   partial bijections the ``naive'' (wrong) way, $f \comp g$ and
-  $f^{-1} \comp g^{-1}$ (instead of $(g^{-1} \comp f^{-1})$).  This
+  $\overline f \comp \overline g$ (instead of $(\overline g \comp
+  \overline f)$).  This
   works in this particular case because we're computing a PALINDROME
   so the order actually doesn't matter. (Enforcing this in the type
   system would be tricky but possible.)}
