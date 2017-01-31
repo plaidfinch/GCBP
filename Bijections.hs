@@ -24,6 +24,8 @@ import           Data.Typeable
 import           Diagrams.Core.Names
 import           Diagrams.Prelude    hiding (dot, end, r2, start)
 
+import Data.Colour.SRGB
+
 ------------------------------------------------------------
 -- Diagram utilities
 
@@ -434,12 +436,23 @@ colorBij colors = bijParts . mapped %~ colorBij'
 ------------------------------------------------------------
 -- Example sets and bijections
 
-a0, b0, a1, b1 :: _ => Set b
-a0 = nset 3 yellow
-b0 = nset 3 blue
+-- See http://mkweb.bcgsc.ca/colorblind/img/colorblindness.palettes.trivial.png
+--
+-- These colors should be perceptible as distinct by most people with
+-- some form of colorblindness.
+colors =
+  [ sRGB24 0 114 178     -- blue
+  , sRGB24 86 180 233  -- sky blue
+  , sRGB24 213 94 0    -- vermillion
+  , sRGB24 230 159 0   -- orange
+  ]
 
-a1 = nset 2 green
-b1 = nset 2 red
+a0, b0, a1, b1 :: _ => Set b
+a0 = nset 3 (colors !! 0)
+b0 = nset 3 (colors !! 1)
+
+a1 = nset 2 (colors !! 2)
+b1 = nset 2 (colors !! 3)
 
 bc0, bc1, bc01 :: _ => BComplex b
 bc0 = a0 .- bij0 -.. b0
