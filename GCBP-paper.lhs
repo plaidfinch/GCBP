@@ -434,7 +434,7 @@ juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.
   instead of left to right.  When run ``in reverse'' in this way on
   $f(a)$, we can see that the algorithm will visit exactly the same
   series of elements in reverse, stopping when it reaches the original
-  $a$ since it is the first element not in $B$.
+  $a$ since will be the first element not in $B$.
 \end{proof}
 
 This proof would convince any combinatorialist, but it has several
