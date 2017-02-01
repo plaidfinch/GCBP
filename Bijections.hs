@@ -441,7 +441,7 @@ colorBij colors = bijParts . mapped %~ colorBij'
 -- These colors should be perceptible as distinct by most people with
 -- some form of colorblindness.
 colors =
-  [ sRGB24 0 114 178     -- blue
+  [ sRGB24 0 114 178   -- blue
   , sRGB24 86 180 233  -- sky blue
   , sRGB24 213 94 0    -- vermillion
   , sRGB24 230 159 0   -- orange
