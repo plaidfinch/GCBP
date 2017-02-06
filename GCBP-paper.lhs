@@ -566,7 +566,7 @@ For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|,
 
 We say that two partial functions are \emph{compatible} if they agree on all
 inputs for which they are both defined---that is, |f| and |g| are compatible if
-there is no input |x| for which |f x = Just y| and |g x = Just z| and \(y \ne z\).
+for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
 We will abbreviate this predicate as \(f\,||||\, g\).
 
 Another less point-wise way of stating compatibility for partial functions

@@ -28,6 +28,7 @@ shake
 *.fdb_latexmk
 *.fls
 *.synctex.gz
+auto/
 
 *.agdai
 *~
