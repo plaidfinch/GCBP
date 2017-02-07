@@ -28,3 +28,17 @@ Car thoughts:
 - How is left-biased (<>) defined? In order to produce a bijection, it needs to only add edges that don't conflict in *either* direction. (example: (1<->2,2<->3) <> id is not bijective w/o this)
 - If you compose bijections in the "wrong" way, this /works/ if you only ever look at palindromes. Wrong way: (f, f^-1) . (g, g^-1) = (f . g, f^1 . g^1). [The types don't line up this way...] You have to coalesce by pairs...
 - We think that there's an "abides" between all three pairs of operators. Is this the case?
+
+-----
+
+Define orbit of each dark blue element. (as partial identity?  items
+  in A' + B' that are reached by it under iteration).
+Prove orbits are disjoint.  (using bijectiveness)
+  i.e. x \in orbit(a) and x \in orbit(b) then a = b.
+
+Make a cycle with h, g bar.  Then every edge is part of a unique path.
+Paths are all disjoint, and there are only two types: ones that start
+and end at blue elements, or ones that cycle around in the brown
+sets.  How to prove this constructively?
+
+Blue sets can be infinite!
