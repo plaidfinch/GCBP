@@ -551,6 +551,59 @@ is ``at least as defined as'' $x$.
   partial functions: use symbol $\sqcup$ since it's a join in the
   partial order (should change Agda code to use this symbol too).}
 
+Using the |Maybe| monad, we can define the type of partial functions,
+\(a \rightharpoonup b\) as |a -> Maybe b|. This function space forms a Kleisli
+category; that is, they can be composed using the |(<=<)| operation,
+whose identity is the monadic |return|. We overload \(\circ\) and |id| throughout
+this paper for anything fitting a category structure.
+
+We define equivalence \(\approx\) on partial functions in the usual pointwise
+way---that they are equal on all possible inputs.
+
+Moreover, partial functions also participate in a partial order,
+determined by their pointwise defined-ness. That is to say, we define
+the partial order on partial functions \(\sqsubseteq\) as the pointwise lifting
+of the defined-ness partial order on |Maybe|, wherein |Nothing| \(\sqsubseteq\) |m|
+for all |m|, |Just x| \(\sqsubseteq\) |Just y| when |x = y|, and all other values
+are incomparable.
+
+These partial functions also allow a sum construction akin to that for
+ordinary functions.
+
+For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|, we define
+
+\begin{spec}
+  f + h = either (fmap Left . f) (fmap Right . h)
+\end{spec}
+
+\begin{proof}[Composition Abides Sum]
+  For all partial functions
+  \(f : B_0 \rightharpoonup C_0\), \(g : A_0 \rightharpoonup B_0\),
+  \(h : B_1 \rightharpoonup C_1\), \(k : A_1 \rightharpoonup B_1\),
+  the sum of compositions \((f \circ g) + (h \circ k)\) is equivalent to
+  the composition of sums \((f + h) \circ (g + k)\).
+  \todo{Needs proof, really needs diagram.}
+\end{proof}
+
+We say that two partial functions are \emph{compatible} if they agree on all
+inputs for which they are both defined---that is, |f| and |g| are compatible if
+for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
+We will abbreviate this predicate as \(f\,||||\, g\).
+
+Another less point-wise way of stating compatibility for partial functions
+is to say that two functions are compatible when they are equal upon restriction
+to the other's domain. We define a new |dom| operator over partial functions,
+so that |dom f| is the identity on all inputs for which |f| is defined, and
+returns nothing for all inputs on which |f| is undefined.
+
+With |dom|, we can restate the notion of compatiblity in a point-free style:
+two functions |f| and |g| are compatible if and only if
+\(f \circ dom\ g \approx g \circ dom\ f\).
+
+\todo{Prove this.}
+
+
+
 \todo{Now define partial bijections as a pair of pfuns such that left,
   right dom laws hold.  Note equivalence to other possible set of
   laws.  Prove composition (using nicer equational proof).}
