@@ -337,8 +337,7 @@ of $A'$ so obtained.  \pref{fig:GCBP} illustrates this process.  The
 top two elements of the (dark blue) set on the upper-left map immediately
 into the two lower elements of the light blue set; the third element of the
 dark blue set, however, requires two iterations before finally landing on
-the uppermost element of the light blue set. \todo{Highlight paths through
-  the diagram}
+the uppermost element of the light blue set.
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -350,17 +349,39 @@ the uppermost element of the light blue set. \todo{Highlight paths through
         # drawBComplex
       , hsep 3
         [ text "$=$"
-        , (a0 .- (single $ mkABij a0 b0 ((`mod` 3) . succ)) -.. b0) -- $
+        , ( a0 .-
+              ( mkABij a0 b0 ((`mod` 3) . succ)
+                # single
+                # colorEdge (toNameI 0) (colors !! 4)
+                # colorEdge (toNameI 1) (colors !! 4)
+                # colorEdge (toNameI 2) (colors !! 5)
+              ) -..
+            b0
+          )
           # labelBC ["$f$"]
           # drawBComplex
         ]
       ]
 
-    gcbp = (a0 +++ a1) .- bij2 -.
-           (b0 +++ b1) .- (empty +++ reversing bij1) -.
-           (a0 +++ a1) .- bij2 -.
-           (b0 +++ b1) .- (empty +++ reversing bij1) -.
-           (a0 +++ a1) .- bij2 -..
+    gcbp = (a0 +++ a1) .-
+             (bij2 # colorEdge ('a' .> (0 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (1 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (2 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -..
            (b0 +++ b1)
     bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ) -- $
   \end{diagram}

@@ -441,10 +441,12 @@ colorBij colors = bijParts . mapped %~ colorBij'
 -- These colors should be perceptible as distinct by most people with
 -- some form of colorblindness.
 colors =
-  [ sRGB24 0 114 178   -- blue
-  , sRGB24 86 180 233  -- sky blue
-  , sRGB24 213 94 0    -- vermillion
-  , sRGB24 230 159 0   -- orange
+  [ sRGB24   0 114 178   -- blue
+  , sRGB24  86 180 233   -- sky blue
+  , sRGB24 213  94   0   -- vermillion
+  , sRGB24 230 159   0   -- orange
+  , sRGB24   0 158 115   -- bluish green
+  , sRGB24 204 121 167   -- reddish purple
   ]
 
 a0, b0, a1, b1 :: _ => Set b
@@ -465,3 +467,7 @@ bc01' = bc01 +- (reversing bij0 +++ empty) -.. (a0 +++ a1)
 bij0, bij1 :: _ => Bij b
 bij0 = single $ mkABij a0 b0 ((`mod` 3) . succ . succ)
 bij1 = single $ mkABij a1 b1 id
+
+colorEdge :: _ => Name -> Colour Double -> Bij b -> Bij b
+colorEdge n c = bijParts . traverse . bijStyle
+  %~ \sty n' -> if (n' == n) then (sty n' # lc c # lw thick) else sty n'
