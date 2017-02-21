@@ -1,0 +1,180 @@
+Hi Brent!
+
+Hi Kenny!
+
+Yep, seems to be working. Cool!
+
+It would seem so!  Not sure of the best way to manage this but
+hopefully we'll figure it out. =)
+
+Do you remember Google Wave? This is like the Emacs version of
+that, more or less.
+
+Hah, indeed.  I do remember Google Wave.
+
+So--you said you figured some things out about orbits?
+
+Well, at least I think things are clearer in my head, but I haven't
+yet written anything down.  So I'll try now and hopefully it will help
+clarify things.  (By the way, does your buffer show lots of random
+gray splotches? [KWF: yes] Weird, I think it tries to highlight stuff
+but gets confused about what it has or hasn't unhighlighted.  Not sure
+if there's a way to make it redraw. I found one: M-x
+floobits-clear-highlights.  Lovely, thanks!)
+
+So given h and g as in Figure 3, for some a \in A (dark blue) define
+orb_n(a) as the set of elements of A'+B'
+
+  orb_n(a) = {h(a), hg'h(a), ... h(g'h)^n(a) }
+
+We can prove stuff like: the orbits of different elements are
+disjoint.  Though interestingly this turns out to be phrased
+"contrapositively": i.e.  "if x /= y then there does not exist z
+s.t. z \in orb_n(x) and z \in orb_n(y)."  What we really want is a
+positively phrased theorem:
+
+For all x,y \in A, if there exists a z \in orb_n(x) and z \in
+orb_n(y), then x=y.
+
+This can be proved by induction: since g'h is a bijection, sending z
+backwards along it results in some z' which is in both orb_{n-1}'s,
+and so on.
+
+I am being a bit vague about orb_n and what happens when n is bigger
+than the length it takes to get back to A' but we can say e.g. that in
+that case orb_m = orb_n for all m > n.
+
+I think that makes sense.
+
+We can also prove that the orbit for a \in A always "makes progress"
+until it reaches A'.  That is, for successive n, the orbit either
+strictly gets larger, or has reached an element in A'.  Intuitively
+this ensures that the orbit can never "get stuck in a loop".
+
+So formally, for all n \geq 0, either orb_n(a) contains some element
+of A', or orb_n(a) is a strict subset of orb_{n+1}(a).  Not sure of
+the exact best way to phrase that.
+
+Now I am thinking how to prove this constructively...
+
+Yeah, right now it is very LEMmy... you mean the proof you can think
+of is LEMmy, or the way it is stated is already LEMmy?
+
+The proof I can think of, I think. I'm pondering how to rephrase it.
+
+To say that orb_n(a) is a strict subset of orb_{n+1}(a) is already to
+state a negation: namely, that h(g'h)^{n+1}(a) \notin orb_n(a),
+i.e. that for all m <= n, h(g'h)^{n+1}(a) /= h(g'h)^m(a).  I don't
+know whether that's actually what we want or whether we will need to
+state this more positively.
+
+And we need this strictness... because we want to say that precisely
+when it is *not* strictly increasing, it is finished. Right?  Right,
+this will be the basis of the termination argument.  This all
+ultimately came from me trying to figure out *what* it is that is
+always strictly increasing/making progress. Okay, that makes sense.
+Hmm.
+
+So if we accept the negatively-phrased thing, i.e. for all m <= n,
+h(g'h)^{n+1}(a) /= h(g'h)^m(a), we can prove that constructively, the
+same way as it is proved at the end of pg 2 -- top of pg 3.  That is,
+we can apply the inverse of h(g'h)^m to both sides to get a =
+something which is not an element of A, which is a contradiction.
+Doing this out in Agda sounds painful but I am confident it can be done.
+
+Where does the heterogeneous equality come in?  Never mind, I am
+getting tripped up by the fact that mathematicians tend to play fast
+and loose with the difference between a \in A  and inl(a) \in A+B. Aha.
+But we probably can make this simpler, by being more precise about what
+types things are.  Agreed, in the end the contradiction would just
+come down to having inl(something) = inr(something).  Anyway, it still
+sounds painful to do this in Agda but at least not for that reason. =)
+
+Quite :) I've been learning a lot by sinking my teeth into this project,
+but I still feel like there's a mountain of intuition about Agda that I
+have yet to fully consume. It feels a lot like I felt when I was first
+learning Haskell, except moreso, because I can guess where some things
+might be going.  Haha, well I can tell you that from up here on what
+looks like the top of the mountain to you, I can see that the mountain
+continues several more miles upwards =) I guessed as much :)
+
+So it seems like maybe we are actually figuring out how to turn the
+"proof by contradiction" in the beginning of the paper into a more
+benign use of a proof of negation.  Perhaps.  The part I am still not
+sure about is whether this negatively-phrased definition of strict
+subset will be something upon which one can do well-founded
+induction.
+
+Huh. I don't have a good guess about that. Need to think more on it.
+Me too, and actually I suspect thinking will not be enough, we would
+need to actually try to write some Agda. Yep.
+
+It occurs to me that most of this file will read later like a person
+who is talking to themself.  Why yes, self, it will read like that.
+*snort*  I thought about putting in things like BAY: KWF: to indicate
+who said what, but I figure (a) it doesn't really matter and (b) we'll
+probably remember anyway. Most likely. And if not, well, Rosencrantz and
+Guildenstern was a good play...  haha.
+
+So if we can pop up to a meta-level for a minute, I think we're making
+good (if slow) progress, but I am increasingly skeptical there is any
+way this could be ready to submit to ICFP. Me too.  Not to mention
+that I might not be able to go anyway.
+
+Congratulations!!!  Thanks =)
+
+Well, we can either target Haskell Symposium (although this still does
+feel more ICFP-y...) or table it for a later conference, though continuing
+to work on it... It seems that most of my research projects are moving
+in the Haskell Symposium direction---my project about type level maps is in
+a similar state (actually a little less ready), and I'm meeting with Stephanie
+today to talk about the fact that it seems impossible to have it ready...
+
+Yeah, and Haskell Symposium has the similar problem that I probably
+won't be there (though of course that's not an absolute showstopper).
+
+What other venues are there for fun mathy functional programming things?
+We certainly don't have to answer this now, but we should start looking
+around. Is the Monad Reader still running? I know, not peer-reviewed really,
+and whatnot, but if it ends up that we can't find another place, it'd be
+a good place to get this out into the world.
+
+Monad Reader really isn't running anymore.  Some possibilities I can
+think of include MSFP (which should happen again in spring 2018), or JFP.
+
+How does JFP work? I've never submitted to a journal before.
+
+It has rolling submissions, submissions get reviewed by 3 or so
+referees (selected/invited by the editor based on the topic of the
+submission), and it can either be accepted, accepted with minor
+revisions, rejected, etc.  Usually what happens is that it will go
+through a few rounds of revision until the referees are happy with it,
+it's rare for something to just be rejected outright I think.  The
+upside is that you get some great feedback, it's a good opportunity to
+publish something that can be a bit longer/more leisurely since
+there's no hard page limit; the downsides are that the process can
+take a long time (imagine 2 months or so for each round of reviews,
+plus the time you spend revising, plus the time from when it is
+accepted to when it appears, etc.), and it's not quite as prestigious
+as a conference. Okay. So, if we keep working on this, then eventually
+it'll either a) be in shape for next ICFP, or b) for a JFP or MSFP submission.
+
+Yes, I think so.  Also, I have a bunch of money to spend and was
+thinking about seeing if I could fit a visit to Philly into my summer
+(if you will be around). I will! That would be great.  Yeah, I think a
+few focused days of in-person collaboration would probably be worth 3
+months or so of weekly phone conversations. =) That seems to be about the
+shape of it.
+
+OK.  Well, that's probably a good place to leave things for today I suppose.
+Sounds good! I'll see if I can look at those proofs before next time--presuming
+that you want to continue the weekly phone meetings, even with less
+deadline stress.  Yes, let's try it---though I have promised Jacques
+Carette that I will have time to work on a long-dormant project with
+him after the ICFP deadline, so I'll have to see how things shake
+out. (But the projects are actually related/synergistic...)
+Sounds good to me. Really!I'd love to hear about that next time. Sure thing.
+
+Anyhow, I should head out shortly to get to Penn
+
+OK, talk to you next week!
