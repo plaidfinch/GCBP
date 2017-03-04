@@ -28,10 +28,7 @@ import PartialFunctions as PFun
 ----------------------------------------------------------------------
 
 -- A partial bijection is a pair of partial functions f and g between
--- sets A and B such that both f∘g and g∘f are bounded above by the
--- identity function.  That is, f∘g can be undefined on some values
--- but it must be the identity for those values on which it is
--- defined.
+-- sets A and B such that f and g are inverses on their domains.
 record _⇌_ (A B : Set) : Set where
   constructor PBij
   field
