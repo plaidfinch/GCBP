@@ -41,7 +41,6 @@ infix 1 _⇌_
 
 open _⇌_
 
-
 -- The properties left-dom and right-dom imply both the properties we
 -- had before.  So if those properties were strong enough to properly
 -- characterize partial bijections, then this property must be as
@@ -163,6 +162,8 @@ _∘_ {A} g f = record
     module f = _⇌_ f
     module g = _⇌_ g
 
+-- h ∥ g → h ∙ dom (f ∙ g) ≈ dom f ∙ h ∙ dom g
+
     lemma : {A B C : Set} {f⁻¹ : B ⇀ A} {f : A ⇀ B} {g : B ⇀ C}
           → f⁻¹ ∙ f ≈ PFun.dom f → f⁻¹ ∙ PFun.dom g ∙ f ≈ PFun.dom (g ∙ f)
     lemma {f = f} eq a with f a | inspect f a | eq a
@@ -177,7 +178,7 @@ _∘_ {A} g f = record
 
     .∘-left-dom : {A B C : Set} (h : A ⇌ B) (k : B ⇌ C)
                → (bwd h ∙ bwd k) ∙ fwd k ∙ fwd h ≈ PFun.dom (fwd k ∙ fwd h)
-    ∘-left-dom {A} h k = begin
+    ∘-left-dom {A} {B} h k = begin
       (h.bwd ∙ k.bwd) ∙ k.fwd ∙ h.fwd
                                          ≈⟨ sym (∙-assoc _ _ h.fwd ) ⟩
       ((h.bwd ∙ k.bwd) ∙ k.fwd) ∙ h.fwd
@@ -190,9 +191,22 @@ _∘_ {A} g f = record
                                            )
                                          ⟩
       (h.bwd ∙ PFun.dom k.fwd) ∙ h.fwd
-                                        ≈⟨ ∙-assoc _ _ h.fwd ⟩
+                                         ≈⟨ ∙-assoc _ _ h.fwd ⟩
       h.bwd ∙ PFun.dom k.fwd ∙ h.fwd
-                                        ≈⟨ lemma h.left-dom ⟩
+                                         ≈⟨ lemma h.left-dom ⟩
+
+
+      --                                   ≈⟨ ≈-cong-right (h.bwd ∙ PFun.dom k.fwd) (PFEqAB.sym (dom-right-id {f = h.fwd})) ⟩
+      -- (h.bwd ∙ PFun.dom k.fwd) ∙ (h.fwd ∙ PFun.dom h.fwd)
+      --                                   ≈⟨ ∙-assoc _ _ (h.fwd ∙ PFun.dom h.fwd) ⟩
+      -- h.bwd ∙ (PFun.dom k.fwd ∙ (h.fwd ∙ PFun.dom h.fwd))
+      --                                   ≈⟨ ≈-cong-right h.bwd (PFEqAB.sym (dom-∙ k.fwd h.fwd h.fwd (PFun.∥-refl {f = h.fwd}))) ⟩
+      -- h.bwd ∙ (h.fwd ∙ PFun.dom (k.fwd ∙ h.fwd))
+      --                                   ≈⟨ sym (∙-assoc _ _ (PFun.dom (k.fwd ∙ h.fwd))) ⟩
+      -- (h.bwd ∙ h.fwd) ∙ PFun.dom (k.fwd ∙ h.fwd)
+      --                                   ≈⟨ ≈-cong-left (PartialFunctions.dom (k.fwd ∙ h.fwd)) h.left-dom ⟩
+      -- PFun.dom h.fwd ∙ PFun.dom (k.fwd ∙ h.fwd)
+      --                                   ≈⟨ {!!} ⟩
       PFun.dom (k.fwd ∙ h.fwd) ∎
       where
         module h = _⇌_ h
@@ -200,6 +214,7 @@ _∘_ {A} g f = record
 
         open import Relation.Binary.EqReasoning (PFun.setoid A A)
         open module PFEquiv = IsEquivalence (PFun.isEquivalence {A = A} {B = A})
+        module PFEqAB = IsEquivalence (PFun.isEquivalence {A = A} {B = B})
 
 ∘-assoc : {A B C D : Set} → (f : C ⇌ D) (g : B ⇌ C) (h : A ⇌ B)
   → (f ∘ g) ∘ h ≋ f ∘ (g ∘ h)
