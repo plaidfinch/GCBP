@@ -178,3 +178,11 @@ Sounds good to me. Really!I'd love to hear about that next time. Sure thing.
 Anyhow, I should head out shortly to get to Penn
 
 OK, talk to you next week!
+
+================================================================
+
+Motivation: "two houses both alike in dignity..."
+
+GCBP and GMIP are equivalent.  GCBP is phrased more "positively",
+preferred by functional programmers?  GMIP has things "cancel out",
+preferred by combinatorialists?
