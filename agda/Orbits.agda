@@ -35,8 +35,15 @@ module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B �
   iter (suc n) a | inj₁ a′ = inj₁ a′
   iter (suc n) a | inj₂ b′ = _↔_.fwd h (inj₂ (_↔_.bwd g b′))
 
+  -- This ought to be true.  But as a start it might be easier to
+  -- prove a version where m ≡ n.
   orbitsDisjoint : (x y : A) (m n : ℕ) → (iter m x ≡ iter n y) → x ≡ y
   orbitsDisjoint x y m n imx≡imy = {!!}
+
+  -- Version where we iterate the same number of times on both sides.
+  orbitsDisjointN : (x y : A) (n : ℕ) → (iter n x ≡ iter n y) → x ≡ y
+  orbitsDisjointN x y zero    ix≡iy = {!!}
+  orbitsDisjointN x y (suc n) ix≡iy = {!!}
 
 open Orbits public
 
