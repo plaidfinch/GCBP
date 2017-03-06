@@ -27,6 +27,9 @@ record _↔_ (A B : Set) : Set where
   injective a₁ a₂ refl | b₁ , fa₁≡b₁ | .b₁ , fa₂≡b₁
     = _⇌_.injective pbij a₁ a₂ b₁ fa₁≡b₁ fa₂≡b₁
 
+inj₁-inj : {A : Set} (B : Set) (x y : A) → _≡_ {_} {A ⊎ B} (inj₁ x) (inj₁ y) → x ≡ y
+inj₁-inj _ x .x refl = refl
+
 module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B ↔ B′) where
 
   iter : (n : ℕ) (a : A) → (A′ ⊎ B′)
@@ -37,12 +40,13 @@ module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B �
 
   -- This ought to be true.  But as a start it might be easier to
   -- prove a version where m ≡ n.
-  orbitsDisjoint : (x y : A) (m n : ℕ) → (iter m x ≡ iter n y) → x ≡ y
+  .orbitsDisjoint : (x y : A) (m n : ℕ) → (iter m x ≡ iter n y) → x ≡ y
   orbitsDisjoint x y m n imx≡imy = {!!}
 
   -- Version where we iterate the same number of times on both sides.
-  orbitsDisjointN : (x y : A) (n : ℕ) → (iter n x ≡ iter n y) → x ≡ y
-  orbitsDisjointN x y zero    ix≡iy = {!!}
+  .orbitsDisjointN : (x y : A) (n : ℕ) → (iter n x ≡ iter n y) → x ≡ y
+  orbitsDisjointN x y zero ix≡iy with _↔_.totalfwd h (inj₁ x) | _↔_.totalfwd h (inj₁ y)
+  orbitsDisjointN x y zero refl | hx , eqx | .hx , eqy = inj₁-inj B x y (_↔_.injective h (inj₁ x) (inj₁ y) {!!})
   orbitsDisjointN x y (suc n) ix≡iy = {!!}
 
 open Orbits public
