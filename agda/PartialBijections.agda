@@ -11,11 +11,11 @@ open import Data.Product as Prod
 open import Data.Maybe as Maybe
 
 open import Relation.Binary
-open import Relation.Binary.Core using (module IsEquivalence)
+open import Relation.Binary.Core using (module IsEquivalence ; _≡_)
 import Relation.Binary.Core as PropEq
 import Relation.Binary.PreorderReasoning as Pre
   renaming (_∼⟨_⟩_ to _⊑⟨_⟩_ )
-open import Relation.Binary.PropositionalEquality using (inspect)
+open import Relation.Binary.PropositionalEquality using (inspect ; module ≡-Reasoning)
   renaming ([_] to ins_)
 
 open import PartialFunctions hiding (∅ ; id ; inl ; inr ; projl ; projr ; isEquivalence
@@ -27,6 +27,9 @@ import PartialFunctions as PFun
 -- Partial bijections
 ----------------------------------------------------------------------
 
+just-inj : {A : Set} (x y : A) → _≡_ {_} {Maybe A} (just x) (just y) → x ≡ y
+just-inj x .x PropEq.refl = PropEq.refl
+
 -- A partial bijection is a pair of partial functions f and g between
 -- sets A and B such that f and g are inverses on their domains.
 record _⇌_ (A B : Set) : Set where
@@ -36,6 +39,36 @@ record _⇌_ (A B : Set) : Set where
     bwd        : B ⇀ A
     .left-dom   : bwd ∙ fwd ≈ PFun.dom fwd
     .right-dom  : fwd ∙ bwd ≈ PFun.dom bwd
+
+  .injective : (a₁ a₂ : A) (b : B) → fwd a₁ ≡ just b → fwd a₂ ≡ just b → a₁ ≡ a₂
+  injective a₁ a₂ b fa₁≡b fa₂≡b = just-inj a₁ a₂ (begin
+    just a₁
+                                            ≡⟨ lem₁ ⟩
+    PFun.dom fwd a₁
+                                            ≡⟨ ≈-sym left-dom a₁ ⟩
+    (bwd ∙ fwd) a₁
+                                            ≡⟨ lem₃ ⟩
+    bwd b
+                                            ≡⟨ lem₄ ⟩
+    (bwd ∙ fwd) a₂
+                                            ≡⟨ left-dom a₂ ⟩
+    PFun.dom fwd a₂
+                                            ≡⟨ lem₂ ⟩
+    just a₂ ∎)
+    where
+      open ≡-Reasoning
+
+      lem₁ : just a₁ ≡ PFun.dom fwd a₁
+      lem₁ rewrite fa₁≡b = PropEq.refl
+
+      lem₂ : PFun.dom fwd a₂ ≡ just a₂
+      lem₂ rewrite fa₂≡b = PropEq.refl
+
+      lem₃ : (bwd ∙ fwd) a₁ ≡ bwd b
+      lem₃ rewrite fa₁≡b = PropEq.refl
+
+      lem₄ : bwd b ≡ (bwd ∙ fwd) a₂
+      lem₄ rewrite fa₂≡b = PropEq.refl
 
 infix 1 _⇌_
 
