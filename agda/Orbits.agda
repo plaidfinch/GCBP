@@ -6,7 +6,7 @@ open import Data.Sum
 open import Data.Product
 open import Data.Nat
 open import Data.Maybe
-open import Relation.Binary.Core using (_≡_)
+open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; sym ; trans)
 
 -- A bijection is a partial bijection which is defined everywhere.
 record _↔_ (A B : Set) : Set where
@@ -21,6 +21,11 @@ record _↔_ (A B : Set) : Set where
 
   bwd : B → A
   bwd b = proj₁ (totalbwd b)
+
+  .injective : (a₁ a₂ : A) → fwd a₁ ≡ fwd a₂ → a₁ ≡ a₂
+  injective a₁ a₂ eq with totalfwd a₁ | totalfwd a₂
+  injective a₁ a₂ refl | b₁ , fa₁≡b₁ | .b₁ , fa₂≡b₁
+    = _⇌_.injective pbij a₁ a₂ b₁ fa₁≡b₁ fa₂≡b₁
 
 module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B ↔ B′) where
 
