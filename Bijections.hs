@@ -15,6 +15,7 @@ module Bijections where
 
 import           Control.Arrow       ((&&&))
 import           Data.Default.Class
+import           Data.Bifunctor
 import           Data.List           (find, findIndex, isSuffixOf, partition)
 import qualified Data.Map            as M
 import           Data.Maybe          (catMaybes, fromMaybe)
@@ -22,7 +23,7 @@ import           Data.Tuple          (swap)
 import           Data.Typeable
 
 import           Diagrams.Core.Names
-import           Diagrams.Prelude    hiding (dot, end, r2, start)
+import           Diagrams.Prelude    hiding (dot, end, r2, start, set)
 
 import Data.Colour.SRGB
 
@@ -95,7 +96,7 @@ instance Par (Set b) where
   pars  = Set . disjointly concat . map setParts
 
 nset :: Int -> Colour Double -> Set b
-nset n c = single $ ASet (map toName [0::Int .. (n-1)]) c
+nset n = set [0::Int .. (n-1)]
 
 set :: IsName n => [n] -> Colour Double -> Set b
 set ns c = single $ ASet (map toName ns) c
@@ -288,13 +289,12 @@ flattenA :: AltList (AltList a b) b -> AltList a b
 flattenA (Single l) = l
 flattenA (Cons l b l') = concatA l b (flattenA l')
 
-map1 :: (a -> b) -> AltList a c -> AltList b c
-map1 f (Single a) = Single (f a)
-map1 f (Cons a b l) = Cons (f a) b (map1 f l)
+instance Bifunctor AltList where
+  first f (Single a) = Single (f a)
+  first f (Cons a b l) = Cons (f a) b (first f l)
 
-map2 :: (b -> c) -> AltList a b -> AltList a c
-map2 _ (Single a) = Single a
-map2 g (Cons a b l) = Cons a (g b) (map2 g l)
+  second _ (Single a) = Single a
+  second g (Cons a b l) = Cons a (g b) (second g l)
 
 zipWith2 :: (x -> b -> c) -> [x] -> AltList a b -> AltList a c
 zipWith2 _ _  (Single a)       = Single a
