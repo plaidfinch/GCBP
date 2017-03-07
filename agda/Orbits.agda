@@ -6,7 +6,7 @@ open import Data.Sum
 open import Data.Product
 open import Data.Nat
 open import Data.Maybe
-open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; sym ; trans)
+open import Relation.Binary.PropositionalEquality using (_≡_ ; refl ; sym ; trans ; [_] ; inspect)
 
 -- A bijection is a partial bijection which is defined everywhere.
 record _↔_ (A B : Set) : Set where
@@ -27,8 +27,8 @@ record _↔_ (A B : Set) : Set where
   injective a₁ a₂ refl | b₁ , fa₁≡b₁ | .b₁ , fa₂≡b₁
     = _⇌_.injective pbij a₁ a₂ b₁ fa₁≡b₁ fa₂≡b₁
 
-inj₁-inj : {A : Set} (B : Set) (x y : A) → _≡_ {_} {A ⊎ B} (inj₁ x) (inj₁ y) → x ≡ y
-inj₁-inj _ x .x refl = refl
+inj₁-inj : {A : Set} (B : Set) {x y : A} → _≡_ {_} {A ⊎ B} (inj₁ x) (inj₁ y) → x ≡ y
+inj₁-inj _ refl = refl
 
 module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B ↔ B′) where
 
@@ -44,10 +44,29 @@ module Orbits {A B A′ B′ : Set} (h : (A ⊎ B) ↔ (A′ ⊎ B′)) (g : B �
   orbitsDisjoint x y m n imx≡imy = {!!}
 
   -- Version where we iterate the same number of times on both sides.
-  .orbitsDisjointN : (x y : A) (n : ℕ) → (iter n x ≡ iter n y) → x ≡ y
-  orbitsDisjointN x y zero ix≡iy with _↔_.totalfwd h (inj₁ x) | _↔_.totalfwd h (inj₁ y)
-  orbitsDisjointN x y zero refl | hx , eqx | .hx , eqy = inj₁-inj B x y (_↔_.injective h (inj₁ x) (inj₁ y) {!!})
-  orbitsDisjointN x y (suc n) ix≡iy = {!!}
+
+  -- For some reason this is currently failing the termination check
+  -- but I don't understand why.  It's clearly structurally recursive
+  -- on n.
+  --
+  -- Referring to
+  -- http://wiki.portal.chalmers.se/agda/pmwiki.php?n=ReferenceManual.Pragmas,
+  -- I thought I had it figured out: since the recursive call is
+  -- hidden under a 'with', which compiles to a helper function call,
+  -- it has to go through a chain of function calls before discovering
+  -- that the parameter is actually decreasing.  But I tried setting
+  -- {-# OPTIONS --termination-depth=2 #-}, I even tried as high as
+  -- 10, but no dice.
+
+  {-# TERMINATING #-}  -- trust us, Agda!
+  .orbitsDisjointN : (n : ℕ) (x y : A) → (iter n x ≡ iter n y) → x ≡ y
+  orbitsDisjointN zero x y ix≡iy with _↔_.totalfwd h (inj₁ x) | _↔_.totalfwd h (inj₁ y)
+  orbitsDisjointN zero x y refl | hx , eqx | .hx , eqy = inj₁-inj B (_↔_.injective h (inj₁ x) (inj₁ y) {!!})
+  orbitsDisjointN (suc n) x y ix≡iy with iter n x | inspect (iter n) x | iter n y | inspect (iter n) y
+  ... | inj₁ xa | [ nx≡ ] | inj₁ ya | [ ny≡ ] = orbitsDisjointN n x y (trans nx≡ (trans ix≡iy (sym ny≡)))
+  ... | inj₁ xa | [ nx≡ ] | inj₂ yb | [ ny≡ ] = {!!}
+  ... | inj₂ xb | [ nx≡ ] | inj₁ ya | [ ny≡ ] = {!!}
+  ... | inj₂ xb | [ nx≡ ] | inj₂ yb | [ ny≡ ] = {!!}
 
 open Orbits public
 
