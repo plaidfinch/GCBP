@@ -8,7 +8,7 @@ open import Function using (const) renaming (_∘_ to _∘ᶠ_)
 open import Data.Unit
 open import Data.Sum as Sum
 open import Data.Product as Prod
-open import Data.Maybe as Maybe
+open import Data.Maybe
 
 open import Relation.Binary
 open import Relation.Binary.Core using (module IsEquivalence ; _≡_)
@@ -27,8 +27,8 @@ import PartialFunctions as PFun
 -- Partial bijections
 ----------------------------------------------------------------------
 
-just-inj : {A : Set} (x y : A) → _≡_ {_} {Maybe A} (just x) (just y) → x ≡ y
-just-inj x .x PropEq.refl = PropEq.refl
+just-inj : ∀ {ℓ} {A : Set ℓ} {x y : A} → Maybe.just x ≡ just y → x ≡ y
+just-inj PropEq.refl = PropEq.refl
 
 -- A partial bijection is a pair of partial functions f and g between
 -- sets A and B such that f and g are inverses on their domains.
@@ -41,7 +41,7 @@ record _⇌_ (A B : Set) : Set where
     .right-dom  : fwd ∙ bwd ≈ PFun.dom bwd
 
   .injective : (a₁ a₂ : A) (b : B) → fwd a₁ ≡ just b → fwd a₂ ≡ just b → a₁ ≡ a₂
-  injective a₁ a₂ b fa₁≡b fa₂≡b = just-inj a₁ a₂ (begin
+  injective a₁ a₂ b fa₁≡b fa₂≡b = just-inj (begin
     just a₁
                                             ≡⟨ lem₁ ⟩
     PFun.dom fwd a₁
