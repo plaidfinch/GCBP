@@ -36,12 +36,15 @@ reassocR :: ((a + b) + c) <=> ((a' + b') + c')
          -> (a + (b + c)) <=> (a' + (b' + c'))
 reassocR bij = inverse assoc . bij . assoc
 
+-- TODO: Conjugate bijections by each other?
+
 class Category c => Groupoid c where
   inverse :: c a b -> c b a
 
 data a <=> b = (a -> b) :<=>: (b -> a)
 infixr 8 <=>
 infixr 8 :<=>:
+-- satisfying laws not (yet) stated here
 
 -- TODO: Maybe later try modality-parameterized ___-jections?
 
@@ -59,6 +62,7 @@ applyIso (f :<=>: _) = f
 data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
 infixr 8 <->
 infixr 8 :<->:
+-- satisfying laws not (yet) stated here
 
 partial :: (a <=> b) -> (a <-> b)
 partial (f :<=>: g) = Just . f :<->: Just . g
@@ -89,6 +93,8 @@ rightPartial (f :<->: g) =
 
 class Category arr => Parallel arr where
   (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+
+-- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
 instance Parallel (<=>) where
   (f :<=>: g) ||| (h :<=>: i) =
@@ -127,20 +133,30 @@ step minuend subtrahend current =
   >>>
   partial minuend
 
+-- NOTE: We can omit the call to `leftPartial current` in gcbp, but not in gcbpExact,
+-- because it is never needed, since the merge operation "locks in" a value, so we
+-- never loop back around to use that chunk. Thus, we could replace it with the
+-- partial bijection defined nowhere, and gcbp would behave identically.
+
 infixl 3 <||>
 (<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
 (f <||> g) a = f a <|> g a
 
+-- Merge operation. In theory, should only merge compatible partial bijections.
 instance Monoid (a <-> b) where
   mempty =
     const Nothing :<->: const Nothing
-  mappend (f :<->: g) ~(h :<->: i) =
-    (f <||> h) :<->: (g <||> i)
+  mappend (f :<->: g) ~(h :<->: i) =  -- NOTE: this irrefutable match is Very Important
+    (f <||> h) :<->: (g <||> i)       --       this is because of the infinite merge in gcbp
 
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp minuend subtrahend =
   unsafeTotal . foldMap leftPartial $
     iterate (step minuend subtrahend) (partial minuend)
+
+-- NOTE: How to fix the slowness of gcbp:
+--       1. *All* bijections should be automatically memoized on construction
+--       2. Composition during gcbp should be the "wrong way", which is okay because everything's a palindrome
 
 gmip :: (a <=> a')
      -> (b <=> b')
@@ -168,6 +184,7 @@ test = unsafeBuildBijection
   , (Right False, Right True )
   , (Right True,  Left One  ) ]
 
+-- NOTE: Invariant: input list must be the graph of a bijection
 unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
 unsafeBuildBijection pairs =
   unsafeTotal (f :<->: g)
