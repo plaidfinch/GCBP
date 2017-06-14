@@ -10,6 +10,10 @@ import Data.Maybe
 import Data.Tuple
 import Debug.Trace
 
+import Test.QuickCheck
+import Test.QuickCheck.Monadic
+import System.Random.Shuffle
+
 type (+) = Either
 
 maybeLeft :: a + b -> Maybe a
@@ -108,6 +112,17 @@ instance Parallel (<->) where
 
 --------------------------------------------------
 
+gcbpReference :: (a0 + a1 <=> b0 + b1) -> (a1 <=> b1) -> (a0 <=> b0)
+gcbpReference a0a1__b0b1 a1__b1 =
+    (iter (applyIso a0a1__b0b1) (applyIso $ inverse a1__b1) . Left)
+    :<=>:
+    (iter (applyIso $ inverse a0a1__b0b1) (applyIso $ a1__b1) . Left)
+  where
+    iter a0a1_b0b1 b1_a1 a0a1 =
+      case a0a1_b0b1 a0a1 of
+        Left  b0 -> b0
+        Right b1 -> iter a0a1_b0b1 b1_a1 (Right (b1_a1 b1))
+
 gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbpExact i minuend subtrahend =
   unsafeTotal . leftPartial $
@@ -191,6 +206,26 @@ unsafeBuildBijection pairs =
   where
     f = flip lookup pairs
     g = flip lookup (map swap pairs)
+
+-- generateTestCase m n generates random endobijections on [m]+[n] and
+-- [n] (which can be subtracted to compute an endobijection on [m] for
+-- testing/demonstration purposes).
+generateTestCase :: Integer -> Integer
+  -> IO (Integer + Integer <=> Integer + Integer, Integer <=> Integer)
+generateTestCase m n = do
+  let a = [1..m]
+      c = [1..n]
+      ac = (map Left a ++ map Right c)
+  bd <- shuffleM ac
+  d  <- shuffleM c
+  return $ (unsafeBuildBijection $ zip ac bd, unsafeBuildBijection $ zip c d)
+
+prop_gcbp_reference :: Positive Integer -> Positive Integer -> Property
+prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
+  (f,g) <- run $ generateTestCase m n
+  let h1 = gcbp f g
+      h2 = gcbpReference f g
+  assert $ map (applyIso h1) [1..m] == map (applyIso h2) [1..m]
 
 --------------------------------------------------
 
