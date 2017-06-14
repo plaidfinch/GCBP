@@ -220,6 +220,20 @@ generateTestCase m n = do
   d  <- shuffleM c
   return $ (unsafeBuildBijection $ zip ac bd, unsafeBuildBijection $ zip c d)
 
+-- BAY 6/13: the crazy thing is, gcbp is not actually all that slow!
+-- It's hard to get reliable timings with ghci since I think some of
+-- the computation to actually produce the test bijections is being
+-- shared, but it is fairly comparable to gcbpReference, even up to
+-- values of m and n in the thousands.
+--
+-- The inverse of the bijection produced by gcbp seems a bit slower
+-- but not by much.
+--
+-- I wonder if it's because things are quadratic *in the maximum cycle
+-- length* which is not all that long for random bijections.  But
+-- perhaps we could construct pessimal examples where the difference
+-- is more pronounced.
+
 -- gcbp is the same as the reference implementation
 prop_gcbp_reference :: Positive Integer -> Positive Integer -> Property
 prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
