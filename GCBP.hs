@@ -73,6 +73,9 @@ infixr 8 <->
 infixr 8 :<->:
 -- satisfying laws not (yet) stated here
 
+undef :: (a <-> b)
+undef = const Nothing :<->: const Nothing
+
 partial :: (a <=> b) -> (a <-> b)
 partial (f :<=>: g) = Just . f :<->: Just . g
 
@@ -170,9 +173,11 @@ instance Monoid (a <-> b) where
     (f <||> h) :<->: (g <||> i)       --       this is because of the infinite merge in gcbp
 
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbp minuend subtrahend =
-  unsafeTotal . foldMap leftPartial $
-    iterate (step minuend subtrahend) (partial minuend)
+gcbp minuend subtrahend = unsafeTotal . mconcat $ gcbpIterates minuend subtrahend
+
+gcbpIterates :: (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
+gcbpIterates minuend subtrahend = map leftPartial $
+  iterate (step minuend subtrahend) (partial minuend)
 
 -- NOTE: How to fix the slowness of gcbp:
 --       1. *All* bijections should be automatically memoized on construction
@@ -240,10 +245,36 @@ generateTestCase m n = do
 -- The inverse of the bijection produced by gcbp seems a bit slower
 -- but not by much.
 --
--- I wonder if it's because things are quadratic *in the maximum cycle
+-- I wonder if it's because things are quadratic *in the maximum path
 -- length* which is not all that long for random bijections.  But
 -- perhaps we could construct pessimal examples where the difference
 -- is more pronounced.
+--
+-- Indeed, check this out:
+--
+-- >>> (f,g) <- generateTestCase 1000 1000
+-- (0.00 secs, 3,511,040 bytes)
+-- >>> take 20 . map (numDefined 1000) . scanl (<>) undef $ gcbpIterates f g
+-- [0,488,752,882,938,969,986,993,997,998,999,999,999,1000,1000,1000,1000,1000,1000,1000]
+--
+-- f is a randomly constructed bijection between two sets of size
+-- 2000, and g is between sets of size 1000. If we iterate the gcbp
+-- procedure, the resulting bijection *very quickly* gets close to
+-- being totally defined.  There are just a few stubborn elements that
+-- take more than 10 iterations to reach their destination.  This
+-- makes sense if you think about it: the *sum* of the lengths of
+-- *all* the paths can't be more than m+n (the total size of both
+-- sets) (otherwise there would be Too Many Pigeons).  So the average
+-- cycle is going to be very short, on average something like (m+n)/m.
+--
+-- We can intentionally construct a pessimal case, for example where f
+-- sends each element to the "next" element down, except the very last
+-- element in the bottom set which it sends back to the top; g is the
+-- identity.  Then all elements but 1 will immediately reach their
+-- destination after 1 iteration, but that one last element requires n
+-- iterations.
+
+
 
 -- gcbp is the same as the reference implementation
 prop_gcbp_reference :: Positive Integer -> Positive Integer -> Property
@@ -269,3 +300,8 @@ instrument s =
   where
     cons a as = trace (s ++ " :")  (a : as)
     nil       = trace (s ++ " []") []
+
+------------------------------------------------------------
+
+numDefined :: Integer -> (Integer <-> Integer) -> Int
+numDefined n f = length . catMaybes . map (applyPartial f) $ [1..n]
