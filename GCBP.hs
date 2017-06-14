@@ -226,6 +226,12 @@ generateTestCase m n = do
 -- shared, but it is fairly comparable to gcbpReference, even up to
 -- values of m and n in the thousands.
 --
+-- To test it I have been doing things like
+--
+-- > (f,g) <- generateTestCase 1000 1000
+-- > let h = gcbp f g
+-- > map (applyIso h) [1..1000] -- see how long this takes
+--
 -- The inverse of the bijection produced by gcbp seems a bit slower
 -- but not by much.
 --
