@@ -220,11 +220,20 @@ generateTestCase m n = do
   d  <- shuffleM c
   return $ (unsafeBuildBijection $ zip ac bd, unsafeBuildBijection $ zip c d)
 
+-- gcbp is the same as the reference implementation
 prop_gcbp_reference :: Positive Integer -> Positive Integer -> Property
 prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbpReference f g
+  assert $ map (applyIso h1) [1..m] == map (applyIso h2) [1..m]
+
+-- gcbp is the same as converting to gmip and back
+prop_gcbp_gcbp' :: Positive Integer -> Positive Integer -> Property
+prop_gcbp_gcbp' (Positive m) (Positive n) = monadicIO $ do
+  (f,g) <- run $ generateTestCase m n
+  let h1 = gcbp f g
+      h2 = gcbp' f g
   assert $ map (applyIso h1) [1..m] == map (applyIso h2) [1..m]
 
 --------------------------------------------------
