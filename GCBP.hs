@@ -42,6 +42,11 @@ reassocR bij = inverse assoc . bij . assoc
 
 -- TODO: Conjugate bijections by each other?
 
+-- Ah, actually we can't write a general conjugate method to implement
+-- reassocL and reassocR --- notice that we end up calling assoc
+-- (which is polymorphic) at *two different* types!  So we wouldn't be
+-- able to give a general enough type to the conjugation function.
+
 class Category c => Groupoid c where
   inverse :: c a b -> c b a
 
