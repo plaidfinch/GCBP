@@ -1,18 +1,21 @@
-{-# LANGUAGE TypeOperators, TypeFamilies, LambdaCase, ScopedTypeVariables #-}
+{-# LANGUAGE LambdaCase          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
+{-# LANGUAGE TypeOperators       #-}
 
 module GCBP where
 
-import Prelude hiding ((.), id)
-import Control.Category
-import Control.Monad
-import Control.Applicative
-import Data.Maybe
-import Data.Tuple
-import Debug.Trace
+import           Control.Applicative
+import           Control.Category
+import           Control.Monad
+import           Data.Maybe
+import           Data.Tuple
+import           Debug.Trace
+import           Prelude                 hiding (id, (.))
 
-import Test.QuickCheck
-import Test.QuickCheck.Monadic
-import System.Random.Shuffle
+import           System.Random.Shuffle
+import           Test.QuickCheck
+import           Test.QuickCheck.Monadic
 
 type (+) = Either
 
@@ -223,8 +226,8 @@ unsafeBuildBijection pairs =
 generateTestCase :: Integer -> Integer
   -> IO (Integer + Integer <=> Integer + Integer, Integer <=> Integer)
 generateTestCase m n = do
-  let a = [1..m]
-      c = [1..n]
+  let a = [0..m-1]
+      c = [0..n-1]
       ac = (map Left a ++ map Right c)
   bd <- shuffleM ac
   d  <- shuffleM c
@@ -240,7 +243,7 @@ generateTestCase m n = do
 --
 -- > (f,g) <- generateTestCase 1000 1000
 -- > let h = gcbp f g
--- > map (applyIso h) [1..1000] -- see how long this takes
+-- > map (applyIso h) [0..999] -- see how long this takes
 --
 -- The inverse of the bijection produced by gcbp seems a bit slower
 -- but not by much.
@@ -282,7 +285,7 @@ prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbpReference f g
-  assert $ map (applyIso h1) [1..m] == map (applyIso h2) [1..m]
+  assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
 
 -- gcbp is the same as converting to gmip and back
 prop_gcbp_gcbp' :: Positive Integer -> Positive Integer -> Property
@@ -290,7 +293,7 @@ prop_gcbp_gcbp' (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbp' f g
-  assert $ map (applyIso h1) [1..m] == map (applyIso h2) [1..m]
+  assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
 
 --------------------------------------------------
 
@@ -304,4 +307,34 @@ instrument s =
 ------------------------------------------------------------
 
 numDefined :: Integer -> (Integer <-> Integer) -> Int
-numDefined n f = length . catMaybes . map (applyPartial f) $ [1..n]
+numDefined n f = length . catMaybes . map (applyPartial f) $ [0..n-1]
+
+------------------------------------------------------------
+
+-- Construct a pessimal test case.  pessimal m n generates the
+-- bijection on [m]+[n] which sends each element to the "next element"
+-- (in particular sending the last element of [m] to the first of [n],
+-- and vice versa), and the identity bijection on [n].  This should be
+-- a worst case for gcbp.
+pessimal :: Integer -> Integer -> (Integer + Integer <=> Integer + Integer, Integer <=> Integer)
+pessimal m n = (add >>> cyc >>> inverse add, id)
+  where
+
+    -- add :: [m] + [n] <=> [m+n]
+    add = fromSum :<=>: toSum
+    fromSum (Left k)  = k
+    fromSum (Right k) = m + k
+    toSum k
+      | k >= m    = Right (k - m)
+      | otherwise = Left k
+
+    cyc = mkCyc (+1) :<=>: mkCyc (subtract 1)
+    mkCyc f k = f k `mod` (m+n)
+
+-- It does seem to take a bit longer to compute the very last element
+-- of the pessimal gcbp result than to compute the entire thing for a
+-- random set of bijections.  e.g. after computing gcbp f g for (f,g)
+-- from generateTestCase 5000 5000, it took ~6 seconds to print the
+-- result applied to [0..4999].  For pessimal 5000 5000, it printed
+-- the first 4999 elements almost instantly, and then took ~14 seconds
+-- to compute the final one.
