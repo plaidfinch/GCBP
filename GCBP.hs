@@ -333,8 +333,10 @@ pessimal m n = (add >>> cyc >>> inverse add, id)
 
 -- It does seem to take a bit longer to compute the very last element
 -- of the pessimal gcbp result than to compute the entire thing for a
--- random set of bijections.  e.g. after computing gcbp f g for (f,g)
+-- random set of bijections.  e.g. after computing h = gcbp f g for (f,g)
 -- from generateTestCase 5000 5000, it took ~6 seconds to print the
 -- result applied to [0..4999].  For pessimal 5000 5000, it printed
 -- the first 4999 elements almost instantly, and then took ~14 seconds
 -- to compute the final one.
+--
+-- Performance of (inverse h) is about the same.
