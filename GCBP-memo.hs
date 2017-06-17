@@ -6,6 +6,7 @@
 module GCBP where
 
 import           Control.Applicative
+import           Control.Arrow           (first)
 import           Control.Category
 import           Control.Monad
 import           Data.Maybe
@@ -17,7 +18,16 @@ import           System.Random.Shuffle
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
+import           Data.MemoTrie           hiding (memo)
+import           Memo
+
 type (+) = Either
+
+instance HasTrie a => HasTrie (Maybe a) where
+  data (Maybe a) :->: x = MaybeTrie x (a :->: x)
+  trie f = MaybeTrie (f Nothing) (trie (f . Just))
+  untrie (MaybeTrie n j) = maybe n (untrie j)
+  enumerate (MaybeTrie n j) = (Nothing,n) : ((map . first) Just $ enumerate j)
 
 maybeLeft :: a + b -> Maybe a
 maybeLeft = either Just (const Nothing)
@@ -28,18 +38,20 @@ maybeRight = either (const Nothing) Just
 swapEither :: a + b -> b + a
 swapEither = either Right Left
 
-commute :: a + b <=> b + a
-commute = swapEither :<=>: swapEither
+commute :: (HasTrie a, HasTrie b) => a + b <=> b + a
+commute = swapEither <==> swapEither
 
-assoc :: a + (b + c) <=> (a + b) + c
-assoc = either (Left . Left) (either (Left . Right) Right) :<=>:
+assoc :: (HasTrie a, HasTrie b, HasTrie c) => a + (b + c) <=> (a + b) + c
+assoc = either (Left . Left) (either (Left . Right) Right) <==>
         either (either Left (Right . Left)) (Right . Right)
 
-reassocL :: (a + (b + c)) <=> (a' + (b' + c'))
+reassocL :: (HasTrie a, HasTrie b, HasTrie c, HasTrie a', HasTrie b', HasTrie c')
+         => (a + (b + c)) <=> (a' + (b' + c'))
          -> ((a + b) + c) <=> ((a' + b') + c')
 reassocL bij = assoc . bij . inverse assoc
 
-reassocR :: ((a + b) + c) <=> ((a' + b') + c')
+reassocR :: (HasTrie a, HasTrie b, HasTrie c, HasTrie a', HasTrie b', HasTrie c')
+         => ((a + b) + c) <=> ((a' + b') + c')
          -> (a + (b + c)) <=> (a' + (b' + c'))
 reassocR bij = inverse assoc . bij . assoc
 
@@ -53,9 +65,13 @@ reassocR bij = inverse assoc . bij . assoc
 class Category c => Groupoid c where
   inverse :: c a b -> c b a
 
-data a <=> b = (a -> b) :<=>: (b -> a)
+data a <=> b = Memo a b :<=>: Memo b a
 infixr 8 <=>
 infixr 8 :<=>:
+infixr 8 <==>
+
+(<==>) :: (HasTrie a, HasTrie b) => (a -> b) -> (b -> a) -> (a <=> b)
+f <==> g = memo f :<=>: memo g
 -- satisfying laws not (yet) stated here
 
 -- TODO: Maybe later try modality-parameterized ___-jections?
@@ -69,64 +85,68 @@ instance Category (<=>) where
     (f1 . f2) :<=>: (g2 . g1)
 
 applyIso :: (a <=> b) -> a -> b
-applyIso (f :<=>: _) = f
+applyIso (f :<=>: _) = apply f
 
-data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
+data a <-> b = Memo a (Maybe b) :<->: Memo b (Maybe a)
 infixr 8 <->
 infixr 8 :<->:
+infixr 8 <-->
 -- satisfying laws not (yet) stated here
 
-undef :: (a <-> b)
-undef = const Nothing :<->: const Nothing
+(<-->) :: (HasTrie a, HasTrie b) => (a -> Maybe b) -> (b -> Maybe a) -> (a <-> b)
+(<-->) f g = memo f :<->: memo g
 
-partial :: (a <=> b) -> (a <-> b)
-partial (f :<=>: g) = Just . f :<->: Just . g
+undef :: (HasTrie a, HasTrie b) => (a <-> b)
+undef = const Nothing <--> const Nothing
 
-unsafeTotal :: (a <-> b) -> (a <=> b)
-unsafeTotal (f :<->: g) = fromJust . f :<=>: fromJust . g
+partial :: (HasTrie a, HasTrie b) => (a <=> b) -> (a <-> b)
+partial (f :<=>: g) = memo Just . f :<->: memo Just . g
+
+unsafeTotal :: (HasTrie a, HasTrie b) => (a <-> b) -> (a <=> b)
+unsafeTotal (f :<->: g) = memo fromJust . f :<=>: memo fromJust . g
 
 instance Category (<->) where
-  id = Just :<->: Just
+  id = Just <--> Just
   (f1 :<->: g1) . (f2 :<->: g2) =
-    (f1 <=< f2) :<->: (g2 <=< g1)
+    (apply f1 <=< apply f2) <--> (apply g2 <=< apply g1)
 
 instance Groupoid (<->) where
   inverse (f :<->: g) = g :<->: f
 
 applyPartial :: (a <-> b) -> a -> Maybe b
-applyPartial (f :<->: _) = f
+applyPartial (f :<->: _) = apply f
 
-leftPartial :: (a + c <-> b + d) -> (a <-> b)
+leftPartial :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <-> b + d) -> (a <-> b)
 leftPartial (f :<->: g) =
-  (maybeLeft <=< f . Left) :<->:
-  (maybeLeft <=< g . Left)
+  (maybeLeft <=< apply f . Left) <-->
+  (maybeLeft <=< apply g . Left)
 
-rightPartial :: (a + c <-> b + d) -> (c <-> d)
+rightPartial :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <-> b + d) -> (c <-> d)
 rightPartial (f :<->: g) =
-  (maybeRight <=< f . Right) :<->:
-  (maybeRight <=< g . Right)
+  (maybeRight <=< apply f . Right) <-->
+  (maybeRight <=< apply g . Right)
 
 class Category arr => Parallel arr where
-  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+  (|||) :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => arr a c -> arr b d -> arr (a + b) (c + d)
 
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
 instance Parallel (<=>) where
   (f :<=>: g) ||| (h :<=>: i) =
-    either (Left . f) (Right . h) :<=>:
-    either (Left . g) (Right . i)
+    either (Left . apply f) (Right . apply h) <==>
+    either (Left . apply g) (Right . apply i)
 
 instance Parallel (<->) where
   (f :<->: g) ||| (h :<->: i) =
-    either (fmap Left . f) (fmap Right . h) :<->:
-    either (fmap Left . g) (fmap Right . i)
+    either (fmap Left . apply f) (fmap Right . apply h) <-->
+    either (fmap Left . apply g) (fmap Right . apply i)
 
 --------------------------------------------------
 
-gcbpReference :: (a0 + a1 <=> b0 + b1) -> (a1 <=> b1) -> (a0 <=> b0)
+gcbpReference :: (HasTrie a0, HasTrie a1, HasTrie b0, HasTrie b1) => (a0 + a1 <=> b0 + b1) -> (a1 <=> b1) -> (a0 <=> b0)
 gcbpReference a0a1__b0b1 a1__b1 =
     (iter (applyIso a0a1__b0b1) (applyIso $ inverse a1__b1) . Left)
-    :<=>:
+    <==>
     (iter (applyIso $ inverse a0a1__b0b1) (applyIso $ a1__b1) . Left)
   where
     iter a0a1_b0b1 b1_a1 a0a1 =
@@ -134,7 +154,7 @@ gcbpReference a0a1__b0b1 a1__b1 =
         Left  b0 -> b0
         Right b1 -> iter a0a1_b0b1 b1_a1 (Right (b1_a1 b1))
 
-gcbpExact :: Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbpExact :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => Integer -> (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbpExact i minuend subtrahend =
   unsafeTotal . leftPartial $
     composeN i
@@ -148,7 +168,8 @@ gcbpExact i minuend subtrahend =
 
 -- TODO: Think about how to use Cayley encoding to make both directions
 -- use monadic right-recursion
-step :: (a + c <=> b + d)
+step :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d)
+     => (a + c <=> b + d)
      -> (c <=> d)
      -> (a + c <-> b + d)
      -> (a + c <-> b + d)
@@ -169,15 +190,16 @@ infixl 3 <||>
 (f <||> g) a = f a <|> g a
 
 -- Merge operation. In theory, should only merge compatible partial bijections.
-instance Monoid (a <-> b) where
-  mempty = undef
+instance (HasTrie a, HasTrie b) => Monoid (a <-> b) where
+  mempty =
+    const Nothing <--> const Nothing
   mappend (f :<->: g) ~(h :<->: i) =  -- NOTE: this irrefutable match is Very Important
-    (f <||> h) :<->: (g <||> i)       --       this is because of the infinite merge in gcbp
+    (apply f <||> apply h) <--> (apply g <||> apply i)       --       this is because of the infinite merge in gcbp
 
-gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp minuend subtrahend = unsafeTotal . mconcat $ gcbpIterates minuend subtrahend
 
-gcbpIterates :: (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
+gcbpIterates :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
 gcbpIterates minuend subtrahend = map leftPartial $
   iterate (step minuend subtrahend) (partial minuend)
 
@@ -185,7 +207,8 @@ gcbpIterates minuend subtrahend = map leftPartial $
 --       1. *All* bijections should be automatically memoized on construction
 --       2. Composition during gcbp should be the "wrong way", which is okay because everything's a palindrome
 
-gmip :: (a <=> a')
+gmip :: (HasTrie a, HasTrie a', HasTrie b, HasTrie b', HasTrie fa, HasTrie fb) =>
+  (a <=> a')
      -> (b <=> b')
      -> (a' <=> b')
      -> (fa + a <=> fb + b)
@@ -193,7 +216,7 @@ gmip :: (a <=> a')
 gmip involA involB f' f =
   gcbp (reassocR $ f ||| f') ((involA >>> f' >>> inverse involB) ||| f')
 
-gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp' :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp' minuend subtrahend =
   gmip id id subtrahend minuend
 
@@ -202,6 +225,12 @@ gcbp' minuend subtrahend =
 --------------------------------------------------
 
 data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
+
+instance HasTrie Three where
+  data Three :->: x = ThreeTree x x x
+  trie f    = ThreeTree (f One) (f Two) (f Three)
+  untrie (ThreeTree x y z) = \case {One -> x; Two -> y; Three -> z}
+  enumerate (ThreeTree x y z) = [(One,x), (Two,y), (Three,z)]
 
 test :: Three + Bool <=> Three + Bool
 test = unsafeBuildBijection
@@ -212,9 +241,9 @@ test = unsafeBuildBijection
   , (Right True,  Left One  ) ]
 
 -- NOTE: Invariant: input list must be the graph of a bijection
-unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
+unsafeBuildBijection :: (Eq a, Eq b, HasTrie a, HasTrie b) => [(a,b)] -> (a <=> b)
 unsafeBuildBijection pairs =
-  unsafeTotal (f :<->: g)
+  unsafeTotal (f <--> g)
   where
     f = flip lookup pairs
     g = flip lookup (map swap pairs)
@@ -320,14 +349,14 @@ pessimal m n = (add >>> cyc >>> inverse add, id)
   where
 
     -- add :: [m] + [n] <=> [m+n]
-    add = fromSum :<=>: toSum
+    add = fromSum <==> toSum
     fromSum (Left k)  = k
     fromSum (Right k) = m + k
     toSum k
       | k >= m    = Right (k - m)
       | otherwise = Left k
 
-    cyc = mkCyc (+1) :<=>: mkCyc (subtract 1)
+    cyc = mkCyc (+1) <==> mkCyc (subtract 1)
     mkCyc f k = f k `mod` (m+n)
 
 -- It does seem to take a bit longer to compute the very last element
