@@ -167,8 +167,7 @@ infixl 3 <||>
 
 -- Merge operation. In theory, should only merge compatible partial bijections.
 instance Monoid (a <-> b) where
-  mempty =
-    const Nothing :<->: const Nothing
+  mempty = undef
   mappend (f :<->: g) ~(h :<->: i) =  -- NOTE: this irrefutable match is Very Important
     (f <||> h) :<->: (g <||> i)       --       this is because of the infinite merge in gcbp
 
