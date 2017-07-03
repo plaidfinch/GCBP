@@ -1,28 +1,40 @@
 {-# LANGUAGE GADTs #-}
 
 module Memo
-  ( Memo, memo, apply )
+  ( Memo, memo, apply
+  , MemoM, memoM, applyM)
   where
 
 import           Control.Category
+import           Control.Monad
 import           Data.Array
+import           Data.Functor.Identity
 import           Data.MemoTrie    (HasTrie)
 import qualified Data.MemoTrie    as MT
 import           Prelude          hiding (id, (.))
 
-data Memo a b where
-  Id :: Memo a a
-  Memo :: HasTrie a => (a -> b) -> Memo a b
+data MemoM m a b where
+  Id :: MemoM m a a
+  Memo :: HasTrie a => (a -> m b) -> MemoM m a b
 
-memo :: (HasTrie a) => (a -> b) -> Memo a b
-memo f = Memo (MT.memo f)
-
-instance Category Memo where
+instance Monad m => Category (MemoM m) where
   id = Id
   Id . m = m
   m . Id = m
-  Memo f . Memo g = memo (f . g)
+  Memo f . Memo g = memoM (f <=< g)
+
+memoM :: HasTrie a => (a -> m b) -> MemoM m a b
+memoM f = Memo (MT.memo f)
+
+applyM :: Applicative m => MemoM m a b -> a -> m b
+applyM Id       = pure
+applyM (Memo f) = f
+
+type Memo = MemoM Identity
+
+memo :: (HasTrie a) => (a -> b) -> Memo a b
+memo f = memoM (return . f)
 
 apply :: Memo a b -> a -> b
-apply Id       = id
-apply (Memo f) = f
+apply f = runIdentity . applyM f
+

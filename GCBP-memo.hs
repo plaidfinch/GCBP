@@ -87,44 +87,44 @@ instance Category (<=>) where
 applyIso :: (a <=> b) -> a -> b
 applyIso (f :<=>: _) = apply f
 
-data a <-> b = Memo a (Maybe b) :<->: Memo b (Maybe a)
+data a <-> b = MemoM Maybe a b :<->: MemoM Maybe b a
 infixr 8 <->
 infixr 8 :<->:
 infixr 8 <-->
 -- satisfying laws not (yet) stated here
 
 (<-->) :: (HasTrie a, HasTrie b) => (a -> Maybe b) -> (b -> Maybe a) -> (a <-> b)
-(<-->) f g = memo f :<->: memo g
+(<-->) f g = memoM f :<->: memoM g
 
 undef :: (HasTrie a, HasTrie b) => (a <-> b)
 undef = const Nothing <--> const Nothing
 
 partial :: (HasTrie a, HasTrie b) => (a <=> b) -> (a <-> b)
-partial (f :<=>: g) = memo Just . f :<->: memo Just . g
+partial (f :<=>: g) = memoM (Just . apply f) :<->: memoM (Just . apply g)
 
 unsafeTotal :: (HasTrie a, HasTrie b) => (a <-> b) -> (a <=> b)
-unsafeTotal (f :<->: g) = memo fromJust . f :<=>: memo fromJust . g
+unsafeTotal (f :<->: g) = memo (fromJust . applyM f) :<=>: memo (fromJust . applyM g)
 
 instance Category (<->) where
-  id = Just <--> Just
+  id = id :<->: id
   (f1 :<->: g1) . (f2 :<->: g2) =
-    (apply f1 <=< apply f2) <--> (apply g2 <=< apply g1)
+    (f1 . f2) :<->: (g2 . g1)
 
 instance Groupoid (<->) where
   inverse (f :<->: g) = g :<->: f
 
 applyPartial :: (a <-> b) -> a -> Maybe b
-applyPartial (f :<->: _) = apply f
+applyPartial (f :<->: _) = applyM f
 
 leftPartial :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <-> b + d) -> (a <-> b)
 leftPartial (f :<->: g) =
-  (maybeLeft <=< apply f . Left) <-->
-  (maybeLeft <=< apply g . Left)
+  (maybeLeft <=< applyM f . Left) <-->
+  (maybeLeft <=< applyM g . Left)
 
 rightPartial :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <-> b + d) -> (c <-> d)
 rightPartial (f :<->: g) =
-  (maybeRight <=< apply f . Right) <-->
-  (maybeRight <=< apply g . Right)
+  (maybeRight <=< applyM f . Right) <-->
+  (maybeRight <=< applyM g . Right)
 
 class Category arr => Parallel arr where
   (|||) :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => arr a c -> arr b d -> arr (a + b) (c + d)
@@ -138,8 +138,16 @@ instance Parallel (<=>) where
 
 instance Parallel (<->) where
   (f :<->: g) ||| (h :<->: i) =
-    either (fmap Left . apply f) (fmap Right . apply h) <-->
-    either (fmap Left . apply g) (fmap Right . apply i)
+    either (fmap Left . applyM f) (fmap Right . applyM h) <-->
+    either (fmap Left . applyM g) (fmap Right . applyM i)
+
+-- Extend a palindromic composition by doing the composition
+-- "backwards", to avoid quadratic runtime in the backwards direction.
+extendPalindrome :: (a <-> b) -> (b <-> a) -> (a <-> b) -> (a <-> b)
+extendPalindrome (f :<->: f') (g :<->: g') (h :<->: h')
+  = (f >>> g >>> h)
+    :<->:
+    (f' >>> g' >>> h')
 
 --------------------------------------------------
 
@@ -166,19 +174,16 @@ gcbpExact i minuend subtrahend =
 
 --------------------------------------------------
 
--- TODO: Think about how to use Cayley encoding to make both directions
--- use monadic right-recursion
 step :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d)
      => (a + c <=> b + d)
      -> (c <=> d)
      -> (a + c <-> b + d)
      -> (a + c <-> b + d)
 step minuend subtrahend current =
-  current
-  >>>
-  inverse (leftPartial current ||| partial subtrahend)
-  >>>
-  partial minuend
+  extendPalindrome
+    current
+    (inverse (leftPartial current ||| partial subtrahend))
+    (partial minuend)
 
 -- NOTE: We can omit the call to `leftPartial current` in gcbp, but not in gcbpExact,
 -- because it is never needed, since the merge operation "locks in" a value, so we
@@ -194,7 +199,7 @@ instance (HasTrie a, HasTrie b) => Monoid (a <-> b) where
   mempty =
     const Nothing <--> const Nothing
   mappend (f :<->: g) ~(h :<->: i) =  -- NOTE: this irrefutable match is Very Important
-    (apply f <||> apply h) <--> (apply g <||> apply i)       --       this is because of the infinite merge in gcbp
+    (applyM f <||> applyM h) <--> (applyM g <||> applyM i)       --       this is because of the infinite merge in gcbp
 
 gcbp :: (HasTrie a, HasTrie b, HasTrie c, HasTrie d) => (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
 gcbp minuend subtrahend = unsafeTotal . mconcat $ gcbpIterates minuend subtrahend
@@ -314,6 +319,7 @@ prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
   let h1 = gcbp f g
       h2 = gcbpReference f g
   assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
+  assert $ map (applyIso (inverse h1)) [0..m-1] == map (applyIso (inverse h2)) [0..m-1]
 
 -- gcbp is the same as converting to gmip and back
 prop_gcbp_gcbp' :: Positive Integer -> Positive Integer -> Property
@@ -322,6 +328,7 @@ prop_gcbp_gcbp' (Positive m) (Positive n) = monadicIO $ do
   let h1 = gcbp f g
       h2 = gcbp' f g
   assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
+  assert $ map (applyIso (inverse h1)) [0..m-1] == map (applyIso (inverse h2)) [0..m-1]
 
 --------------------------------------------------
 
@@ -359,6 +366,8 @@ pessimal m n = (add >>> cyc >>> inverse add, id)
     cyc = mkCyc (+1) <==> mkCyc (subtract 1)
     mkCyc f k = f k `mod` (m+n)
 
+-- For non-memoized version:
+--
 -- It does seem to take a bit longer to compute the very last element
 -- of the pessimal gcbp result than to compute the entire thing for a
 -- random set of bijections.  e.g. after computing h = gcbp f g for (f,g)
@@ -368,3 +377,16 @@ pessimal m n = (add >>> cyc >>> inverse add, id)
 -- to compute the final one.
 --
 -- Performance of (inverse h) is about the same.
+--
+-- With memoized version:
+--
+-- generateTestCase 5000 5000, takes about 2.5 seconds to print result
+-- applied to [0..4999].  For pessimal 5000 5000, result on [0..4999]
+-- takes only 0.61 seconds!  Hooray!
+--
+-- What about (inverse h)?  It's still slow: map (applyIso (inverse
+-- h)) [0..4999] takes... well, I waited for about a minute and it
+-- used 90% of my 4G of memory and I had to kill it!  Let's try doing
+-- the "naive" composition.
+--
+-- Yay, it's fast now!!
