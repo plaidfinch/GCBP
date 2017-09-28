@@ -7,9 +7,30 @@
 
 %include polycode.fmt
 
+%format pattern = "\mathbf{pattern}"
+
+%format <$> = "\mathbin{\langle \$ \rangle}"
+
 %format >=> = ">\!=\!>"
 %format <=< = "<\!=\!<"
 %format +++ = "+\!\!+\!\!+"
+
+%format ^^  = "\;"
+
+%format <=>   = "\Leftrightarrow"
+%format <->   = "\leftrightarrow"
+%format :<=>: = "\mathbin{:\Leftrightarrow:}"
+%format :<->: = "\mathbin{:\leftrightarrow:}"
+
+%% XXX
+%format <~>   = "\mathbin{\leftrightsquigarrow}"
+
+%format undef = "\varnothing"
+
+%format f1
+%format f2
+%format g1
+%format g2
 
 %if false
 \begin{code}
@@ -318,6 +339,8 @@ presentation of the algorithm is low-level and element-based (\ie
   high-level character.
 \end{itemize}
 
+\todo{Go back and edit the contributions \& introduction.}
+
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
 
@@ -493,17 +516,37 @@ downsides:
 \label{sec:algebra}
 
 We solve all these problems at once by eschewing point-based reasoning
-in favor of a high-level algebra of \emph{partial bijections}, which
-we use to directly construct---and constructively verify---a bijection
-which is the ``difference'' of two other bijections.
+in favor of a high-level algebric approach, which we use to directly
+construct---and constructively verify---a bijection which is the
+``difference'' of two other bijections.
 
-We need to work with \emph{partial} bijections---not just
-bijections---since we can think of the algorithm as starting with a
-completely undefined bijection and building up more and more
-information, until finishing with a total bijection.  Intuitively, a
-partial bijection between sets $A$ and $B$ is a bijection that may be
-undefined on some elements, that is, a bijection between
-\emph{subsets} of $A$ and $B$, illustrated in \pref{fig:partial-bij}.
+Since the GCBP takes two bijections as input and yields a bijection as
+output, one might think to begin by defining a type of bijections:
+\begin{spec}
+data Bij a b = Bij
+  {  ^^ fwd  :: a -> b
+  ,  ^^ bwd  :: b -> a
+  }
+\end{spec}
+(satisfying the invariants that |to . from = id| and |from . to =
+id|).  The idea would be to somehow piece together the GCBP algorithm
+out of high-level operations on bijections, so that the whole
+algorithm returns a valid bijection by construction, eliminating
+duplication of code and the possibility for the forward and backward
+directions to be out of sync.
+
+This is the right idea, but it is not quite good enough.  The problem
+is that when it comes to bijections, the algorithm is an
+all-or-nothing sort of deal: we put two bijections in and get one out,
+but it is hard to find intermediate bijections that arise during
+execution of the algorithm, out of which we could build the ultimate
+result.  For example \todo{example?}
+
+Instead, the idea is to generalize to \emph{partial} bijections, that
+is, bijections which may be undefined on some parts of their domain
+(\pref{fig:partial-bij}).  We can think of the algorithm as starting
+with a completely undefined bijection and building up more and more
+information, until finishing with a total bijection.
 
 \begin{figure}[htp]
   \centering
@@ -521,101 +564,261 @@ undefined on some elements, that is, a bijection between
   \label{fig:partial-bij}
 \end{figure}
 
-We begin by formalizing an algebra of partial \emph{functions}, which
-forms a foundation for our partial bijections.
-
-\subsection{Partial functions}
-
-Partial functions, in turn, are built atop the familiar |Maybe| monad,
-with
+Whereas a (total) bijection consists of a pair of inverse functions |a -> b|
+and |b -> a|, a partial bijection consists of a pair of \emph{partial}
+functions |a -> Maybe b| and |b -> Maybe a|, subject to a suitable
+compatibility condition.  We can work uniformly with both by
+generalizing to an arbitrary \emph{Kleisli} category,
 \begin{spec}
-data Maybe a = Nothing | Just a
+newtype Kleisli m a b = Kleisli { runKleisli :: a -> m b }
 \end{spec}
-and \emph{Kleisli composition} defined by
+consisting of functions |a -> m b| for any monad |m|.  Picking |m =
+Identity| yields normal total functions (up to an extra |newtype|
+wrapper); picking |m = Maybe| yields partial functions.  The
+|Category| instance for |Kleisli m| provides the identity |id ::
+Kleisli m a a| along with a composition operator
+\[ |(.) :: Kleisli m b c -> Kleisli m a b -> Kleisli m a c|. \]
+
+We can now define a general type of |m|-bijections as
+\begin{code}
+data Bij m a b = Bij
+  {  ^^ fwd  :: Kleisli m a b
+  ,  ^^ bwd  :: Kleisli m b a
+  }
+\end{code}
+These can be composed via a |Category| instance, and can be inverted:
+\begin{code}
+instance Monad m => Category (Bij m) where
+  id = Bij id id
+  (Bij f1 g1) . (Bij f2 g2) = Bij (f1 . f2) (g2 . g1)
+
+class Category c => Groupoid c where
+  inverse :: c a b -> c b a
+
+instance Monad m => Groupoid (Bij m) where
+  inverse (Bij f g) = Bij g f
+\end{code}
+
+However, not just any pair of |Kleisli| arrows qualifies as a |Bij m a
+b|.  Consider the function |dom| defined by
 \begin{spec}
-(<=<) :: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
-f <=< g = \a -> g a >>= f
-\end{spec}
-We also define a partial order on |Maybe a| by setting $|Nothing|
-\sqsubset x$ for all |x :: Maybe a|, and taking $\sqsubseteq$ as
-the reflexive, transitive closure of $\sqsubset$ (though transitivity
-admittedly does not add much).  Intuitively, $x \sqsubseteq y$ if $y$
-is ``at least as defined as'' $x$.
-
-\todo{Partial functions: Kleisli category.  Definedness partial order
-  is pointwise.  Define sum, prove abides.  Define compatibility.
-  Define subsets as pfun $\subseteq$ id (benefit: restriction is just
-  composition).  Define dom operator.  Prove compatibility is the same
-  as $f . dom g = g . dom f$. Prove lemma involving dom of a
-  composition (with picture).  Finally, define merge of compatible
-  partial functions: use symbol $\sqcup$ since it's a join in the
-  partial order (should change Agda code to use this symbol too).}
-
-Using the |Maybe| monad, we can define the type of partial functions,
-\(a \rightharpoonup b\) as |a -> Maybe b|. This function space forms a Kleisli
-category; that is, they can be composed using the |(<=<)| operation,
-whose identity is the monadic |return|. We overload \(\circ\) and |id| throughout
-this paper for anything fitting a category structure.
-
-We define equivalence \(\approx\) on partial functions in the usual pointwise
-way---that they are equal on all possible inputs.
-
-Moreover, partial functions also participate in a partial order,
-determined by their pointwise defined-ness. That is to say, we define
-the partial order on partial functions \(\sqsubseteq\) as the pointwise lifting
-of the defined-ness partial order on |Maybe|, wherein |Nothing| \(\sqsubseteq\) |m|
-for all |m|, |Just x| \(\sqsubseteq\) |Just y| when |x = y|, and all other values
-are incomparable.
-
-These partial functions also allow a sum construction akin to that for
-ordinary functions.
-
-For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|, we define
-
+  dom :: Functor m => Kleisli m a b -> Kleisli m a a
+  dom (Kleisli f) = Kleisli (\a -> const a <$> f a)
+\end{spec}%$
+Although |dom f| acts as the identity on values of type |a|, it
+retains the \emph{effects} of |f|.  We can therefore impose the laws
 \begin{spec}
-  f + h = either (fmap Left . f) (fmap Right . h)
+  bwd . fwd = dom fwd
+  fwd . bwd = dom bwd
 \end{spec}
+which intuitively say that |bwd . fwd| and |fwd . bwd| must both act
+like |id|, except for some possible effects---but even these must
+match, in the sense that |bwd| cannot introduce any effects not
+already introduced by |fwd|, and vice versa.  When |m = Identity|
+there are no effects at all, and indeed, |dom f = id| since |const a
+<$> f a = Identity a|, so the laws reduce to the familiar |bwd . fwd =
+id| and |fwd . bwd = id|.  In the case |m = Maybe|, the laws
+essentially say that |fwd a = Just b| if and only if |bwd b = Just
+a|---that is, |fwd| and |bwd| must agree wherever they are both
+defined, and moreover, they must either be both defined or both
+undefined.  This justifies drawing partial bijections by connecting
+two sets with some collection of undirected (\ie bidirectional) line
+segments.
 
-\begin{proof}[Composition Abides Sum]
-  For all partial functions
-  \(f : B_0 \rightharpoonup C_0\), \(g : A_0 \rightharpoonup B_0\),
-  \(h : B_1 \rightharpoonup C_1\), \(k : A_1 \rightharpoonup B_1\),
-  the sum of compositions \((f \circ g) + (h \circ k)\) is equivalent to
-  the composition of sums \((f + h) \circ (g + k)\).
-  \todo{Needs proof, really needs diagram.}
-\end{proof}
+%$
 
-We say that two partial functions are \emph{compatible} if they agree on all
-inputs for which they are both defined---that is, |f| and |g| are compatible if
-for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
-We will abbreviate this predicate as \(f\,||||\, g\).
+Finally, we can recover specific types for total and partial bijections as
+\begin{code}
+infixr 8 <=>, <->
 
-Another less point-wise way of stating compatibility for partial functions
-is to say that two functions are compatible when they are equal upon restriction
-to the other's domain. We define a new |dom| operator over partial functions,
-so that |dom f| is the identity on all inputs for which |f| is defined, and
-returns nothing for all inputs on which |f| is undefined.
+type (<=>) = Bij Identity
+type (<->) = Bij Maybe
+\end{code}
+(Mnemonic: total bijections (|<=>|) have more horizontal lines
+connecting elements on the two sides than partial bijections (|<->|).)
 
-With |dom|, we can restate the notion of compatiblity in a point-free style:
-two functions |f| and |g| are compatible if and only if
-\(f \circ dom\ g \approx g \circ dom\ f\).
+Finally, to make working with total and partial bijections more
+convenient, we can define pattern synonyms \todo{cite}
 
-\todo{Prove this.}
+\begin{code}
+pattern (:<=>:) f g <- Bij  (Kleisli ((runIdentity.) -> f))
+                            (Kleisli ((runIdentity.) -> g))
+  where
+  f :<=>: g = Bij  (Kleisli (Identity . f))
+                   (Kleisli (Identity . g))
+
+pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
+\end{code}
+
+For instance, the pattern synonym |:<=>:| lets us pretend as if we had
+directly declared something like
+\begin{spec}
+  data a <=> b = (a -> b) :<=>: (b -> a),
+\end{spec}
+automatically handling the wrapping and unwrapping of the |Kleisli|
+and |Identity| newtypes for us.
+
+We begin by defining some utility functions for working with total and
+partial bijections. First, |applyTotal| and |applyPartial| let us run a
+bijection in the forward direction:
+\begin{code}
+applyTotal :: (a <=> b) -> a -> b
+applyTotal (f :<=>: _) = f
+
+applyPartial :: (a <-> b) -> a -> Maybe b
+applyPartial (f :<->: _) = f
+\end{code}
+Next, we define |undef| as the completely undefined partial bijection,
+and the |partial| and |unsafePartial| functions move back and forth
+between total and partial bijections.  Of course, treating a total
+bijection as a partial one is always safe; the other direction is only
+safe if we know that the ``partial'' bijection is, in fact, defined
+everywhere.
+\begin{code}
+undef  ::  a <-> b
+undef  =   const Nothing :<->: const Nothing
+
+partial ::  (a <=> b)    ->  (a <-> b)
+partial     (f :<=>: g)  =   Just . f :<->: Just . g
+
+unsafeTotal ::  (a <-> b)    ->  (a <=> b)
+unsafeTotal     (f :<->: g)  =   fromJust . f :<=>: fromJust . g
+\end{code}
+
+We now turn to developing tools for dealing with bijections involving
+sum types.  First, we can construct general bijections witnessing the
+associativity of type sum:
+\begin{code}
+(<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
+f <~> g = Bij (Kleisli (return . f) (Kleisli (return . g))
+
+assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
+assoc =
+  either (Left . Left) (either (Left . Right) Right)
+  <~>
+  either (either Left (Right . Left)) (Right . Right)
+
+reassocL
+  :: Monad m
+  => Bij m (a + (b + c)) (a' + (b' + c'))
+  -> Bij m ((a + b) + c) ((a' + b') + c')
+reassocL bij = assoc . bij . inverse assoc
+
+reassocR
+  :: Monad m
+  => Bij m ((a + b) + c) ((a' + b') + c')
+  -> Bij m (a + (b + c)) (a' + (b' + c'))
+reassocR bij = inverse assoc . bij . assoc
+\end{code}
+
+\begin{code}
+leftPartial :: (a + c <-> b + d) -> (a <-> b)
+leftPartial (f :<->: g) =
+  (maybeLeft <=< f . Left) :<->:
+  (maybeLeft <=< g . Left)
+
+rightPartial :: (a + c <-> b + d) -> (c <-> d)
+rightPartial (f :<->: g) =
+  (maybeRight <=< f . Right) :<->:
+  (maybeRight <=< g . Right)
+
+\end{code}
+
+% We begin by formalizing an algebra of partial \emph{functions}, which
+% forms a foundation for our partial bijections.
+
+% \subsection{Partial functions}
+
+% Partial functions, in turn, are built atop the familiar |Maybe| monad,
+% with
+% \begin{spec}
+% data Maybe a = Nothing | Just a
+% \end{spec}
+% and \emph{Kleisli composition} defined by
+% \begin{spec}
+% (<=<) :: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
+% f <=< g = \a -> g a >>= f
+% \end{spec}
+% We also define a partial order on |Maybe a| by setting $|Nothing|
+% \sqsubset x$ for all |x :: Maybe a|, and taking $\sqsubseteq$ as
+% the reflexive, transitive closure of $\sqsubset$ (though transitivity
+% admittedly does not add much).  Intuitively, $x \sqsubseteq y$ if $y$
+% is ``at least as defined as'' $x$.
+
+% \todo{Partial functions: Kleisli category.  Definedness partial order
+%   is pointwise.  Define sum, prove abides.  Define compatibility.
+%   Define subsets as pfun $\subseteq$ id (benefit: restriction is just
+%   composition).  Define dom operator.  Prove compatibility is the same
+%   as $f . dom g = g . dom f$. Prove lemma involving dom of a
+%   composition (with picture).  Finally, define merge of compatible
+%   partial functions: use symbol $\sqcup$ since it's a join in the
+%   partial order (should change Agda code to use this symbol too).}
+
+% Using the |Maybe| monad, we can define the type of partial functions,
+% \(a \rightharpoonup b\) as |a -> Maybe b|. This function space forms a Kleisli
+% category; that is, they can be composed using the |(<=<)| operation,
+% whose identity is the monadic |return|. We overload \(\circ\) and |id| throughout
+% this paper for anything fitting a category structure.
+
+% We define equivalence \(\approx\) on partial functions in the usual pointwise
+% way---that they are equal on all possible inputs.
+
+% Moreover, partial functions also participate in a partial order,
+% determined by their pointwise defined-ness. That is to say, we define
+% the partial order on partial functions \(\sqsubseteq\) as the pointwise lifting
+% of the defined-ness partial order on |Maybe|, wherein |Nothing| \(\sqsubseteq\) |m|
+% for all |m|, |Just x| \(\sqsubseteq\) |Just y| when |x = y|, and all other values
+% are incomparable.
+
+% These partial functions also allow a sum construction akin to that for
+% ordinary functions.
+
+% For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|, we define
+
+% \begin{spec}
+%   f + h = either (fmap Left . f) (fmap Right . h)
+% \end{spec}
+
+% \begin{proof}[Composition Abides Sum]
+%   For all partial functions
+%   \(f : B_0 \rightharpoonup C_0\), \(g : A_0 \rightharpoonup B_0\),
+%   \(h : B_1 \rightharpoonup C_1\), \(k : A_1 \rightharpoonup B_1\),
+%   the sum of compositions \((f \circ g) + (h \circ k)\) is equivalent to
+%   the composition of sums \((f + h) \circ (g + k)\).
+%   \todo{Needs proof, really needs diagram.}
+% \end{proof}
+
+% We say that two partial functions are \emph{compatible} if they agree on all
+% inputs for which they are both defined---that is, |f| and |g| are compatible if
+% for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
+% We will abbreviate this predicate as \(f\,||||\, g\).
+
+% Another less point-wise way of stating compatibility for partial functions
+% is to say that two functions are compatible when they are equal upon restriction
+% to the other's domain. We define a new |dom| operator over partial functions,
+% so that |dom f| is the identity on all inputs for which |f| is defined, and
+% returns nothing for all inputs on which |f| is undefined.
+
+% With |dom|, we can restate the notion of compatiblity in a point-free style:
+% two functions |f| and |g| are compatible if and only if
+% \(f \circ dom\ g \approx g \circ dom\ f\).
+
+% \todo{Prove this.}
 
 
 
-\todo{Now define partial bijections as a pair of pfuns such that left,
-  right dom laws hold.  Note equivalence to other possible set of
-  laws.  Prove composition (using nicer equational proof).}
+% \todo{Now define partial bijections as a pair of pfuns such that left,
+%   right dom laws hold.  Note equivalence to other possible set of
+%   laws.  Prove composition (using nicer equational proof).}
 
-\todo{Continue...}
+% \todo{Continue...}
 
-\todo{Then implement GCBP entirely at the level of partial
-  bijections.  First develop version that has to iterate a specific
-  number of times.  But observe that it's tricky to compute the right
-  number of iterations (and it's not idempotent after doing the right
-  number, so we can't just do ``enough'' and call it a day).
-  Solution: iterated merge!}
+% \todo{Then implement GCBP entirely at the level of partial
+%   bijections.  First develop version that has to iterate a specific
+%   number of times.  But observe that it's tricky to compute the right
+%   number of iterations (and it's not idempotent after doing the right
+%   number, so we can't just do ``enough'' and call it a day).
+%   Solution: iterated merge!}
 
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}

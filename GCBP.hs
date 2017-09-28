@@ -34,15 +34,15 @@ maybeLeft = either Just (const Nothing)
 maybeRight :: a + b -> Maybe b
 maybeRight = either (const Nothing) Just
 
-swapEither :: a + b -> b + a
-swapEither = either Right Left
-
 ------------------------------------------------------------
 
 data Bij m a b = Bij { fwd :: Kleisli m a b, bwd :: Kleisli m b a }
 
 applyBij :: Bij m a b -> (a -> m b)
 applyBij (Bij (Kleisli f) _) = f
+
+dom :: Functor m => Kleisli m a b -> Kleisli m a a
+dom (Kleisli f) = Kleisli (\a -> const a <$> f a)
 
 infixr 8 <=>, <->, :<=>:, :<->:, <~>
 
@@ -69,9 +69,6 @@ f <~> g = Bij (arr f) (arr g)
 
 ------------------------------------------------------------
 
-commute :: Monad m => Bij m (a + b) (b + a)
-commute = swapEither <~> swapEither
-
 assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
 assoc = either (Left . Left) (either (Left . Right) Right) <~>
         either (either Left (Right . Left)) (Right . Right)
@@ -88,8 +85,8 @@ reassocR
   -> Bij m (a + (b + c)) (a' + (b' + c'))
 reassocR bij = inverse assoc . bij . assoc
 
-applyIso :: (a <=> b) -> a -> b
-applyIso (f :<=>: _) = f
+applyTotal :: (a <=> b) -> a -> b
+applyTotal (f :<=>: _) = f
 
 undef :: (a <-> b)
 undef = const Nothing :<->: const Nothing
@@ -128,9 +125,9 @@ instance Monad m => Parallel (Bij m) where
 
 gcbpReference :: (a0 + a1 <=> b0 + b1) -> (a1 <=> b1) -> (a0 <=> b0)
 gcbpReference a0a1__b0b1 a1__b1 =
-    (iter (applyIso a0a1__b0b1) (applyIso $ inverse a1__b1) . Left)
+    (iter (applyTotal a0a1__b0b1) (applyTotal $ inverse a1__b1) . Left)
     :<=>:
-    (iter (applyIso $ inverse a0a1__b0b1) (applyIso $ a1__b1) . Left)
+    (iter (applyTotal $ inverse a0a1__b0b1) (applyTotal $ a1__b1) . Left)
   where
     iter a0a1_b0b1 b1_a1 a0a1 =
       case a0a1_b0b1 a0a1 of
@@ -245,7 +242,7 @@ generateTestCase m n = do
 --
 -- > (f,g) <- generateTestCase 1000 1000
 -- > let h = gcbp f g
--- > map (applyIso h) [0..999] -- see how long this takes
+-- > map (applyTotal h) [0..999] -- see how long this takes
 --
 -- The inverse of the bijection produced by gcbp seems a bit slower
 -- but not by much.
@@ -287,7 +284,7 @@ prop_gcbp_reference (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbpReference f g
-  assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
+  assert $ map (applyTotal h1) [0..m-1] == map (applyTotal h2) [0..m-1]
 
 -- gcbp is the same as converting to gmip and back
 prop_gcbp_gcbp' :: Positive Integer -> Positive Integer -> Property
@@ -295,7 +292,7 @@ prop_gcbp_gcbp' (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbp' f g
-  assert $ map (applyIso h1) [0..m-1] == map (applyIso h2) [0..m-1]
+  assert $ map (applyTotal h1) [0..m-1] == map (applyTotal h2) [0..m-1]
 
 --------------------------------------------------
 
