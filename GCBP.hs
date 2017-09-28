@@ -1,13 +1,19 @@
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE TypeOperators       #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE LambdaCase           #-}
+{-# LANGUAGE PatternSynonyms      #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE TypeOperators        #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ViewPatterns         #-}
 
 module GCBP where
 
 import           Control.Applicative
+import           Control.Arrow (Kleisli(..), arr)
 import           Control.Category
 import           Control.Monad
+import           Data.Functor.Identity
 import           Data.Maybe
 import           Data.Tuple
 import           Debug.Trace
@@ -16,6 +22,9 @@ import           Prelude                 hiding (id, (.))
 import           System.Random.Shuffle
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
+
+------------------------------------------------------------
+-- Sum type & utilities
 
 type (+) = Either
 
@@ -28,53 +37,59 @@ maybeRight = either (const Nothing) Just
 swapEither :: a + b -> b + a
 swapEither = either Right Left
 
-commute :: a + b <=> b + a
-commute = swapEither :<=>: swapEither
+------------------------------------------------------------
 
-assoc :: a + (b + c) <=> (a + b) + c
-assoc = either (Left . Left) (either (Left . Right) Right) :<=>:
-        either (either Left (Right . Left)) (Right . Right)
+data Bij m a b = Bij { fwd :: Kleisli m a b, bwd :: Kleisli m b a }
 
-reassocL :: (a + (b + c)) <=> (a' + (b' + c'))
-         -> ((a + b) + c) <=> ((a' + b') + c')
-reassocL bij = assoc . bij . inverse assoc
+applyBij :: Bij m a b -> (a -> m b)
+applyBij (Bij (Kleisli f) _) = f
 
-reassocR :: ((a + b) + c) <=> ((a' + b') + c')
-         -> (a + (b + c)) <=> (a' + (b' + c'))
-reassocR bij = inverse assoc . bij . assoc
+infixr 8 <=>, <->, :<=>:, :<->:, <~>
 
--- TODO: Conjugate bijections by each other?
+type (<=>) = Bij Identity
+type (<->) = Bij Maybe
 
--- Ah, actually we can't write a general conjugate method to implement
--- reassocL and reassocR --- notice that we end up calling assoc
--- (which is polymorphic) at *two different* types!  So we wouldn't be
--- able to give a general enough type to the conjugation function.
+pattern (:<=>:) f g <- Bij (Kleisli ((runIdentity.) -> f)) (Kleisli ((runIdentity.) -> g)) where
+  f :<=>: g = Bij (Kleisli (Identity . f)) (Kleisli (Identity . g))
+
+pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
+
+instance Monad m => Category (Bij m) where
+  id = Bij id id
+  (Bij f1 g1) . (Bij f2 g2) = Bij (f1 . f2) (g2 . g1)
 
 class Category c => Groupoid c where
   inverse :: c a b -> c b a
 
-data a <=> b = (a -> b) :<=>: (b -> a)
-infixr 8 <=>
-infixr 8 :<=>:
--- satisfying laws not (yet) stated here
+instance Monad m => Groupoid (Bij m) where
+  inverse (Bij f g) = Bij g f
 
--- TODO: Maybe later try modality-parameterized ___-jections?
+(<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
+f <~> g = Bij (arr f) (arr g)
 
-instance Groupoid (<=>) where
-  inverse (f :<=>: g) = g :<=>: f
+------------------------------------------------------------
 
-instance Category (<=>) where
-  id = id :<=>: id
-  (f1 :<=>: g1) . (f2 :<=>: g2) =
-    (f1 . f2) :<=>: (g2 . g1)
+commute :: Monad m => Bij m (a + b) (b + a)
+commute = swapEither <~> swapEither
+
+assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
+assoc = either (Left . Left) (either (Left . Right) Right) <~>
+        either (either Left (Right . Left)) (Right . Right)
+
+reassocL
+  :: Monad m
+  => Bij m (a + (b + c)) (a' + (b' + c'))
+  -> Bij m ((a + b) + c) ((a' + b') + c')
+reassocL bij = assoc . bij . inverse assoc
+
+reassocR
+  :: Monad m
+  => Bij m ((a + b) + c) ((a' + b') + c')
+  -> Bij m (a + (b + c)) (a' + (b' + c'))
+reassocR bij = inverse assoc . bij . assoc
 
 applyIso :: (a <=> b) -> a -> b
 applyIso (f :<=>: _) = f
-
-data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
-infixr 8 <->
-infixr 8 :<->:
--- satisfying laws not (yet) stated here
 
 undef :: (a <-> b)
 undef = const Nothing :<->: const Nothing
@@ -84,14 +99,6 @@ partial (f :<=>: g) = Just . f :<->: Just . g
 
 unsafeTotal :: (a <-> b) -> (a <=> b)
 unsafeTotal (f :<->: g) = fromJust . f :<=>: fromJust . g
-
-instance Category (<->) where
-  id = Just :<->: Just
-  (f1 :<->: g1) . (f2 :<->: g2) =
-    (f1 <=< f2) :<->: (g2 <=< g1)
-
-instance Groupoid (<->) where
-  inverse (f :<->: g) = g :<->: f
 
 applyPartial :: (a <-> b) -> a -> Maybe b
 applyPartial (f :<->: _) = f
@@ -111,15 +118,11 @@ class Category arr => Parallel arr where
 
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
-instance Parallel (<=>) where
-  (f :<=>: g) ||| (h :<=>: i) =
-    either (Left . f) (Right . h) :<=>:
-    either (Left . g) (Right . i)
-
-instance Parallel (<->) where
-  (f :<->: g) ||| (h :<->: i) =
-    either (fmap Left . f) (fmap Right . h) :<->:
-    either (fmap Left . g) (fmap Right . i)
+instance Monad m => Parallel (Bij m) where
+  (Bij f g) ||| (Bij h i) = Bij
+    (Kleisli $ either (fmap Left . runKleisli f) (fmap Right . runKleisli h))
+    (Kleisli $ either (fmap Left . runKleisli g) (fmap Right . runKleisli i))
+  -- there must be a more concise way to implement the above...?
 
 --------------------------------------------------
 
