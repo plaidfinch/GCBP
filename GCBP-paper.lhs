@@ -11,8 +11,8 @@
 
 %format <$> = "\mathbin{\langle \$ \rangle}"
 
-%format >=> = ">\!=\!>"
-%format <=< = "<\!=\!<"
+%format >=> = ">\!\!=\!\!\!>"
+%format <=< = "<\!\!\!=\!\!<"
 %format +++ = "+\!\!+\!\!+"
 
 %format ^^  = "\;"
@@ -26,6 +26,7 @@
 %format <~>   = "\mathbin{\leftrightsquigarrow}"
 
 %format undef = "\varnothing"
+%format <||>  = "\mathbin{\langle || \rangle}"
 
 %format f1
 %format f2
@@ -122,6 +123,9 @@
 \newcommand{\id}{\mathit{id}}
 
 \DeclareMathOperator{\cod}{cod}
+
+\newcommand{\compat}{\mathbin{||||}}
+\newcommand{\mrg}{\sqcup}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -564,6 +568,13 @@ information, until finishing with a total bijection.
   \label{fig:partial-bij}
 \end{figure}
 
+\todo{Need to redo this whole section with PICTURES instead of just
+  showing Haskell code.  We can keep the Haskell code for precision
+  (probably relegated to various figures), but pictures are what
+  should be inline in the text, to help readers build useful
+  intuition.}
+\todo{Should also introduce laws that we will need later.}
+
 Whereas a (total) bijection consists of a pair of inverse functions |a -> b|
 and |b -> a|, a partial bijection consists of a pair of \emph{partial}
 functions |a -> Maybe b| and |b -> Maybe a|, subject to a suitable
@@ -637,9 +648,8 @@ type (<->) = Bij Maybe
 (Mnemonic: total bijections (|<=>|) have more horizontal lines
 connecting elements on the two sides than partial bijections (|<->|).)
 
-Finally, to make working with total and partial bijections more
+To make working with total and partial bijections more
 convenient, we can define pattern synonyms \todo{cite}
-
 \begin{code}
 pattern (:<=>:) f g <- Bij  (Kleisli ((runIdentity.) -> f))
                             (Kleisli ((runIdentity.) -> g))
@@ -649,7 +659,6 @@ pattern (:<=>:) f g <- Bij  (Kleisli ((runIdentity.) -> f))
 
 pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
 \end{code}
-
 For instance, the pattern synonym |:<=>:| lets us pretend as if we had
 directly declared something like
 \begin{spec}
@@ -686,8 +695,22 @@ unsafeTotal     (f :<->: g)  =   fromJust . f :<=>: fromJust . g
 \end{code}
 
 We now turn to developing tools for dealing with bijections involving
-sum types.  First, we can construct general bijections witnessing the
-associativity of type sum:
+sum types. First, given two bijections, we can put them in parallel to
+construct a bijection between sum types. \todo{Do we want the Parallel
+  class?} \todo{picture}
+\begin{code}
+(|||) :: Bij m a b -> Bij m c d -> Bij m (a+c) (b+d)
+(Bij f g) ||| (Bij h i) = Bij
+  (Kleisli $ either
+    (fmap Left . runKleisli f)
+    (fmap Right . runKleisli h))
+  (Kleisli $ either
+    (fmap Left . runKleisli g)
+    (fmap Right . runKleisli i))
+\end{code}
+
+Next, we can construct general bijections witnessing the
+associativity of the type-level sum constructor: \todo{pictures?}
 \begin{code}
 (<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
 f <~> g = Bij (Kleisli (return . f) (Kleisli (return . g))
@@ -711,6 +734,10 @@ reassocR
 reassocR bij = inverse assoc . bij . assoc
 \end{code}
 
+We also define |leftPartial| and |rightPartial| \todo{use some
+  notation for these? e.g. $\langle f ||$?}, which allow us to take a
+bijection between sum types and project out only the edges between one
+side or the other of the sums. \todo{picture}
 \begin{code}
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
 leftPartial (f :<->: g) =
@@ -721,11 +748,37 @@ rightPartial :: (a + c <-> b + d) -> (c <-> d)
 rightPartial (f :<->: g) =
   (maybeRight <=< f . Right) :<->:
   (maybeRight <=< g . Right)
-
 \end{code}
 
-% We begin by formalizing an algebra of partial \emph{functions}, which
-% forms a foundation for our partial bijections.
+\section{GCBP, take 1}
+
+We now have the tools we need to construct a first attempt high-level,
+point-free version of the Gordon Complementary Bijection Principle.
+Although this first version will ultimately turn out to be unusable in
+practice, it has most of the important ingredients of the more
+sophisticated variants developed later.
+
+The basic idea is to construct \todo{fig ...} step-by-step.
+
+\section{Compatibility and merging}
+
+\todo{introduce/motivate}
+
+We say that two partial functions $f, g :: A \to B$ are
+\term{compatible}, written $f \compat g$, if they agree at all points
+where both are defined.  Formally, $f \compat g$ if and only if |f
+. dom g = g . dom f|, that is, restricting $f$ to $g$'s domain yields
+the same partial function as restricting $g$ to $f$'s
+domain. \todo{picture}
+
+For a total function |dom f = id|, and hence for total functions
+$f \compat g \iff f = g$, which makes sense: since total functions are
+defined everywhere, the only way for them to be compatible is to be
+equal.
+
+If two partial functions $f, g :: A \to B$ are compatible, we can
+define their \term{merge} as \[ f \mrg g = \] \todo{how to define this
+  exactly?}
 
 % \subsection{Partial functions}
 
