@@ -35,6 +35,32 @@ maybeRight :: a + b -> Maybe b
 maybeRight = either (const Nothing) Just
 
 ------------------------------------------------------------
+-- Classes
+
+class Category arr => Parallel arr where
+  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+
+class Category c => Groupoid c where
+  inverse :: c a b -> c b a
+
+class Category arr => Mergeable arr where
+  undef  :: arr a b
+  (<||>) :: arr a b -> arr a b -> arr a b
+
+merge :: Mergeable arr => [arr a b] -> arr a b
+merge = foldr (<||>) undef
+
+------------------------------------------------------------
+-- Partial functions
+
+-- instance Alternative f => Parallel (Kleisli m a b) where
+--   (f ||| g) = undefined
+
+instance (Monad m, Alternative m) => Mergeable (Kleisli m) where
+  undef = Kleisli $ const empty
+  Kleisli f <||> Kleisli g = Kleisli $ \a -> f a <|> g a
+
+------------------------------------------------------------
 
 data Bij m a b = Bij { fwd :: Kleisli m a b, bwd :: Kleisli m b a }
 
@@ -57,9 +83,6 @@ pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
 instance Monad m => Category (Bij m) where
   id = Bij id id
   (Bij f1 g1) . (Bij f2 g2) = Bij (f1 . f2) (g2 . g1)
-
-class Category c => Groupoid c where
-  inverse :: c a b -> c b a
 
 instance Monad m => Groupoid (Bij m) where
   inverse (Bij f g) = Bij g f
@@ -88,9 +111,6 @@ reassocR bij = inverse assoc . bij . assoc
 applyTotal :: (a <=> b) -> a -> b
 applyTotal (f :<=>: _) = f
 
-undef :: (a <-> b)
-undef = const Nothing :<->: const Nothing
-
 partial :: (a <=> b) -> (a <-> b)
 partial (f :<=>: g) = Just . f :<->: Just . g
 
@@ -109,9 +129,6 @@ rightPartial :: (a + c <-> b + d) -> (c <-> d)
 rightPartial (f :<->: g) =
   (maybeRight <=< f . Right) :<->:
   (maybeRight <=< g . Right)
-
-class Category arr => Parallel arr where
-  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
 
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
@@ -164,18 +181,14 @@ step minuend subtrahend current =
 -- never loop back around to use that chunk. Thus, we could replace it with the
 -- partial bijection defined nowhere, and gcbp would behave identically.
 
-infixl 3 <||>
-(<||>) :: Alternative f => (a -> f b) -> (a -> f b) -> (a -> f b)
-(f <||> g) a = f a <|> g a
-
 -- Merge operation. In theory, should only merge compatible partial bijections.
-instance Monoid (a <-> b) where
-  mempty = undef
-  mappend (f :<->: g) ~(h :<->: i) =  -- NOTE: this irrefutable match is Very Important
-    (f <||> h) :<->: (g <||> i)       --       this is because of the infinite merge in gcbp
+instance Mergeable (<->) where
+  undef = Bij undef undef
+  (Bij f g) <||> ~(Bij h i) =  -- NOTE: this irrefutable match is Very Important
+    Bij (f <||> h) (g <||> i)     --       this is because of the infinite merge in gcbp
 
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbp minuend subtrahend = unsafeTotal . mconcat $ gcbpIterates minuend subtrahend
+gcbp minuend subtrahend = unsafeTotal . merge $ gcbpIterates minuend subtrahend
 
 gcbpIterates :: (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
 gcbpIterates minuend subtrahend = map leftPartial $
