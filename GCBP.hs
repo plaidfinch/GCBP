@@ -120,15 +120,11 @@ unsafeTotal (f :<->: g) = fromJust . f :<=>: fromJust . g
 applyPartial :: (a <-> b) -> a -> Maybe b
 applyPartial (f :<->: _) = f
 
-leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial (f :<->: g) =
-  (maybeLeft <=< f . Left) :<->:
-  (maybeLeft <=< g . Left)
+left :: a <-> a + b
+left = (Just . Left) :<->: either Just (const Nothing)
 
-rightPartial :: (a + c <-> b + d) -> (c <-> d)
-rightPartial (f :<->: g) =
-  (maybeRight <=< f . Right) :<->:
-  (maybeRight <=< g . Right)
+leftPartial :: (a + c <-> b + d) -> (a <-> b)
+leftPartial f = inverse left . f . left
 
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
