@@ -58,7 +58,7 @@ factor :: Functor m => m a + m b -> m (a + b)
 factor = either (fmap Left) (fmap Right)
 
 instance Monad m => Parallel (Kleisli m) where
-  Kleisli f ||| Kleisli g = Kleisli $ factor . bimap f g
+  Kleisli f ||| Kleisli g = Kleisli $ bimap f g >>> factor
 
 instance (Monad m, Alternative m) => Mergeable (Kleisli m) where
   undef = Kleisli $ const empty
@@ -79,8 +79,8 @@ infixr 8 <=>, <->, :<=>:, :<->:, <~>
 type (<=>) = Bij Identity
 type (<->) = Bij Maybe
 
-pattern (:<=>:) f g <- Bij (Kleisli ((runIdentity.) -> f)) (Kleisli ((runIdentity.) -> g)) where
-  f :<=>: g = Bij (Kleisli (Identity . f)) (Kleisli (Identity . g))
+pattern (:<=>:) f g <- Bij (Kleisli ((>>> runIdentity) -> f)) (Kleisli ((>>> runIdentity) -> g)) where
+  f :<=>: g = Bij (Kleisli (f >>> Identity)) (Kleisli (g >>> Identity))
 
 pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
 
@@ -97,38 +97,38 @@ f <~> g = Bij (arr f) (arr g)
 ------------------------------------------------------------
 
 assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
-assoc = either (Left . Left) (either (Left . Right) Right) <~>
-        either (either Left (Right . Left)) (Right . Right)
+assoc = either (Left >>> Left) (either (Right >>> Left) Right) <~>
+        either (either Left (Left >>> Right)) (Right >>> Right)
 
 reassocL
   :: Monad m
   => Bij m (a + (b + c)) (a' + (b' + c'))
   -> Bij m ((a + b) + c) ((a' + b') + c')
-reassocL bij = assoc . bij . inverse assoc
+reassocL bij = inverse assoc >>> bij >>> assoc
 
 reassocR
   :: Monad m
   => Bij m ((a + b) + c) ((a' + b') + c')
   -> Bij m (a + (b + c)) (a' + (b' + c'))
-reassocR bij = inverse assoc . bij . assoc
+reassocR bij = assoc >>> bij >>> inverse assoc
 
 applyTotal :: (a <=> b) -> a -> b
 applyTotal (f :<=>: _) = f
 
 partial :: (a <=> b) -> (a <-> b)
-partial (f :<=>: g) = Just . f :<->: Just . g
+partial (f :<=>: g) = (f >>> Just) :<->: (g >>> Just)
 
 unsafeTotal :: (a <-> b) -> (a <=> b)
-unsafeTotal (f :<->: g) = fromJust . f :<=>: fromJust . g
+unsafeTotal (f :<->: g) = (f >>> fromJust) :<=>: (g >>> fromJust)
 
 applyPartial :: (a <-> b) -> a -> Maybe b
 applyPartial (f :<->: _) = f
 
 left :: a <-> a + b
-left = (Just . Left) :<->: either Just (const Nothing)
+left = (Left >>> Just) :<->: either Just (const Nothing)
 
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial f = inverse left . f . left
+leftPartial f = left >>> f >>> inverse left
 
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
