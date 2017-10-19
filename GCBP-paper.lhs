@@ -14,6 +14,7 @@
 %format >=> = ">\!\!=\!\!\!>"
 %format <=< = "<\!\!\!=\!\!<"
 %format +++ = "+\!\!+\!\!+"
+%format >>> = "\mathbin{;}"
 
 %format ^^  = "\;"
 
@@ -21,6 +22,10 @@
 %format <->   = "\leftrightarrow"
 %format :<=>: = "\mathbin{:\Leftrightarrow:}"
 %format :<->: = "\mathbin{:\leftrightarrow:}"
+
+%format inverse(a) = "\overline{" a "}"
+%format leftPartial(f) = "\langle" f "|"
+%format rightPartial(f) = "|" f "\rangle"
 
 %% XXX
 %format <~>   = "\mathbin{\leftrightsquigarrow}"
@@ -126,6 +131,9 @@
 
 \newcommand{\compat}{\mathbin{||||}}
 \newcommand{\mrg}{\sqcup}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{lem}[thm]{Lemma}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -588,7 +596,12 @@ Identity| yields normal total functions (up to an extra |newtype|
 wrapper); picking |m = Maybe| yields partial functions.  The
 |Category| instance for |Kleisli m| provides the identity |id ::
 Kleisli m a a| along with a composition operator
-\[ |(.) :: Kleisli m b c -> Kleisli m a b -> Kleisli m a c|. \]
+\[ |(.) :: Kleisli m b c -> Kleisli m a b -> Kleisli m a c|. \]  In
+order to match up with the pictures, where we tend to draw functions
+going from left to right, we will make use of the notation
+\begin{spec}
+  f >>> g = g . f
+\end{spec}
 
 We can now define a general type of |m|-bijections as
 \begin{code}
@@ -604,14 +617,16 @@ instance Monad m => Category (Bij m) where
   (Bij f1 g1) . (Bij f2 g2) = Bij (f1 . f2) (g2 . g1)
 
 class Category c => Groupoid c where
-  inverse :: c a b -> c b a
+  (inverse(-)) :: c a b -> c b a
 
 instance Monad m => Groupoid (Bij m) where
   inverse (Bij f g) = Bij g f
 \end{code}
 
 However, not just any pair of |Kleisli| arrows qualifies as a |Bij m a
-b|.  Consider the function |dom| defined by
+b|.  \todo{Need pictures and/or more intuitive discussion before
+  introducing |dom|.  Also need a picture to illustrate what |dom| is
+  doing.} Consider the function |dom| defined by
 \begin{spec}
   dom :: Functor m => Kleisli m a b -> Kleisli m a a
   dom (Kleisli f) = Kleisli (\a -> const a <$> f a)
@@ -619,23 +634,36 @@ b|.  Consider the function |dom| defined by
 Although |dom f| acts as the identity on values of type |a|, it
 retains the \emph{effects} of |f|.  We can therefore impose the laws
 \begin{spec}
-  bwd . fwd = dom fwd
-  fwd . bwd = dom bwd
+  fwd >>> bwd = dom fwd
+  bwd >>> fwd = dom bwd
 \end{spec}
-which intuitively say that |bwd . fwd| and |fwd . bwd| must both act
+which intuitively say that |fwd >>> bwd| and |bwd >>> fwd| must both act
 like |id|, except for some possible effects---but even these must
 match, in the sense that |bwd| cannot introduce any effects not
 already introduced by |fwd|, and vice versa.  When |m = Identity|
 there are no effects at all, and indeed, |dom f = id| since |const a
-<$> f a = Identity a|, so the laws reduce to the familiar |bwd . fwd =
-id| and |fwd . bwd = id|.  In the case |m = Maybe|, the laws
+<$> f a = Identity a|, so the laws reduce to the familiar |fwd >>> bwd =
+id| and |bwd >>> fwd = id|.  In the case |m = Maybe|, the laws
 essentially say that |fwd a = Just b| if and only if |bwd b = Just
 a|---that is, |fwd| and |bwd| must agree wherever they are both
 defined, and moreover, they must either be both defined or both
 undefined.  This justifies drawing partial bijections by connecting
 two sets with some collection of undirected (\ie bidirectional) line
-segments.
+segments, as in \pref{fig:partial-bij}.
 
+%$
+
+\todo{explain this}
+\begin{spec}
+class Category arr => Parallel arr where
+  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+
+factor :: Functor m => m a + m b -> m (a + b)
+factor = either (fmap Left) (fmap Right)
+
+instance Monad m => Parallel (Kleisli m) where
+  Kleisli f ||| Kleisli g = Kleisli (bimap f g >>> factor)
+\end{spec}
 %$
 
 Finally, we can recover specific types for total and partial bijections as
@@ -649,15 +677,17 @@ type (<->) = Bij Maybe
 connecting elements on the two sides than partial bijections (|<->|).)
 
 To make working with total and partial bijections more
-convenient, we can define pattern synonyms \todo{cite}
+convenient, we can define pattern synonyms \todo{cite} \bay{Should we
+  show these?  The syntax for the |:<->:| one in particular is hard to
+  understand.}
 \begin{code}
-pattern (:<=>:) f g <- Bij  (Kleisli ((runIdentity.) -> f))
-                            (Kleisli ((runIdentity.) -> g))
-  where
-  f :<=>: g = Bij  (Kleisli (Identity . f))
-                   (Kleisli (Identity . g))
-
 pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
+
+pattern (:<=>:) f g <- Bij  (Kleisli ((>>> runIdentity) -> f))
+                            (Kleisli ((>>> runIdentity) -> g))
+  where
+  f :<=>: g = Bij  (Kleisli (f >>> Identity))
+                   (Kleisli (g >>> Identity))
 \end{code}
 For instance, the pattern synonym |:<=>:| lets us pretend as if we had
 directly declared something like
@@ -687,68 +717,87 @@ everywhere.
 undef  ::  a <-> b
 undef  =   const Nothing :<->: const Nothing
 
-partial ::  (a <=> b)    ->  (a <-> b)
-partial     (f :<=>: g)  =   Just . f :<->: Just . g
+partial      ::  (a <=> b)    ->  (a <-> b)
+partial          (f :<=>: g)  =   (f >>> Just) :<->: (g >>> Just)
 
-unsafeTotal ::  (a <-> b)    ->  (a <=> b)
-unsafeTotal     (f :<->: g)  =   fromJust . f :<=>: fromJust . g
+unsafeTotal  ::  (a <-> b)    ->  (a <=> b)
+unsafeTotal      (f :<->: g)  =   (f >>> fromJust) :<=>: (g >>> fromJust)
 \end{code}
 
 We now turn to developing tools for dealing with bijections involving
 sum types. First, given two bijections, we can put them in parallel to
-construct a bijection between sum types. \todo{Do we want the Parallel
-  class?} \todo{picture}
+construct a bijection between sum types.  \todo{picture}
 \begin{code}
-(|||) :: Bij m a b -> Bij m c d -> Bij m (a+c) (b+d)
-(Bij f g) ||| (Bij h i) = Bij
-  (Kleisli $ either
-    (fmap Left . runKleisli f)
-    (fmap Right . runKleisli h))
-  (Kleisli $ either
-    (fmap Left . runKleisli g)
-    (fmap Right . runKleisli i))
+instance Monad m => Parallel (Bij m) where
+  (Bij f g) ||| (Bij h i) = Bij (f ||| h) (g ||| i)
 \end{code}
 
 Next, we can construct general bijections witnessing the
 associativity of the type-level sum constructor: \todo{pictures?}
 \begin{code}
 (<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
-f <~> g = Bij (Kleisli (return . f) (Kleisli (return . g))
+f <~> g = Bij (Kleisli (f >>> return) (Kleisli (g >>> return))
 
 assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
 assoc =
-  either (Left . Left) (either (Left . Right) Right)
+  either (Left >>> Left) (either (Right >>> Left) Right)
   <~>
-  either (either Left (Right . Left)) (Right . Right)
+  either (either Left (Left >>> Right)) (Right >>> Right)
 
 reassocL
   :: Monad m
   => Bij m (a + (b + c)) (a' + (b' + c'))
   -> Bij m ((a + b) + c) ((a' + b') + c')
-reassocL bij = assoc . bij . inverse assoc
+reassocL bij = inverse assoc >>> bij >>> assoc
 
 reassocR
   :: Monad m
   => Bij m ((a + b) + c) ((a' + b') + c')
   -> Bij m (a + (b + c)) (a' + (b' + c'))
-reassocR bij = inverse assoc . bij . assoc
+reassocR bij = assoc >>> bij >>> inverse assoc
 \end{code}
 
-We also define |leftPartial| and |rightPartial| \todo{use some
-  notation for these? e.g. $\langle f ||$?}, which allow us to take a
-bijection between sum types and project out only the edges between one
-side or the other of the sums. \todo{picture}
+We also define |left|, the partial bijection which injects |a| into |a
++ b| in one direction, and drops |b| in the other
+direction. \todo{picture} From this we define the left partial
+projection, notated |leftPartial|, which allows us to take a bijection
+between sum types and project out only the edges between the left
+sides of the sums. \todo{picture} Of course |right| and |rightPartial|
+could be defined similarly, but we do not need them.
 \begin{code}
-leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial (f :<->: g) =
-  (maybeLeft <=< f . Left) :<->:
-  (maybeLeft <=< g . Left)
+left :: a <-> a + b
+left = (Just . Left) :<->: either Just (const Nothing)
 
-rightPartial :: (a + c <-> b + d) -> (c <-> d)
-rightPartial (f :<->: g) =
-  (maybeRight <=< f . Right) :<->:
-  (maybeRight <=< g . Right)
+leftPartial :: (a + c <-> b + d) -> (a <-> b)
+leftPartial f = inverse left . f . left
 \end{code}
+
+We can write down a few algebraic laws about the way |left|, |assoc|,
+and parallel composition interact.  Rather than give formal proofs, we
+content ourselves with pictures which should make the laws intuitively
+clear
+
+\begin{lem}
+  |left >>> inverse left = id|
+\end{lem}
+
+\todo{picture}  Note that it is not automatically the case that |f >>>
+inverse f = id| when |f| is a partial bijection; and indeed, it is not
+the case that |inverse left >>> left = id| (in fact |inverse left >>>
+left = id |||||| undef|).
+
+\begin{lem}
+  |left >>> assoc = left >>> left|
+\end{lem}
+
+\todo{picture} By taking the inverse of both sides, we also deduce the corollary
+|inverse assoc >>> inverse left = inverse left >>> inverse left|.
+
+\begin{lem}
+  |left >>> (f |||||| g) = f >>> left|
+\end{lem}
+
+\todo{picture}
 
 \section{GCBP, take 1}
 
