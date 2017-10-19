@@ -13,6 +13,7 @@ import           Control.Applicative
 import           Control.Arrow (Kleisli(..), arr)
 import           Control.Category
 import           Control.Monad
+import           Data.Bifunctor
 import           Data.Functor.Identity
 import           Data.Maybe
 import           Data.Tuple
@@ -53,8 +54,11 @@ merge = foldr (<||>) undef
 ------------------------------------------------------------
 -- Partial functions
 
--- instance Alternative f => Parallel (Kleisli m a b) where
---   (f ||| g) = undefined
+factor :: Functor m => m a + m b -> m (a + b)
+factor = either (fmap Left) (fmap Right)
+
+instance Monad m => Parallel (Kleisli m) where
+  Kleisli f ||| Kleisli g = Kleisli $ factor . bimap f g
 
 instance (Monad m, Alternative m) => Mergeable (Kleisli m) where
   undef = Kleisli $ const empty
@@ -129,10 +133,7 @@ leftPartial f = inverse left . f . left
 -- NOTE: This is *not* the same as arrows, since bijections do not admit `arr`
 
 instance Monad m => Parallel (Bij m) where
-  (Bij f g) ||| (Bij h i) = Bij
-    (Kleisli $ either (fmap Left . runKleisli f) (fmap Right . runKleisli h))
-    (Kleisli $ either (fmap Left . runKleisli g) (fmap Right . runKleisli i))
-  -- there must be a more concise way to implement the above...?
+  (Bij f g) ||| (Bij h i) = Bij (f ||| h) (g ||| i)
 
 --------------------------------------------------
 
