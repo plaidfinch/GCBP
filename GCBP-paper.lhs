@@ -624,9 +624,19 @@ instance Monad m => Groupoid (Bij m) where
 \end{code}
 
 However, not just any pair of |Kleisli| arrows qualifies as a |Bij m a
-b|.  \todo{Need pictures and/or more intuitive discussion before
-  introducing |dom|.  Also need a picture to illustrate what |dom| is
-  doing.} Consider the function |dom| defined by
+b|.  When |m = Identity|, a |Bij| should consist of two inverse
+functions, that is, functions whose composition is |id|.  In general,
+we cannot say that composing the arrows yields the identity, but we
+can say that their composition is the identity ``up to any
+  |m| effects''.  For example, \todo{finish}
+
+  \bay{The level of abstraction seems to be getting out of hand.  I
+    don't know whether all this is worth it.}
+
+  \todo{Need pictures and/or more intuitive discussion before
+    introducing |dom|.  Also need a picture to illustrate what |dom|
+    is doing.} To express this formally, we introduce the
+  function |dom|, which intuitively \todo{finish}
 \begin{spec}
   dom :: Functor m => Kleisli m a b -> Kleisli m a a
   dom (Kleisli f) = Kleisli (\a -> const a <$> f a)
@@ -651,19 +661,6 @@ undefined.  This justifies drawing partial bijections by connecting
 two sets with some collection of undirected (\ie bidirectional) line
 segments, as in \pref{fig:partial-bij}.
 
-%$
-
-\todo{explain this}
-\begin{spec}
-class Category arr => Parallel arr where
-  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
-
-factor :: Functor m => m a + m b -> m (a + b)
-factor = either (fmap Left) (fmap Right)
-
-instance Monad m => Parallel (Kleisli m) where
-  Kleisli f ||| Kleisli g = Kleisli (bimap f g >>> factor)
-\end{spec}
 %$
 
 Finally, we can recover specific types for total and partial bijections as
@@ -697,6 +694,14 @@ directly declared something like
 automatically handling the wrapping and unwrapping of the |Kleisli|
 and |Identity| newtypes for us.
 
+\begin{diagram}[width=400]
+  import Bijections
+
+  dia = drawGenBij (text) (Cons (SingleGSet "A") (PrimLink, "f")
+  (Single 
+
+\end{diagram}
+
 We begin by defining some utility functions for working with total and
 partial bijections. First, |applyTotal| and |applyPartial| let us run a
 bijection in the forward direction:
@@ -725,9 +730,24 @@ unsafeTotal      (f :<->: g)  =   (f >>> fromJust) :<=>: (g >>> fromJust)
 \end{code}
 
 We now turn to developing tools for dealing with bijections involving
-sum types. First, given two bijections, we can put them in parallel to
-construct a bijection between sum types.  \todo{picture}
+sum types. It is useful to have a type class for ``things which can be
+composed in parallel''. \todo{picture}
+
+\begin{spec}
+class Category arr => Parallel arr where
+  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+\end{spec}
+%$
+
+Kleisli arrows can be composed in parallel, and consequently, so can
+generalized bijections.
 \begin{code}
+factor :: Functor m => m a + m b -> m (a + b)
+factor = either (fmap Left) (fmap Right)
+
+instance Monad m => Parallel (Kleisli m) where
+  Kleisli f ||| Kleisli g = Kleisli (bimap f g >>> factor)
+
 instance Monad m => Parallel (Bij m) where
   (Bij f g) ||| (Bij h i) = Bij (f ||| h) (g ||| i)
 \end{code}

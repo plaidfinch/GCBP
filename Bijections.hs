@@ -471,3 +471,35 @@ bij1 = single $ mkABij a1 b1 id
 colorEdge :: _ => Name -> Colour Double -> Bij b -> Bij b
 colorEdge n c = bijParts . traverse . bijStyle
   %~ \sty n' -> if (n' == n) then (sty n' # lc c # lw thick) else sty n'
+
+------------------------------------------------------------
+-- Generalized bijection diagrams
+
+type GenBij l = AltList (GSet l) (Link l, l)
+
+data GSet l
+  = SingleGSet l
+  | GSum (GSet l) (GSet l)
+
+data Link l
+  = PrimLink
+  | ManyLink [(l,l)]
+
+drawGenBij :: _ => (l -> Diagram b) -> GenBij l -> Diagram b
+drawGenBij drawLabel = go 0
+  where
+    go :: Int -> _ -> _
+    go i (Single gset)       = i .>> drawGSet gset
+    go i (Cons gset (lk,l) rest) = hcat
+      [ i .>> gsetD
+      , strutX 1 <> label
+      , go (i+1) rest
+      ]
+      where
+        gsetD = drawGSet gset
+        label = drawLabel l
+                -- # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
+                -- # (\d -> translateY (-(height s1 + height d)/2) d)
+
+    drawGSet (SingleGSet l) = drawLabel l <> rect 1 1 # named l
+    drawGSet (GSum s1 s2)   = drawGSet s1 === drawGSet s2
