@@ -694,12 +694,14 @@ directly declared something like
 automatically handling the wrapping and unwrapping of the |Kleisli|
 and |Identity| newtypes for us.
 
-\begin{diagram}[width=400]
+\begin{diagram}[width=100]
   import Bijections
 
-  dia = drawGenBij (text) (Cons (SingleGSet "A") (PrimLink, "f")
-  (Single 
-
+  dia = drawGenBij tex
+    (SingleGSet "A" .- (PrimLink, "f") -. SingleGSet "B"
+                    .- (PrimLink, "g") -.. SingleGSet "C"
+    )
+  tex s = text ("$" ++ s ++ "$") # fontSizeO 8 <> strutY 1
 \end{diagram}
 
 We begin by defining some utility functions for working with total and

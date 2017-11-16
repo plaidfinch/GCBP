@@ -488,18 +488,23 @@ data Link l
 drawGenBij :: _ => (l -> Diagram b) -> GenBij l -> Diagram b
 drawGenBij drawLabel = go 0
   where
+    ssize = 1.5
+
     go :: Int -> _ -> _
     go i (Single gset)       = i .>> drawGSet gset
     go i (Cons gset (lk,l) rest) = hcat
       [ i .>> gsetD
-      , strutX 1 <> label
+      , case lk of
+          PrimLink -> hrule ssize
+          _        -> strutX ssize
+        <>
+        label # translateY (-height label)
       , go (i+1) rest
       ]
       where
         gsetD = drawGSet gset
         label = drawLabel l
-                -- # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
-                -- # (\d -> translateY (-(height s1 + height d)/2) d)
+                -- # (\d -> translateY (-(height gsetD + height d)/2) d)
 
-    drawGSet (SingleGSet l) = drawLabel l <> rect 1 1 # named l
+    drawGSet (SingleGSet l) = drawLabel l <> rect ssize ssize # named l
     drawGSet (GSum s1 s2)   = drawGSet s1 === drawGSet s2
