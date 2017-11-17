@@ -694,15 +694,32 @@ directly declared something like
 automatically handling the wrapping and unwrapping of the |Kleisli|
 and |Identity| newtypes for us.
 
-\begin{diagram}[width=100]
-  import Bijections
+In what follows, we will use simple diagrams of labelled boxes and
+lines to abstractly represent sets and generalized bijections between
+them, since looking at the pictures gives a much better intuitive idea
+of what is going on than looking at code.  For example, a generalized
+bijection $f$ between sets $A$ and $B$ will be drawn as a thick line
+connecting two labelled boxes, as shown in \pref{fig:gen-bij-dia}.
+\begin{figure}
+  \begin{center}
+    \begin{diagram}[width=100]
+      import Bijections
 
-  dia = drawGenBij tex
-    (SingleGSet "A" .- (PrimLink, "f") -. SingleGSet "B"
-                    .- (PrimLink, "g") -.. SingleGSet "C"
-    )
-  tex s = text ("$" ++ s ++ "$") # fontSizeO 8 <> strutY 1
-\end{diagram}
+      dia = drawGenBij tex
+        (sg "A" .- lk "f" -.. sg "B")
+    \end{diagram}
+  \end{center}
+  \caption{A generalized bijection $f$ between $A$ and $B$} \label{fig:gen-bij-dia}
+\end{figure}
+Note that we don't draw the action of $f$ on individual elements of
+$A$ and $B$, but simply summarize the relationship expressed by $f$
+with a single thick line.
+
+  % dia = drawGenBij tex
+  %   ((sg "A_1" +++ sg "A_2") +++ sg "A_3")
+  %     .- lk "f" -. (sg "B_1" +++ sg "B_2")
+  %     .- lk "g" -.. sg "C"
+  %   )
 
 We begin by defining some utility functions for working with total and
 partial bijections. First, |applyTotal| and |applyPartial| let us run a
@@ -743,6 +760,13 @@ class Category arr => Parallel arr where
 
 Kleisli arrows can be composed in parallel, and consequently, so can
 generalized bijections.
+
+\begin{diagram}[width=100]
+  import Bijections
+
+  dia = drawGenBij tex
+    ((sg "A" +++ sg "B") .- lk "f + g" -.. (sg "A'" +++ sg "B'"))
+\end{diagram}
 \begin{code}
 factor :: Functor m => m a + m b -> m (a + b)
 factor = either (fmap Left) (fmap Right)
