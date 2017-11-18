@@ -488,6 +488,9 @@ data Link l
 lk :: l -> (Link l, l)
 lk l = (PrimLink, l)
 
+lks :: l -> [(l,l)] -> (Link l, l)
+lks l ls = (ManyLink ls, l)
+
 instance Monoid l => Par (GSet l) where
   empty = SingleGSet mempty
   (+++) = GSum
@@ -496,7 +499,7 @@ sg :: l -> GSet l
 sg = SingleGSet
 
 tex :: _ => String -> Diagram b
-tex s = text ("$" ++ s ++ "$") # fontSizeO 8 <> strutY 1
+tex s = text ("$" ++ s ++ "$") # fontSizeO 10 <> strutY 1
 
 drawGenBij :: _ => (l -> Diagram b) -> GenBij l -> Diagram b
 drawGenBij drawLabel = go 0
@@ -514,14 +517,17 @@ drawGenBij drawLabel = go 0
         label # translateY (-height label)
       , go (i+1) rest
       ]
+      # applyAll links
       where
         gsetD = drawGSet gset
         label = drawLabel l
-                -- # (\d -> translateY (-(height gsetD + height d)/2) d)
+        links = case lk of
+          PrimLink -> []
+          ManyLink lks -> [ connectOutside (i .>> toName m) ((i+1) .>> toName n) | (m,n) <- lks ]
 
     drawGSet = go False
       where
-        go _ (SingleGSet l) = drawLabel l <> rect ssize ssize # named l
+        go _ (SingleGSet l) = drawLabel l <> rect ssize ssize # named (toName l)
         go enbox (GSum s1 s2)
           | enbox     = boxed 0.8 sub # centerY
           | otherwise = sub # centerY

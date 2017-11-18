@@ -706,7 +706,7 @@ connecting two labelled boxes, as shown in \pref{fig:gen-bij-dia}.
       import Bijections
 
       dia = drawGenBij tex
-        (sg "A" .- lk "f" -.. sg "B")
+        (sg "A" .- lk "f" -.. sg "B" :: GenBij String)
     \end{diagram}
   \end{center}
   \caption{A generalized bijection $f$ between $A$ and $B$} \label{fig:gen-bij-dia}
@@ -765,7 +765,7 @@ generalized bijections.
   import Bijections
 
   dia = drawGenBij tex
-    ((sg "A" +++ sg "B") .- lk "f + g" -.. (sg "A'" +++ sg "B'"))
+    ((sg "A" +++ sg "B") .- lks "f + g" [("A","A'"), ("B","B'")] -.. (sg "A'" +++ sg "B'"))
 \end{diagram}
 \begin{code}
 factor :: Functor m => m a + m b -> m (a + b)
