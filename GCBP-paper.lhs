@@ -892,7 +892,16 @@ reassocL bij = inverse assoc >>> bij >>> assoc
 
 We also define |left|, the partial bijection which injects |a| into |a
 + b| in one direction, and drops |b| in the other
-direction. \todo{picture} From this we define the left partial
+direction:
+\begin{center}
+  \begin{diagram}[width=75]
+    import Bijections
+
+    dia = drawGenBij tex
+      ( sg "A" .- lks "\\mathit{left}\\; f" [("A","A")] -.. (sg "A" +++ sg "B") )
+  \end{diagram}
+\end{center}
+\todo{picture} From this we define the left partial
 projection, notated |leftPartial|, which allows us to take a bijection
 between sum types and project out only the edges between the left
 sides of the sums. \todo{picture} Of course |right| and |rightPartial|

@@ -515,15 +515,16 @@ drawGenBij drawLabel = go 0
     go i (Cons gset (lk,l) rest) = hcat
       [ i .>> gsetD
       , case lk of
-          PrimLink  -> hrule ssize # lwO 2
+          PrimLink  -> hrule ssize # lwO 2 # translateY (-(max (
           _         -> strutX ssize
         <>
-        label # translateY (-height gsetD / 2)
-      , go (i+1) rest
+        label # translateY (-(max (height gsetD) (height restD) + 0.1))
+      , restD
       ]
       # applyAll links
       where
         gsetD = drawGSet gset
+        restD = go (i+1) rest
         label = drawLabel l
         links = case lk of
           -- TODO: get rid of connectOutside, instead use withNames,
@@ -534,7 +535,7 @@ drawGenBij drawLabel = go 0
           _ -> []
         opts = with & arrowHead .~ noHead & shaftStyle %~ lwO 2
 
-    drawGSet = go False
+    drawGSet = alignT . go False
       where
         go _ (SingleGSet l) = drawLabel l <> roundedRect ssize ssize (ssize/8) # named (toName l)
         go enbox (GSum s1 s2)
