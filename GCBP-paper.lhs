@@ -27,6 +27,9 @@
 %format leftPartial(f) = "\langle" f "|"
 %format rightPartial(f) = "|" f "\rangle"
 
+%format Kleisli(m)(a)(b) = a "\to_{" m "}" b
+%format Bij(m)(a)(b) = a <~> "_{" m "}" b
+
 %% XXX
 %format <~>   = "\mathbin{\leftrightsquigarrow}"
 
@@ -131,6 +134,8 @@
 
 \newcommand{\compat}{\mathbin{||||}}
 \newcommand{\mrg}{\sqcup}
+
+\newcommand{\parsum}{\mathbin{||||||}}
 
 \newtheorem{thm}{Theorem}
 \newtheorem{lem}[thm]{Lemma}
@@ -535,7 +540,7 @@ construct---and constructively verify---a bijection which is the
 Since the GCBP takes two bijections as input and yields a bijection as
 output, one might think to begin by defining a type of bijections:
 \begin{spec}
-data Bij a b = Bij
+data Bijection a b = Bijection
   {  ^^ fwd  :: a -> b
   ,  ^^ bwd  :: b -> a
   }
@@ -589,14 +594,14 @@ functions |a -> Maybe b| and |b -> Maybe a|, subject to a suitable
 compatibility condition.  We can work uniformly with both by
 generalizing to an arbitrary \emph{Kleisli} category,
 \begin{spec}
-newtype Kleisli m a b = Kleisli { runKleisli :: a -> m b }
+newtype Kleisli m a b = K { runKleisli :: a -> m b }
 \end{spec}
 consisting of functions |a -> m b| for any monad |m|.  Picking |m =
 Identity| yields normal total functions (up to an extra |newtype|
 wrapper); picking |m = Maybe| yields partial functions.  The
 |Category| instance for |Kleisli m| provides the identity |id ::
 Kleisli m a a| along with a composition operator
-\[ |(.) :: Kleisli m b c -> Kleisli m a b -> Kleisli m a c|. \]  In
+\[ |(.) :: (Kleisli m b c) -> (Kleisli m a b) -> (Kleisli m a c)|. \]  In
 order to match up with the pictures, where we tend to draw functions
 going from left to right, we will make use of the notation
 \begin{spec}
@@ -605,7 +610,7 @@ going from left to right, we will make use of the notation
 
 We can now define a general type of |m|-bijections as
 \begin{code}
-data Bij m a b = Bij
+data Bij m a b = B
   {  ^^ fwd  :: Kleisli m a b
   ,  ^^ bwd  :: Kleisli m b a
   }
@@ -613,22 +618,23 @@ data Bij m a b = Bij
 These can be composed via a |Category| instance, and can be inverted:
 \begin{code}
 instance Monad m => Category (Bij m) where
-  id = Bij id id
-  (Bij f1 g1) . (Bij f2 g2) = Bij (f1 . f2) (g2 . g1)
+  id = B id id
+  (B f1 g1) . (B f2 g2) = B (f1 . f2) (g2 . g1)
 
 class Category c => Groupoid c where
   (inverse(-)) :: c a b -> c b a
 
 instance Monad m => Groupoid (Bij m) where
-  inverse (Bij f g) = Bij g f
+  inverse (B f g) = B g f
 \end{code}
 
-However, not just any pair of |Kleisli| arrows qualifies as a |Bij m a
-b|.  When |m = Identity|, a |Bij| should consist of two inverse
-functions, that is, functions whose composition is |id|.  In general,
-we cannot say that composing the arrows yields the identity, but we
-can say that their composition is the identity ``up to any
-  |m| effects''.  For example, \todo{finish}
+However, not just any pair of Kleisli arrows qualifies as a
+generalized bijection.  When |m = Identity|, a generalized bijection
+should consist of two inverse functions, that is, functions whose
+composition is |id|.  In general, for other monads |m|, we cannot say
+that composing the arrows yields the identity, but we can say that
+their composition is the identity ``up to any |m| effects''.  For
+example, \todo{finish}
 
   \bay{The level of abstraction seems to be getting out of hand.  I
     don't know whether all this is worth it.}
@@ -638,8 +644,8 @@ can say that their composition is the identity ``up to any
     is doing.} To express this formally, we introduce the
   function |dom|, which intuitively \todo{finish}
 \begin{spec}
-  dom :: Functor m => Kleisli m a b -> Kleisli m a a
-  dom (Kleisli f) = Kleisli (\a -> const a <$> f a)
+  dom :: Functor m => (Kleisli m a b) -> (Kleisli m a a)
+  dom (K f) = K (\a -> const a <$> f a)
 \end{spec}%$
 Although |dom f| acts as the identity on values of type |a|, it
 retains the \emph{effects} of |f|.  We can therefore impose the laws
@@ -667,8 +673,8 @@ Finally, we can recover specific types for total and partial bijections as
 \begin{code}
 infixr 8 <=>, <->
 
-type (<=>) = Bij Identity
-type (<->) = Bij Maybe
+type a <=> b = Bij Identity a b
+type a <-> b = Bij Maybe a b
 \end{code}
 (Mnemonic: total bijections (|<=>|) have more horizontal lines
 connecting elements on the two sides than partial bijections (|<->|).)
@@ -678,20 +684,20 @@ convenient, we can define pattern synonyms \todo{cite} \bay{Should we
   show these?  The syntax for the |:<->:| one in particular is hard to
   understand.}
 \begin{code}
-pattern (:<->:) f g = Bij (Kleisli f) (Kleisli g)
+pattern (:<->:) f g = B (K f) (K g)
 
-pattern (:<=>:) f g <- Bij  (Kleisli ((>>> runIdentity) -> f))
-                            (Kleisli ((>>> runIdentity) -> g))
+pattern (:<=>:) f g <- B  (K ((>>> runIdentity) -> f))
+                          (K ((>>> runIdentity) -> g))
   where
-  f :<=>: g = Bij  (Kleisli (f >>> Identity))
-                   (Kleisli (g >>> Identity))
+  f :<=>: g = B  (K (f >>> Identity))
+                 (K (g >>> Identity))
 \end{code}
 For instance, the pattern synonym |:<=>:| lets us pretend as if we had
 directly declared something like
 \begin{spec}
   data a <=> b = (a -> b) :<=>: (b -> a),
 \end{spec}
-automatically handling the wrapping and unwrapping of the |Kleisli|
+automatically handling the wrapping and unwrapping of the Kleisli
 and |Identity| newtypes for us.
 
 In what follows, we will use simple diagrams of labelled boxes and
@@ -722,67 +728,145 @@ with a single thick line.
   %   )
 
 We begin by defining some utility functions for working with total and
-partial bijections. First, |applyTotal| and |applyPartial| let us run a
-bijection in the forward direction:
-\begin{code}
-applyTotal :: (a <=> b) -> a -> b
-applyTotal (f :<=>: _) = f
+partial bijections (\pref{fig:partial-total}). First, |applyTotal| and
+|applyPartial| let us run a bijection in the forward direction.  Next,
+we define |undef| as the completely undefined partial bijection, which
+we draw as follows:
 
-applyPartial :: (a <-> b) -> a -> Maybe b
-applyPartial (f :<->: _) = f
-\end{code}
-Next, we define |undef| as the completely undefined partial bijection,
-and the |partial| and |unsafePartial| functions move back and forth
+\begin{center}
+\begin{diagram}[width=75]
+  import Bijections
+
+  dia = drawGenBij tex (sg "A" .- emptyLk "\\varnothing" -.. sg "B")
+\end{diagram}
+\end{center}
+
+Finally, the |partial| and |unsafeTotal| functions move back and forth
 between total and partial bijections.  Of course, treating a total
 bijection as a partial one is always safe; the other direction is only
 safe if we know that the ``partial'' bijection is, in fact, defined
 everywhere.
+\begin{figure}
 \begin{code}
+applyTotal    ::  (a <=> b)    ->  a -> b
+applyTotal        (f :<=>: _)  =   f
+
+applyPartial  ::  (a <-> b)    ->  a -> Maybe b
+applyPartial      (f :<->: _)  =   f
+
 undef  ::  a <-> b
 undef  =   const Nothing :<->: const Nothing
 
-partial      ::  (a <=> b)    ->  (a <-> b)
-partial          (f :<=>: g)  =   (f >>> Just) :<->: (g >>> Just)
+partial       ::  (a <=> b)    ->  (a <-> b)
+partial           (f :<=>: g)  =   (f >>> Just) :<->: (g >>> Just)
 
-unsafeTotal  ::  (a <-> b)    ->  (a <=> b)
-unsafeTotal      (f :<->: g)  =   (f >>> fromJust) :<=>: (g >>> fromJust)
+unsafeTotal   ::  (a <-> b)    ->  (a <=> b)
+unsafeTotal       (f :<->: g)  =   (f >>> fromJust) :<=>: (g >>> fromJust)
 \end{code}
+\caption{Utilities for partial and total
+  bijections} \label{fig:partial-total}
+\end{figure}
 
 We now turn to developing tools for dealing with bijections involving
 sum types. It is useful to have a type class for ``things which can be
-composed in parallel''. \todo{picture}
+composed in parallel''. If $f$ is some sort of relation between $A$
+and $A'$, and $g$ relates $B$ and $B'$, then their parallel sum $f \parsum g$
+relates the disjoint sums $A + B$ and $A' + B'$, which we visualize by
+stacking vertically:
 
-\begin{spec}
-class Category arr => Parallel arr where
-  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
-\end{spec}
-%$
-
-Kleisli arrows can be composed in parallel, and consequently, so can
-generalized bijections.
-
-\begin{diagram}[width=100]
+\begin{center}
+\begin{diagram}[width=200]
   import Bijections
 
-  dia = drawGenBij tex
-    ((sg "A" +++ sg "B") .- lks "f + g" [("A","A'"), ("B","B'")] -.. (sg "A'" +++ sg "B'"))
+  dia =
+    [ vsep 1
+      [ drawGenBij tex (sg "A" .- lk "f" -.. sg "A'")
+      , drawGenBij tex (sg "B" .- lk "g" -.. sg "B'")
+      ]
+    , tex "\\implies"
+    , drawGenBij tex
+      ((sg "A" +++ sg "B")
+      .-  lks "f \\parsum g" [("A","A'"), ("B","B'")]
+      -.. (sg "A'" +++ sg "B'"))
+    ]
+    # map centerY
+    # hsep 1
 \end{diagram}
+\end{center}
+
+For example, normal functions $A \to A'$ can be composed in parallel:
+if $f : A \to A'$ and $g : B \to B'$ then
+$f \parsum g : A+B \to A'+B'$ is the function which runs $f$ on
+elements of $A$ and $g$ on elements of $B$.  Kleisli arrows over the
+same monad |m| can also be composed in parallel: the parallel sum of
+$f : A \to_m A'$ and $g : B \to_m B'$ works the same as the parallel
+sum of normal functions, but has the effects of whichever one actually
+runs.  Finally, since Kleisli arrows can be composed in parallel, so
+can generalized bijections.  The code is shown in \pref{fig:par-comp}.
+
+\begin{figure}
 \begin{code}
+class Category arr => Parallel arr where
+  (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
+
 factor :: Functor m => m a + m b -> m (a + b)
 factor = either (fmap Left) (fmap Right)
 
 instance Monad m => Parallel (Kleisli m) where
-  Kleisli f ||| Kleisli g = Kleisli (bimap f g >>> factor)
+  K f ||| K g = K (bimap f g >>> factor)
 
 instance Monad m => Parallel (Bij m) where
-  (Bij f g) ||| (Bij h i) = Bij (f ||| h) (g ||| i)
+  (B f g) ||| (B h i) = B (f ||| h) (g ||| i)
 \end{code}
+\caption{Parallel composition} \label{fig:par-comp}
+\end{figure}
 
 Next, we can construct general bijections witnessing the
-associativity of the type-level sum constructor: \todo{pictures?}
+associativity of the type-level sum constructor.  |assoc| is a
+generalized bijection relating $A + (B+C)$ to $(A+B)+C$:
+\begin{center}
+\begin{diagram}[width=75]
+  import Bijections
+
+  dia = drawGenBij tex
+    (
+      (sg "A" +++ (sg "B" +++ sg "C"))
+      .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")]
+      -.. ((sg "A" +++ sg "B") +++ sg "C")
+    )
+\end{diagram}
+\end{center}
+|reassocL| takes a generalized bijection between a nested sum and
+reassociates both sides, by composing with |inverse(assoc)| and |assoc|:
+\begin{center}
+\begin{diagram}[width=200]
+  import Bijections
+
+  dia = hsep 1
+    [ drawGenBij tex
+        (   (sg "A" +++ (sg "B" +++ sg "C"))
+        .-  lk "f"
+        -.. (sg "A'" +++ (sg "B'" +++ sg "C'"))
+        )
+    , tex "\\implies"
+    , drawGenBij tex
+        (   ((sg "A" +++ sg "B") +++ sg "C")
+        .-  lks "\\overline{\\mathit{assoc}}" [("A","A"), ("B","B"), ("C","C")]
+        -.  (sg "A" +++ (sg "B" +++ sg "C"))
+        .-  lk "f"
+        -.  (sg "A'" +++ (sg "B'" +++ sg "C'"))
+        .-  lks "\\mathit{assoc}" [("A'","A'"), ("B'","B'"), ("C'","C'")]
+        -.. ((sg "A'" +++ sg "B'") +++ sg "C'")
+        )
+    ]
+\end{diagram}
+\end{center}
+The code for |assoc| and |reassocL| is shown in \pref{fig:assoc}.
+
+\begin{figure}
 \begin{code}
 (<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
-f <~> g = Bij (Kleisli (f >>> return) (Kleisli (g >>> return))
+f <~> g = B (K (f >>> return) (K (g >>> return))
 
 assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
 assoc =
@@ -795,13 +879,16 @@ reassocL
   => Bij m (a + (b + c)) (a' + (b' + c'))
   -> Bij m ((a + b) + c) ((a' + b') + c')
 reassocL bij = inverse assoc >>> bij >>> assoc
-
-reassocR
-  :: Monad m
-  => Bij m ((a + b) + c) ((a' + b') + c')
-  -> Bij m (a + (b + c)) (a' + (b' + c'))
-reassocR bij = assoc >>> bij >>> inverse assoc
 \end{code}
+\caption{XXX foo bar} \label{fig:assoc}
+\end{figure}
+
+% XXX put in reassocR iff we need it
+% reassocR
+%   :: Monad m
+%   => Bij m ((a + b) + c) ((a' + b') + c')
+%   -> Bij m (a + (b + c)) (a' + (b' + c'))
+% reassocR bij = assoc >>> bij >>> inverse assoc
 
 We also define |left|, the partial bijection which injects |a| into |a
 + b| in one direction, and drops |b| in the other

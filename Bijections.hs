@@ -483,7 +483,11 @@ data GSet l
 
 data Link l
   = PrimLink
+  | EmptyLink
   | ManyLink [(l,l)]
+
+emptyLk :: l -> (Link l, l)
+emptyLk l = (EmptyLink, l)
 
 lk :: l -> (Link l, l)
 lk l = (PrimLink, l)
@@ -499,7 +503,7 @@ sg :: l -> GSet l
 sg = SingleGSet
 
 tex :: _ => String -> Diagram b
-tex s = text ("$" ++ s ++ "$") # fontSizeO 10 <> strutY 1
+tex s = text ("$" ++ s ++ "$") # fontSizeO 8 <> strutY 1
 
 drawGenBij :: _ => (l -> Diagram b) -> GenBij l -> Diagram b
 drawGenBij drawLabel = go 0
@@ -511,10 +515,10 @@ drawGenBij drawLabel = go 0
     go i (Cons gset (lk,l) rest) = hcat
       [ i .>> gsetD
       , case lk of
-          PrimLink -> hrule ssize # lwO 2
-          _        -> strutX ssize
+          PrimLink  -> hrule ssize # lwO 2
+          _         -> strutX ssize
         <>
-        label # translateY (-height label)
+        label # translateY (-height gsetD / 2)
       , go (i+1) rest
       ]
       # applyAll links
@@ -522,12 +526,17 @@ drawGenBij drawLabel = go 0
         gsetD = drawGSet gset
         label = drawLabel l
         links = case lk of
-          PrimLink -> []
-          ManyLink lks -> [ connectOutside (i .>> toName m) ((i+1) .>> toName n) | (m,n) <- lks ]
+          -- TODO: get rid of connectOutside, instead use withNames,
+          -- get the outside points manually, and use metafont lib to
+          -- draw curving line connecting them which is horizontal at
+          -- both endpoints
+          ManyLink lks -> [ connectOutside' opts (i .>> toName m) ((i+1) .>> toName n) | (m,n) <- lks ]
+          _ -> []
+        opts = with & arrowHead .~ noHead & shaftStyle %~ lwO 2
 
     drawGSet = go False
       where
-        go _ (SingleGSet l) = drawLabel l <> rect ssize ssize # named (toName l)
+        go _ (SingleGSet l) = drawLabel l <> roundedRect ssize ssize (ssize/8) # named (toName l)
         go enbox (GSum s1 s2)
           | enbox     = boxed 0.8 sub # centerY
           | otherwise = sub # centerY
@@ -535,5 +544,7 @@ drawGenBij drawLabel = go 0
             sub = (go True s1 === go True s2) # centerY
             boxed f d = mconcat
               [ d # scale f
-              , boundingRect (d # scale f # frame (width d * 0.1))
+              , let r :: Path V2 Double
+                    r = boundingRect (d # scale f # frame (width d * 0.1))
+                in  roundedRect (width r) (height r) (min (width r) (height r) / 8)
               ]
