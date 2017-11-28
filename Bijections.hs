@@ -25,6 +25,8 @@ import           Data.Typeable
 import           Diagrams.Core.Names
 import           Diagrams.Prelude    hiding (dot, end, r2, start, set)
 
+import qualified Diagrams.TwoD.Path.Metafont as MF
+
 import Data.Colour.SRGB
 
 ------------------------------------------------------------
@@ -506,38 +508,51 @@ tex :: _ => String -> Diagram b
 tex s = text ("$" ++ s ++ "$") # fontSizeO 8 <> strutY 1
 
 drawGenBij :: _ => (l -> Diagram b) -> GenBij l -> Diagram b
-drawGenBij drawLabel = go 0
+drawGenBij drawLabel = fst . go 0 0
   where
     ssize = 1.5
 
-    go :: Int -> _ -> _
-    go i (Single gset)       = i .>> drawGSet gset
-    go i (Cons gset (lk,l) rest) = hcat
-      [ i .>> gsetD
-      , case lk of
-          PrimLink  -> hrule ssize # lwO 2 # translateY (-(max (
-          _         -> strutX ssize
-        <>
-        label # translateY (-(max (height gsetD) (height restD) + 0.1))
-      , restD
-      ]
-      # applyAll links
+    go :: Int -> Double -> _ -> _
+    go i ht (Single gset) = let gsetD = drawGSet gset in (i .>> gsetD, height gsetD)
+    go i ht (Cons gset (lk,l) rest) =
+      ( let [d1,conn,d2] = hcat
+              [ [i .>> gsetD]
+              , [case lk of
+                  PrimLink  -> hrule ssize # lwO 2 # translateY (-maxHt/2)
+                                 # lineCap LineCapRound
+                  _         -> strutX ssize
+                <>
+                label # translateY (-(maxHt + 0.5))
+                ]
+              , [restD]
+              ]
+        in mconcat [d1,d2,conn]  -- Do layout but then put conn on the bottom,
+            # applyAll links     -- so the ends get covered up if there's anything
+                                 -- there to cover them
+      , maxHt
+      )
       where
+        maxHt = maximum [ht, height gsetD, restHt]
         gsetD = drawGSet gset
-        restD = go (i+1) rest
+        (restD, restHt) = go (i+1) (max ht (height gsetD)) rest
         label = drawLabel l
         links = case lk of
-          -- TODO: get rid of connectOutside, instead use withNames,
-          -- get the outside points manually, and use metafont lib to
-          -- draw curving line connecting them which is horizontal at
-          -- both endpoints
-          ManyLink lks -> [ connectOutside' opts (i .>> toName m) ((i+1) .>> toName n) | (m,n) <- lks ]
+          ManyLink lks -> [ curvyConnect (i .>> toName m) ((i+1) .>> toName n)
+                          | (m,n) <- lks
+                          ]
           _ -> []
+        curvyConnect x y = withNames [x,y] $ \[sx,sy] ->
+          let ptL = boundaryFrom sx unitX
+              ptR = boundaryFrom sy unit_X
+          in  atop (MF.metafont (ptL MF..- MF.leaving unitX <> MF.arriving unitX MF.-. MF.endpt ptR) # lwO 2)
         opts = with & arrowHead .~ noHead & shaftStyle %~ lwO 2
 
     drawGSet = alignT . go False
       where
-        go _ (SingleGSet l) = drawLabel l <> roundedRect ssize ssize (ssize/8) # named (toName l)
+        go _ (SingleGSet l) = drawLabel l
+                           <> roundedRect ssize ssize (ssize/8)
+                              # named (toName l)
+                              # fc white
         go enbox (GSum s1 s2)
           | enbox     = boxed 0.8 sub # centerY
           | otherwise = sub # centerY
@@ -548,4 +563,5 @@ drawGenBij drawLabel = go 0
               , let r :: Path V2 Double
                     r = boundingRect (d # scale f # frame (width d * 0.1))
                 in  roundedRect (width r) (height r) (min (width r) (height r) / 8)
+                    # fc white
               ]

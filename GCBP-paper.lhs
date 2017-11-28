@@ -825,7 +825,7 @@ Next, we can construct general bijections witnessing the
 associativity of the type-level sum constructor.  |assoc| is a
 generalized bijection relating $A + (B+C)$ to $(A+B)+C$:
 \begin{center}
-\begin{diagram}[width=75]
+\begin{diagram}[width=60]
   import Bijections
 
   dia = drawGenBij tex
@@ -842,7 +842,7 @@ reassociates both sides, by composing with |inverse(assoc)| and |assoc|:
 \begin{diagram}[width=200]
   import Bijections
 
-  dia = hsep 1
+  dia =
     [ drawGenBij tex
         (   (sg "A" +++ (sg "B" +++ sg "C"))
         .-  lk "f"
@@ -859,6 +859,8 @@ reassociates both sides, by composing with |inverse(assoc)| and |assoc|:
         -.. ((sg "A'" +++ sg "B'") +++ sg "C'")
         )
     ]
+    # map centerY
+    # hsep 1
 \end{diagram}
 \end{center}
 The code for |assoc| and |reassocL| is shown in \pref{fig:assoc}.
@@ -890,40 +892,92 @@ reassocL bij = inverse assoc >>> bij >>> assoc
 %   -> Bij m (a + (b + c)) (a' + (b' + c'))
 % reassocR bij = assoc >>> bij >>> inverse assoc
 
-We also define |left|, the partial bijection which injects |a| into |a
-+ b| in one direction, and drops |b| in the other
-direction:
+We also define |left|, the partial bijection which injects $A$ into
+$A + B$ in one direction, and drops $B$ in the other direction:
 \begin{center}
-  \begin{diagram}[width=75]
+  \begin{diagram}[width=60]
     import Bijections
 
     dia = drawGenBij tex
-      ( sg "A" .- lks "\\mathit{left}\\; f" [("A","A")] -.. (sg "A" +++ sg "B") )
+      ( sg "A" .- lks "\\mathit{left}" [("A","A")] -.. (sg "A" +++ sg "B") )
   \end{diagram}
 \end{center}
-\todo{picture} From this we define the left partial
+From this we define the left partial
 projection, notated |leftPartial|, which allows us to take a bijection
 between sum types and project out only the edges between the left
-sides of the sums. \todo{picture} Of course |right| and |rightPartial|
-could be defined similarly, but we do not need them.
+sides of the sums:
+\begin{center}
+\begin{diagram}[width=200]
+  import Bijections
+
+  dia =
+    [ drawGenBij tex
+        (   (sg "A" +++ sg "B")
+        .-  lk "f"
+        -.. (sg "A'" +++ sg "B'")
+        )
+    , tex "\\implies"
+    , drawGenBij tex
+        (   sg "A"
+        .-  lks "\\mathit{left}" [("A","A")]
+        -.  (sg "A" +++ sg "B")
+        .-  lk "f"
+        -.  (sg "A'" +++ sg "B'")
+        .-  lks "\\overline{\\mathit{left}}" [("A'","A'")]
+        -.. sg "A'"
+        )
+    ]
+    # map centerY
+    # hsep 1
+\end{diagram}
+\end{center}
+\todo{Concrete example with illustration}
+Code for |left| and |leftPartial| is shown in \pref{fig:left-partial}.
+Of course |right| and |rightPartial| could be defined similarly, but
+we do not need them.
+\begin{figure}
 \begin{code}
 left :: a <-> a + b
-left = (Just . Left) :<->: either Just (const Nothing)
+left = (Left >>> Just) :<->: either Just (const Nothing)
 
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial f = inverse left . f . left
+leftPartial f = left >>> f >>> inverse left
 \end{code}
+\caption{XXX foo quux} \label{fig:left-partial}
+\end{figure}
 
 We can write down a few algebraic laws about the way |left|, |assoc|,
-and parallel composition interact.  Rather than give formal proofs, we
-content ourselves with pictures which should make the laws intuitively
-clear
+and parallel composition interact.  Rather than formal algebraic
+proofs, we give pictorial proofs instead.
 
 \begin{lem}
   |left >>> inverse left = id|
 \end{lem}
+\begin{center}
+\begin{diagram}[width=150]
+    import Bijections
 
-\todo{picture}  Note that it is not automatically the case that |f >>>
+    dia :: Diagram B
+    dia = hsep 1
+      [ b1
+      , tex "=" # translateY (-height b2 / 2)
+      , b2
+      ]
+      where
+        b1, b2 :: Diagram B
+        b2 = drawGenBij tex
+          ( sg "A" .- lk "" -.. sg "A" )
+        b1 = drawGenBij tex
+          ( sg "A"
+              .- lks "\\mathit{left}" [("A","A")] -.
+            (sg "A" +++ sg "B")
+              .- lks "\\overline{\\mathit{left}}" [("A","A")] -..
+            sg "A"
+          )
+\end{diagram}
+\end{center}
+
+Note that it is \emph{not} automatically the case that |f >>>
 inverse f = id| when |f| is a partial bijection; and indeed, it is not
 the case that |inverse left >>> left = id| (in fact |inverse left >>>
 left = id |||||| undef|).
@@ -931,15 +985,65 @@ left = id |||||| undef|).
 \begin{lem}
   |left >>> assoc = left >>> left|
 \end{lem}
+\begin{center}
+  \begin{diagram}[width=240]
+  import Bijections
 
-\todo{picture} By taking the inverse of both sides, we also deduce the corollary
+  dia = hsep 1
+    [ drawGenBij tex
+      ( sg "A"
+          .- lks "\\mathit{left}" [("A","A")] -.
+        (sg "A" +++ (sg "B" +++ sg "C"))
+          .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
+        ((sg "A" +++ sg "B") +++ sg "C")
+      )
+    , tex "=" # translateY (-2)
+    , drawGenBij tex
+      ( sg "A"
+          .- lks "\\mathit{left}" [("A","A")] -.
+        (sg "A" +++ sg "B")
+          .- lks "\\mathit{left}" [("A","A"),("B","B")] -..
+        ((sg "A" +++ sg "B") +++ sg "C")
+      )
+    , tex "=" # translateY (-2)
+    , drawGenBij tex
+      ( sg "A"
+          .- lks "" [("A","A")] -..
+        ((sg "A" +++ sg "B") +++ sg "C")
+      )
+    ]
+\end{diagram}
+\end{center}
+
+By taking the inverse of both sides, we also deduce the corollary
 |inverse assoc >>> inverse left = inverse left >>> inverse left|.
 
 \begin{lem}
   |left >>> (f |||||| g) = f >>> left|
 \end{lem}
+\begin{center}
+  \begin{diagram}[width=200]
+    import Bijections
 
-\todo{picture}
+    dia = hsep 1
+      [ drawGenBij tex
+        ( sg "A"
+            .- lks "\\mathit{left}" [("A","A")] -.
+          (sg "A" +++ sg "B")
+            .- lks "f \\parsum g" [("A","A'"),("B","B'")] -..
+          (sg "A'" +++ sg "B'")
+        )
+      , tex "="
+      , drawGenBij tex
+        ( sg "A"
+            .- lks "f" [("A","A'")] -.
+          sg "A'"
+            .- lks "\\mathit{left}" [("A'","A'")] -..
+          (sg "A'" +++ sg "B'")
+        )
+      ]
+\end{diagram}
+\end{center}
 
 \section{GCBP, take 1}
 
