@@ -882,7 +882,7 @@ reassocL
   -> Bij m ((a + b) + c) ((a' + b') + c')
 reassocL bij = inverse assoc >>> bij >>> assoc
 \end{code}
-\caption{XXX foo bar} \label{fig:assoc}
+\caption{Associativity of sum} \label{fig:assoc}
 \end{figure}
 
 % XXX put in reassocR iff we need it
@@ -931,7 +931,43 @@ sides of the sums:
     # hsep 1
 \end{diagram}
 \end{center}
-\todo{Concrete example with illustration}
+
+For example, \todo{Concrete example with illustration}
+
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = hsep 3
+      [ drawBComplex (bcF # labelBC ["$f$"])
+      , tex "\\implies"
+      , lpF
+        # labelBC ["$\\mathit{left}$", "$f$", "$\\overline{\\mathit{left}}$"]
+        # drawBComplex
+      , tex "="
+      , (
+
+        )
+        # drawBComplex
+      ]
+
+    bcF = (a0 +++ a1) .- bijF -.. (b0 +++ b1)
+    bijF = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ) -- $
+
+    lpF =
+      a0
+        .- single (mkABij a0 (a0 +++ a1) id) -.
+      a0 +++ a1
+        .- bijF -.
+      b0 +++ b1
+        .- single (mkABij (b0 +++ b1) b0 id) -..
+      b0
+  \end{diagram}
+  \caption{XXX}
+  \label{fig:XXX}
+\end{figure}
+
 Code for |left| and |leftPartial| is shown in \pref{fig:left-partial}.
 Of course |right| and |rightPartial| could be defined similarly, but
 we do not need them.
@@ -943,7 +979,7 @@ left = (Left >>> Just) :<->: either Just (const Nothing)
 leftPartial :: (a + c <-> b + d) -> (a <-> b)
 leftPartial f = left >>> f >>> inverse left
 \end{code}
-\caption{XXX foo quux} \label{fig:left-partial}
+\caption{|left| and |leftPartial|} \label{fig:left-partial}
 \end{figure}
 
 We can write down a few algebraic laws about the way |left|, |assoc|,
