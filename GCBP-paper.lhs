@@ -581,13 +581,6 @@ information, until finishing with a total bijection.
   \label{fig:partial-bij}
 \end{figure}
 
-\todo{Need to redo this whole section with PICTURES instead of just
-  showing Haskell code.  We can keep the Haskell code for precision
-  (probably relegated to various figures), but pictures are what
-  should be inline in the text, to help readers build useful
-  intuition.}
-\todo{Should also introduce laws that we will need later.}
-
 Whereas a (total) bijection consists of a pair of inverse functions |a -> b|
 and |b -> a|, a partial bijection consists of a pair of \emph{partial}
 functions |a -> Maybe b| and |b -> Maybe a|, subject to a suitable
@@ -932,23 +925,28 @@ sides of the sums:
 \end{diagram}
 \end{center}
 
-For example, \todo{Concrete example with illustration}
-
+For example, \pref{fig:left-partial-ex} shows the computation of the
+left partial projection |leftPartial(h)|, using the same bijection $h$
+from the introduction. Code for |left| and |leftPartial| is shown in
+\pref{fig:left-partial}.  Of course |right| and |rightPartial| could
+be defined similarly, but we do not need them.
 \begin{figure}
   \centering
   \begin{diagram}[width=200]
     import Bijections
 
     dia = hsep 3
-      [ drawBComplex (bcF # labelBC ["$f$"])
+      [ drawBComplex (bcF # labelBC ["$h$"])
       , tex "\\implies"
       , lpF
-        # labelBC ["$\\mathit{left}$", "$f$", "$\\overline{\\mathit{left}}$"]
+        # labelBC ["$\\mathit{left}$", "$h$", "$\\overline{\\mathit{left}}$"]
         # drawBComplex
       , tex "="
-      , (
-
+      , ( a0
+           .- single (mkABij a0 b0 succ) -..
+          b0
         )
+        # labelBC ["$\\langle\\Varid{h}||$"]
         # drawBComplex
       ]
 
@@ -964,13 +962,9 @@ For example, \todo{Concrete example with illustration}
         .- single (mkABij (b0 +++ b1) b0 id) -..
       b0
   \end{diagram}
-  \caption{XXX}
-  \label{fig:XXX}
+  \caption{Computing the left partial projection |leftPartial(h)|}
+  \label{fig:left-partial-ex}
 \end{figure}
-
-Code for |left| and |leftPartial| is shown in \pref{fig:left-partial}.
-Of course |right| and |rightPartial| could be defined similarly, but
-we do not need them.
 \begin{figure}
 \begin{code}
 left :: a <-> a + b
@@ -1083,11 +1077,11 @@ By taking the inverse of both sides, we also deduce the corollary
 
 \section{GCBP, take 1}
 
-We now have the tools we need to construct a first attempt high-level,
-point-free version of the Gordon Complementary Bijection Principle.
-Although this first version will ultimately turn out to be unusable in
-practice, it has most of the important ingredients of the more
-sophisticated variants developed later.
+We now have the tools we need to construct a first attempt at a
+high-level, point-free version of the Gordon Complementary Bijection
+Principle.  Although this first version will ultimately turn out to be
+unusable in practice, it has most of the important ingredients of the
+more sophisticated variants developed later.
 
 The basic idea is to construct \todo{fig ...} step-by-step.
 

@@ -104,7 +104,7 @@ set :: IsName n => [n] -> Colour Double -> Set b
 set ns c = single $ ASet (map toName ns) c
 
 drawSet :: _ => Set b -> Diagram b
-drawSet = centerY . vcat . map drawAtomic . annot . annot . setParts
+drawSet = vcat . map drawAtomic . annot . annot . setParts
   where
     annot = reverse . zip (False : repeat True)
     drawAtomic (bot, (top, ASet nms c))
@@ -341,22 +341,27 @@ instance Par (BComplex b) where
   (+++) = zipWithA (+++) (+++)
 
 drawBComplex :: _ => BComplex b -> Diagram b
-drawBComplex = centerX . drawBComplexR 0
+drawBComplex = centerX . fst . drawBComplexR 0 0
   where
-    drawBComplexR i (Single s) = i .>> drawSet s
-    drawBComplexR i (Cons ss b c) =
-        hcat
+    drawBComplexR i _  (Single s)
+      = let ds = drawSet s in (i .>> ds, height ds)
+    drawBComplexR i ht (Cons ss b c) =
+      ( hcat
         [ i .>> s1
         , strutX (b ^. bijSep) <> label
-        , drawBComplexR (succ i) c
+        , restD
         ]
         # applyAll (map (drawABij i (map fst $ names s1)) bs)
+      , maxHt
+      )
       where
+        maxHt = maximum [ht, height s1, restHt]
         bs = b ^. bijParts
         s1 = drawSet ss
+        (restD, restHt) = drawBComplexR (succ i) (max ht (height s1)) c
         label = (fromMaybe mempty (b ^. bijLabel))
                 # (\d -> d # withEnvelope (strutY (height d) :: D V2 Double))
-                # (\d -> translateY (-(height s1 + height d)/2) d)
+                # translateY (-(maxHt - 0.5))
 
 drawABij :: _ => Int -> [Name] -> ABij b -> Diagram b -> Diagram b
 drawABij i ns b = applyAll (map conn . catMaybes . map (_2 id . (id &&& (b ^. bijData))) $ ns)
