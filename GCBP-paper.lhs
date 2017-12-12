@@ -18,10 +18,10 @@
 
 %format ^^  = "\;"
 
-%format <=>   = "\Leftrightarrow"
-%format <->   = "\leftrightarrow"
-%format :<=>: = "\mathbin{:\Leftrightarrow:}"
-%format :<->: = "\mathbin{:\leftrightarrow:}"
+%format <=>   = "\leftrightarrow"
+%format <->   = "\rightleftharpoons"
+%format :<=>: = "\mathbin{:\leftrightarrow:}"
+%format :<->: = "\mathbin{:\rightleftharpoons:}"
 
 %format inverse(a) = "\overline{" a "}"
 %format leftPartial(f) = "\langle" f "|"
@@ -669,8 +669,6 @@ infixr 8 <=>, <->
 type a <=> b = Bij Identity a b
 type a <-> b = Bij Maybe a b
 \end{code}
-(Mnemonic: total bijections (|<=>|) have more horizontal lines
-connecting elements on the two sides than partial bijections (|<->|).)
 
 To make working with total and partial bijections more
 convenient, we can define pattern synonyms \todo{cite} \bay{Should we
@@ -1083,11 +1081,143 @@ Principle.  Although this first version will ultimately turn out to be
 unusable in practice, it has most of the important ingredients of the
 more sophisticated variants developed later.
 
-The basic idea is to construct \todo{fig ...} step-by-step.
+The basic idea is to construct the diagram in \pref{fig:ping-pong}
+step-by-step, taking $h$ as a starting point and building up the whole
+diagram incrementally, accumulating more information about
+the final bijection as more elements land in the top set, until all
+elements have landed in the top set and we can stop.
+\begin{figure}[htp]
+  \centering
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = vsep 1 . map centerX $ -- $
+      [ gcbp
+        # labelBC (cycle ["$h$", "$\\overline{g}$"])
+        # drawBComplex
+      , hsep 3
+        [ text "$=$"
+        , ( a0 .-
+              ( mkABij a0 b0 ((`mod` 3) . succ)
+                # single
+                # colorEdge (toNameI 0) (colors !! 4)
+                # colorEdge (toNameI 1) (colors !! 4)
+                # colorEdge (toNameI 2) (colors !! 5)
+              ) -..
+            b0
+          )
+          # labelBC ["$f$"]
+          # drawBComplex
+        ]
+      ]
+
+    gcbp = (a0 +++ a1) .-
+             (bij2 # colorEdge ('a' .> (0 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (1 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (2 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -..
+           (b0 +++ b1)
+    bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ) -- $
+  \end{diagram}
+  \caption{The GCBP construction}
+  \label{fig:ping-pong}
+\end{figure}
+
+We can't compose $h : A+B \bij A' + B'$ with
+$|inverse(g)| : B' \bij B$ directly, since that would be a type error.
+However, if we turn |inverse(g)| into a partial bijection and then
+compose it in parallel with $|undef : A' <-> A|$ we get \[ |undef
+  |||||| inverse(g) : A'+B' <-> A+B| \] which can be composed with
+$h$, yielding \pref{fig:hg}.
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = hsep 2
+      [ ( (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -.
+          (b0 +++ b1)
+          .- (empty +++ reversing bij1) -..
+          (a0 +++ a1)
+        )
+        # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$"]
+        # drawBComplex
+      , text "$=$"
+      , ( (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then 100 else succ n)) -..
+          (b0 +++ b1)
+        )
+        # drawBComplex
+      ]
+  \end{diagram}
+  \caption{The first step of GCBP}
+  \label{fig:hg}
+\end{figure}
+However, notice that there is a problem: the result of
+$|h >>> (undef |||||| inverse(g))|$ is a partial bijection which is
+undefined on the first two elements of $A$ (dark blue).  Those
+elements already map to $B$ (light blue) under $h$, so they are
+already ``done'': the only reason to keep iterating is to find out
+what will happen to the third element.  But as soon as we start
+iterating we lose the knowledge of what happened to the first two!
+
+One (bad!) idea is to ``recycle'' elements that have landed in $B$,
+sending them back to where they started so the cycle can repeat.  That
+is, instead of taking the parallel sum of |inverse(g)| with |undef| at
+each step, we take the parallel sum of |inverse(g)| with the inverse
+of (the left partial projection of) whatever we have constructed so
+far.  So, for example, XXX \pref{fig:hg2}
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = hsep 2
+      [ ( (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -.
+          (b0 +++ b1)
+          .- (single (mkABij b0 a0 pred) +++ reversing bij1) -..
+          (a0 +++ a1)
+        )
+        # labelBC ["$h$", "$\\langle \\overline{h} || \\parsum \\overline{g}$"]
+        # drawBComplex
+      , text "$=$"
+      , ( (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then n else succ n)) -..
+          (b0 +++ b1)
+        )
+        # drawBComplex
+      ]
+  \end{diagram}
+  \caption{The first step of GCBP, patched}
+  \label{fig:hg2}
+\end{figure}
+This is unsatisfactory on many levels. First, it is likely to be quite
+inefficient, as it incurs quadratic complexity to XXX.  Second, it
+requires continuing to iterate for a number of steps equal to the
+least common multiple of the cycle lengths, until all the cycles
+``line up'' and land in $B$ at the same time; in theory, we should
+only have to iterate as long as the \emph{maxmimum} of any cycle, and
+the LCM can be exponentially larger than the maximum.
 
 \section{Compatibility and merging}
 
-\todo{introduce/motivate}
+A better approach presents itself if we XXX
 
 We say that two partial functions $f, g :: A \to B$ are
 \term{compatible}, written $f \compat g$, if they agree at all points
