@@ -1,4 +1,4 @@
-% -*- mode: LaTeX; compile-command: "runhaskell Shake" -*-
+% -*- mode: LaTeX; compile-command: "cabal --sandbox-config-file=$HOME/research/GCBP/cabal.sandbox.config exec -- runhaskell Shake" -*-
 
 \documentclass[natbib, preprint]{sigplanconf}
 
@@ -388,7 +388,7 @@ the uppermost element of the light blue set.
         # labelBC (cycle ["$h$", "$\\overline{g}$"])
         # drawBComplex
       , hsep 3
-        [ text "$=$"
+        [ arrowV (2 ^& 0)
         , ( a0 .-
               ( mkABij a0 b0 ((`mod` 3) . succ)
                 # single
@@ -1081,11 +1081,13 @@ Principle.  Although this first version will ultimately turn out to be
 unusable in practice, it has most of the important ingredients of the
 more sophisticated variants developed later.
 
-The basic idea is to construct the diagram in \pref{fig:ping-pong}
-step-by-step, taking $h$ as a starting point and building up the whole
-diagram incrementally, accumulating more information about
-the final bijection as more elements land in the top set, until all
-elements have landed in the top set and we can stop.
+The basic idea will be to construct the diagram at the top of
+\pref{fig:ping-pong} step-by-step, taking $h$ as a starting point and
+building up the whole diagram incrementally, accumulating more
+information about the final bijection as more elements land in the top
+set, until all elements have landed in the top set and we can
+stop. The left partial projection of the result will then be the
+bijection we are looking for.
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -1096,7 +1098,7 @@ elements have landed in the top set and we can stop.
         # labelBC (cycle ["$h$", "$\\overline{g}$"])
         # drawBComplex
       , hsep 3
-        [ text "$=$"
+        [ arrowV (2 ^& 0)
         , ( a0 .-
               ( mkABij a0 b0 ((`mod` 3) . succ)
                 # single
@@ -1137,12 +1139,15 @@ elements have landed in the top set and we can stop.
   \label{fig:ping-pong}
 \end{figure}
 
+\todo{The devil is in the details. Outline basic problem.}
+
 We can't compose $h : A+B \bij A' + B'$ with
 $|inverse(g)| : B' \bij B$ directly, since that would be a type error.
 However, if we turn |inverse(g)| into a partial bijection and then
 compose it in parallel with $|undef : A' <-> A|$ we get \[ |undef
-  |||||| inverse(g) : A'+B' <-> A+B| \] which can be composed with
-$h$, yielding \pref{fig:hg}.
+  |||||| inverse(g) : A'+B' <-> A+B|. \] Composing $h$ with this
+followed by another copy of $h$ gives the first iteration of GCBP,
+shown in \pref{fig:hg}.
 \begin{figure}
   \centering
   \begin{diagram}[width=200]
@@ -1152,14 +1157,16 @@ $h$, yielding \pref{fig:hg}.
       [ ( (a0 +++ a1)
           .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -.
           (b0 +++ b1)
-          .- (empty +++ reversing bij1) -..
+          .- (empty +++ reversing bij1) -.
           (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -..
+          (b0 +++ b1)
         )
-        # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$"]
+        # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
         # drawBComplex
       , text "$=$"
       , ( (a0 +++ a1)
-          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then 100 else succ n)) -..
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then 100 else (n+2))) -..
           (b0 +++ b1)
         )
         # drawBComplex
@@ -1168,7 +1175,7 @@ $h$, yielding \pref{fig:hg}.
   \caption{The first step of GCBP}
   \label{fig:hg}
 \end{figure}
-However, notice that there is a problem: the result of
+However, there is a problem: the result of
 $|h >>> (undef |||||| inverse(g))|$ is a partial bijection which is
 undefined on the first two elements of $A$ (dark blue).  Those
 elements already map to $B$ (light blue) under $h$, so they are
@@ -1181,7 +1188,9 @@ sending them back to where they started so the cycle can repeat.  That
 is, instead of taking the parallel sum of |inverse(g)| with |undef| at
 each step, we take the parallel sum of |inverse(g)| with the inverse
 of (the left partial projection of) whatever we have constructed so
-far.  So, for example, XXX \pref{fig:hg2}
+far.  At the very first step this means using not |undef ||||||
+inverse(g)| but the parallel sum of |leftPartial(inverse(h))| and |g|,
+as shown in \pref{fig:hg2}.
 \begin{figure}
   \centering
   \begin{diagram}[width=200]
@@ -1191,14 +1200,16 @@ far.  So, for example, XXX \pref{fig:hg2}
       [ ( (a0 +++ a1)
           .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -.
           (b0 +++ b1)
-          .- (single (mkABij b0 a0 pred) +++ reversing bij1) -..
+          .- (single (mkABij b0 a0 pred) +++ reversing bij1) -.
           (a0 +++ a1)
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)) -..
+          (b0 +++ b1)
         )
-        # labelBC ["$h$", "$\\langle \\overline{h} || \\parsum \\overline{g}$"]
+        # labelBC ["$h$", "$\\langle \\overline{h} || \\parsum \\overline{g}$", "$h$"]
         # drawBComplex
       , text "$=$"
       , ( (a0 +++ a1)
-          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then n else succ n)) -..
+          .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\n -> if n < 2 then (n+1) else (n+2))) -..
           (b0 +++ b1)
         )
         # drawBComplex
@@ -1207,17 +1218,36 @@ far.  So, for example, XXX \pref{fig:hg2}
   \caption{The first step of GCBP, patched}
   \label{fig:hg2}
 \end{figure}
-This is unsatisfactory on many levels. First, it is likely to be quite
-inefficient, as it incurs quadratic complexity to XXX.  Second, it
-requires continuing to iterate for a number of steps equal to the
-least common multiple of the cycle lengths, until all the cycles
-``line up'' and land in $B$ at the same time; in theory, we should
-only have to iterate as long as the \emph{maxmimum} of any cycle, and
-the LCM can be exponentially larger than the maximum.
+On the second iteration, we would take the partial bijection
+constructed so far, namely, \[ |f1 = h >>> (leftPartial(inverse(h)) |||||| inverse(g)) >>> h|, \]
+and use its inverse to ``plug the hole'' over the second copy of
+|inverse(g)|, that is,
+\[ |f2 = f1 >>> (leftPartial(inverse(f1)) |||||| inverse(g)) >>> h|, \]
+and so on.  This ensures that every time an orbit lands in $B$, it
+is sent back to the element in $A$ it started from, allowing it to
+cycle through again while it is ``waiting'' for other elements to land
+in $B$.
+
+Unfortunately, this is quite inefficient.  For one thing, it is
+evident that each $f_{i+1}$ contains two copies of $f_i$, leading to
+exponential time complexity to evaluate $f_n$ at a given input (at
+least barring any clever optimizations).  Second, there is something
+we have swept under the rug up to this point: how do we know how long
+to keep iterating?  Note that because of the way we send each orbit
+back to the start while waiting for other orbits to complete, at the
+point when the last orbit completes the other orbits may be in the
+middle of a cycle.  So in fact, we must iterate for a number of steps
+equal to the least common multiple of the cycle lengths, until all the
+cycles ``line up'' and land in $B$ at the same time. In theory, it
+seems like we should only have to iterate as long as the
+\emph{maxmimum} of any cycle, and the LCM can be exponentially larger
+than the maximum.
 
 \section{Compatibility and merging}
 
-A better approach presents itself if we XXX
+A better approach presents itself if we \todo{Explain basic approach.
+  Motivate stepping back to go over basic definitions of compatibility
+  and merge.}
 
 We say that two partial functions $f, g :: A \to B$ are
 \term{compatible}, written $f \compat g$, if they agree at all points
