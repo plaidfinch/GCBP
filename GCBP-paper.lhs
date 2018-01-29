@@ -16,6 +16,8 @@
 %format +++ = "+\!\!+\!\!+"
 %format >>> = "\mathbin{;}"
 
+%format ^   = "^"
+
 %format ^^  = "\;"
 
 %format <=>   = "\leftrightarrow"
@@ -34,7 +36,7 @@
 %format <~>   = "\mathbin{\leftrightsquigarrow}"
 
 %format undef = "\varnothing"
-%format <||>  = "\mathbin{\langle || \rangle}"
+%format <||>  = "\mrg"
 
 %format f1
 %format f2
@@ -1298,14 +1300,16 @@ the same partial function as restricting $g$ to $f$'s
 domain. \todo{picture}
 
 For a total function |dom f = id|, and hence for total functions
-$f \compat g \iff f = g$, which makes sense: since total functions are
-defined everywhere, the only way for them to be compatible is to be
-equal.
+$f \compat g \iff f = g$: since total functions are defined
+everywhere, the only way for them to be compatible is to be equal.
 
 If two partial functions $f, g : A \pfun B$ are compatible, we can
 define their \term{merge} as \[ (f \mrg g)(x) = f(x) \mrg g(x), \]
-\todo{explain the $\mrg$ on |Maybe|.  Note this has some nice
-  algebraic structure (which one?).}
+where $\mrg$ on |Maybe| values yields whichever value is |Just|, or
+|Nothing| if both are |Nothing|.  If both are |Just|, compatibility
+dictates that they must be equal, so merging compatible functions does
+not introduce any bias---that is, $f \mrg g = g \mrg f$ when $f$ and
+$g$ are compatible.
 
 These notions lift easily to the setting of partial bijections.  Two
 partial bijections $f, g : A |<->| B$ are compatible if their forward
@@ -1315,94 +1319,44 @@ is computed by merging their forward and backward directions
 separately.  \todo{Show some code.  Prove that this is coherent,
   i.e. the result is still a valid partial bijection?}
 
-% \subsection{Partial functions}
-
-% Partial functions, in turn, are built atop the familiar |Maybe| monad,
-% with
-% \begin{spec}
-% data Maybe a = Nothing | Just a
-% \end{spec}
-% and \emph{Kleisli composition} defined by
-% \begin{spec}
-% (<=<) :: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
-% f <=< g = \a -> g a >>= f
-% \end{spec}
-% We also define a partial order on |Maybe a| by setting $|Nothing|
-% \sqsubset x$ for all |x :: Maybe a|, and taking $\sqsubseteq$ as
-% the reflexive, transitive closure of $\sqsubset$ (though transitivity
-% admittedly does not add much).  Intuitively, $x \sqsubseteq y$ if $y$
-% is ``at least as defined as'' $x$.
-
-% \todo{Partial functions: Kleisli category.  Definedness partial order
-%   is pointwise.  Define sum, prove abides.  Define compatibility.
-%   Define subsets as pfun $\subseteq$ id (benefit: restriction is just
-%   composition).  Define dom operator.  Prove compatibility is the same
-%   as $f . dom g = g . dom f$. Prove lemma involving dom of a
-%   composition (with picture).  Finally, define merge of compatible
-%   partial functions: use symbol $\sqcup$ since it's a join in the
-%   partial order (should change Agda code to use this symbol too).}
-
-% Using the |Maybe| monad, we can define the type of partial functions,
-% \(a \rightharpoonup b\) as |a -> Maybe b|. This function space forms a Kleisli
-% category; that is, they can be composed using the |(<=<)| operation,
-% whose identity is the monadic |return|. We overload \(\circ\) and |id| throughout
-% this paper for anything fitting a category structure.
-
-% We define equivalence \(\approx\) on partial functions in the usual pointwise
-% way---that they are equal on all possible inputs.
-
-% Moreover, partial functions also participate in a partial order,
-% determined by their pointwise defined-ness. That is to say, we define
-% the partial order on partial functions \(\sqsubseteq\) as the pointwise lifting
-% of the defined-ness partial order on |Maybe|, wherein |Nothing| \(\sqsubseteq\) |m|
-% for all |m|, |Just x| \(\sqsubseteq\) |Just y| when |x = y|, and all other values
-% are incomparable.
-
-% These partial functions also allow a sum construction akin to that for
-% ordinary functions.
-
-% For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|, we define
-
-% \begin{spec}
-%   f + h = either (fmap Left . f) (fmap Right . h)
-% \end{spec}
-
-% \begin{proof}[Composition Abides Sum]
-%   For all partial functions
-%   \(f : B_0 \rightharpoonup C_0\), \(g : A_0 \rightharpoonup B_0\),
-%   \(h : B_1 \rightharpoonup C_1\), \(k : A_1 \rightharpoonup B_1\),
-%   the sum of compositions \((f \circ g) + (h \circ k)\) is equivalent to
-%   the composition of sums \((f + h) \circ (g + k)\).
-%   \todo{Needs proof, really needs diagram.}
-% \end{proof}
-
-% We say that two partial functions are \emph{compatible} if they agree on all
-% inputs for which they are both defined---that is, |f| and |g| are compatible if
-% for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
-% We will abbreviate this predicate as \(f\,||||\, g\).
-
-% Another less point-wise way of stating compatibility for partial functions
-% is to say that two functions are compatible when they are equal upon restriction
-% to the other's domain. We define a new |dom| operator over partial functions,
-% so that |dom f| is the identity on all inputs for which |f| is defined, and
-% returns nothing for all inputs on which |f| is undefined.
-
-% With |dom|, we can restate the notion of compatiblity in a point-free style:
-% two functions |f| and |g| are compatible if and only if
-% \(f \circ dom\ g \approx g \circ dom\ f\).
-
-% \todo{Prove this.}
-
-
-
-% \todo{Now define partial bijections as a pair of pfuns such that left,
-%   right dom laws hold.  Note equivalence to other possible set of
-%   laws.  Prove composition (using nicer equational proof).}
-
 \section{GCBP via merge}
 
-\todo{Implement GCBP via iteration + merge.  Need to get out my notes
-  again to remember how it works.}
+Note that the GCBP construction, as illustrated in
+\pref{fig:ping-pong}, consists in starting with $h : A+B \bij A'+B'$,
+and then iteratively extending it by the composite |(undef |||||| inverse(g)) >>> h|.
+Let us give a name to this iterated operation:
+\begin{spec}
+extend k = k >>> (undef ||| inverse(g)) >>> h
+\end{spec}
+Now consider the sequence of iterates
+\[ |h|, |extend h|, |extend^2 h|, |extend^3 h|, \dots \]
+XXX.  We now take the left projection of each, since XXX.
+\[ |leftPartial(h)|, |leftPartial(extend h)|, |leftPartial(extend^2
+  h)|, |leftPartial(extend^3 h)|, \dots \] We claim that all these
+left projections are compatible. \todo{NEEDS PICTURES!!}  This is
+because the path an element of $A$ takes under iteration of |extend|
+can bounce around in the bottom sets ($B$ and $B'$), but stops (by
+definition!) once it reaches $A'$.  Suppose it takes some $a \in A$
+exactly $n$ iterations of |extend| to reach some $a' \in A'$.  If we
+iterate fewer than $n$ times, $a$ will be mapped to some element of
+$B'$, and hence the left projection will be undefined at $a$.  If we
+iterate exactly $n$ times, $a$ will be mapped to $a' \in A'$, and
+hence it will map to $a'$ in the left projection as well.  If we
+iterate more than $n$ times, the resulting partial bijection will be
+undefined at $a$, because after reaching $a'$ it will be composed with
+|undef|.  So any given $a$ only ever maps to one particular $a'$, or
+is undefined.  Also, there can never be two different elements of $A$
+which map to the same $A'$: two paths can never ``converge'' in this
+way since we are composing partial \emph{bijections}, which in
+particular are injective where they are defined.
+
+Hence, we consider the infinite merge
+\[ |leftPartial(h) <||||> leftPartial(extend h) <||||>
+  leftPartial(extend^2 h) <||||> leftPartial(extend^3 h) <||||> ...| \]
+For every element of $A$, there is some finite $n$ for which
+|leftPartial(extend^n h)| is defined on it, and hence this infinite
+merge actually defines a \emph{total} bijection.  Intuitively,
+\todo{explain intuitively what this infinite merge is doing.}
 
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}
@@ -1590,3 +1544,88 @@ Acknowledgments, if needed.
 
 
 \end{document}
+
+
+% \subsection{Partial functions}
+
+% Partial functions, in turn, are built atop the familiar |Maybe| monad,
+% with
+% \begin{spec}
+% data Maybe a = Nothing | Just a
+% \end{spec}
+% and \emph{Kleisli composition} defined by
+% \begin{spec}
+% (<=<) :: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
+% f <=< g = \a -> g a >>= f
+% \end{spec}
+% We also define a partial order on |Maybe a| by setting $|Nothing|
+% \sqsubset x$ for all |x :: Maybe a|, and taking $\sqsubseteq$ as
+% the reflexive, transitive closure of $\sqsubset$ (though transitivity
+% admittedly does not add much).  Intuitively, $x \sqsubseteq y$ if $y$
+% is ``at least as defined as'' $x$.
+
+% \todo{Partial functions: Kleisli category.  Definedness partial order
+%   is pointwise.  Define sum, prove abides.  Define compatibility.
+%   Define subsets as pfun $\subseteq$ id (benefit: restriction is just
+%   composition).  Define dom operator.  Prove compatibility is the same
+%   as $f . dom g = g . dom f$. Prove lemma involving dom of a
+%   composition (with picture).  Finally, define merge of compatible
+%   partial functions: use symbol $\sqcup$ since it's a join in the
+%   partial order (should change Agda code to use this symbol too).}
+
+% Using the |Maybe| monad, we can define the type of partial functions,
+% \(a \rightharpoonup b\) as |a -> Maybe b|. This function space forms a Kleisli
+% category; that is, they can be composed using the |(<=<)| operation,
+% whose identity is the monadic |return|. We overload \(\circ\) and |id| throughout
+% this paper for anything fitting a category structure.
+
+% We define equivalence \(\approx\) on partial functions in the usual pointwise
+% way---that they are equal on all possible inputs.
+
+% Moreover, partial functions also participate in a partial order,
+% determined by their pointwise defined-ness. That is to say, we define
+% the partial order on partial functions \(\sqsubseteq\) as the pointwise lifting
+% of the defined-ness partial order on |Maybe|, wherein |Nothing| \(\sqsubseteq\) |m|
+% for all |m|, |Just x| \(\sqsubseteq\) |Just y| when |x = y|, and all other values
+% are incomparable.
+
+% These partial functions also allow a sum construction akin to that for
+% ordinary functions.
+
+% For some |f :: a| \(\rightharpoonup\) |b| and |h :: c | \(\rightharpoonup\) |d|, we define
+
+% \begin{spec}
+%   f + h = either (fmap Left . f) (fmap Right . h)
+% \end{spec}
+
+% \begin{proof}[Composition Abides Sum]
+%   For all partial functions
+%   \(f : B_0 \rightharpoonup C_0\), \(g : A_0 \rightharpoonup B_0\),
+%   \(h : B_1 \rightharpoonup C_1\), \(k : A_1 \rightharpoonup B_1\),
+%   the sum of compositions \((f \circ g) + (h \circ k)\) is equivalent to
+%   the composition of sums \((f + h) \circ (g + k)\).
+%   \todo{Needs proof, really needs diagram.}
+% \end{proof}
+
+% We say that two partial functions are \emph{compatible} if they agree on all
+% inputs for which they are both defined---that is, |f| and |g| are compatible if
+% for all inputs |x| for which |f x = Just y| and |g x = Just z|, \(y = z\).
+% We will abbreviate this predicate as \(f\,||||\, g\).
+
+% Another less point-wise way of stating compatibility for partial functions
+% is to say that two functions are compatible when they are equal upon restriction
+% to the other's domain. We define a new |dom| operator over partial functions,
+% so that |dom f| is the identity on all inputs for which |f| is defined, and
+% returns nothing for all inputs on which |f| is undefined.
+
+% With |dom|, we can restate the notion of compatiblity in a point-free style:
+% two functions |f| and |g| are compatible if and only if
+% \(f \circ dom\ g \approx g \circ dom\ f\).
+
+% \todo{Prove this.}
+
+
+
+% \todo{Now define partial bijections as a pair of pfuns such that left,
+%   right dom laws hold.  Note equivalence to other possible set of
+%   laws.  Prove composition (using nicer equational proof).}
