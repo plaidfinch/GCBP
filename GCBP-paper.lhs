@@ -378,11 +378,14 @@ Otherwise, we end up with an element of $B'$.  Run it through
 $g : B \bij B'$ \emph{backwards}, yielding an element of $B$.  Now run
 $h$ again, and so on.  Keep iterating this process until finally
 landing in $A'$; we match the original element of $A$ to the element
-of $A'$ so obtained.  \pref{fig:GCBP} illustrates this process.  The
-top two elements of the (dark blue) set on the upper-left map immediately
-into the two lower elements of the light blue set; the third element of the
-dark blue set, however, requires two iterations before finally landing on
-the uppermost element of the light blue set.
+of $A'$ so obtained.
+\todo{equational presentation of process, $h$ followed by iterating
+  |inverse(g) >>> h|}
+\pref{fig:GCBP} illustrates this process.  The
+top two elements of the (dark blue) set on the upper-left map
+immediately into the two lower elements of the light blue set; the
+third element of the dark blue set, however, requires two iterations
+before finally landing on the uppermost element of the light blue set.
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -1417,7 +1420,49 @@ $||B^-|| = ||B^+|| - ||\Fix \beta||$.  Putting this all together, we
 conclude that $||\Fix \alpha|| = ||\Fix \beta||$ as well.  The
 question is whether we can construct a canonical bijection
 $\Fix \alpha \bij \Fix \beta$ to witness this equality of
-cardinalities; the answer, of course, is yes
+cardinalities; the answer, of course, is yes.
+
+Start with some $a \in \Fix \alpha$ and apply $f^+$ once.  If we land
+in $\Fix \beta$, we are done.  Otherwise, we land in $B^+$ and we then
+``go around the loop''
+\[
+  \xymatrix{
+    B^+ \ar[r]^{\beta} & B^- \ar[r]^{\overline{f^-}} & A^-
+    \ar[r]^{\alpha} & A^+ \ar[r]^{f^+} & ?,
+  }
+\]
+also illustrated in \pref{fix:XXXX}.  We may land in $\Fix \beta$---in
+which case we map the original $a$ to that element of $\Fix
+\beta$---or we may land in $B^+$ again, in which case we repeat the
+procedure.
+
+This seems suspiciously familiar!  We can reformulate the problem a
+bit to make the relationship to the GCBP more clear. \todo{really need
+  a picture here.}  First, let's give a name to the set
+$A^+ - \Fix \alpha$: we'll call it $A^\circ$, and similarly $B^\circ =
+B^+ - \Fix \beta$.  Let's also give $\Fix \alpha$ the name $X$, and
+$\Fix \beta$ the name $Y$.  Under this new naming scheme, XXX
+\begin{itemize}
+\item We stop thinking of $X$ and $Y$ as fixed points of anything;
+  they are just arbitrary sets.
+\item It is not particulary interesting to have involutions which are
+  defined to be the identity on certain sets.  So we just remove $X$
+  and $Y$ from the domains of of $\alpha$ and $\beta$, respectively,
+  and just think of $\alpha : A^\circ \bij A^-$ and
+  $\beta : B^\circ \bij B^-$ as bijections between two sets.  There is
+  no longer any need to think of them as sign-reversing involutions.
+\item $f^+ : A^\circ + X \bij B^\circ + Y$ is a bijection between two
+  sum types.
+\item $f^- : A^- \bij B^-$ still.
+\end{itemize}
+If we can come up with some bijection $A^\circ \bij B^\circ$, we can
+use GCBP to subtract it from $f^+$, resulting in a bijection $X \bij
+Y$.  But this is obvious from the picture: we should choose
+\[
+  \xymatrix{
+    A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ
+  }
+\]
 
 \todo{ the principle is set forth in this particular form
   because of the particular way it arose from inclusion-exclusion type
