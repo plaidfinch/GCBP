@@ -143,6 +143,8 @@
 \newtheorem{thm}{Theorem}
 \newtheorem{lem}[thm]{Lemma}
 
+\DeclareMathOperator{\Fix}{Fix}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
@@ -1358,6 +1360,9 @@ For every element of $A$, there is some finite $n$ for which
 merge actually defines a \emph{total} bijection.  Intuitively,
 \todo{explain intuitively what this infinite merge is doing.}
 
+\todo{Implement and demo.  Prove it is equivalent to reference
+  implementation?  Or that it produces a bijection?}
+
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}
 
@@ -1365,144 +1370,58 @@ merge actually defines a \emph{total} bijection.  Intuitively,
   but actually they are equivalent.}
 
 There is an alternative principle, the \term{Garsia-Milne involution
-  principle} (GMIP), which allows subtracting bijections, and which
-turns out to be equivalent to the GCBP.  At first sight, however, it
-seems unmotivated and baroque.  To properly understand this principle,
-we must first take a detour through the \term{Principle of
-  Inclusion-Exclusion} (PIE).
+  principle} (GMIP), which also allows subtracting bijections.
+Although at first blush it seems more complex and powerful than the
+Gordon principle, it turns out that the two are equivalent; the
+situation is reminiscent of the relationship between ``weak'' and
+``strong'' induction on the natural numbers, which are completely
+equivalent despite their names.  Although the equivalence between GCBP
+and GMIP seems to be folklore, we have never seen a proof written
+down.  The proof is not hard---one might reasonably assign it as an
+exercise in an undergraduate course on combinatorics---but XXX.
 
-\subsection{The Principle of Inclusion-Exclusion}
-\label{sec:PIE}
-
-In its most basic version, PIE is usually presented in terms of unions
-and intersections of sets.  Given a finite collection of finite sets
-$S_1, S_2, \dots, S_n$, we can compute the size of their union in
-terms of the sizes of all possible intersections, adding intersections
-of an odd number of sets and subtracting even ones.  For example, when
-$n = 3$,
-\begin{multline*}
-||S_1 \cup S_2 \cup S_3|| = ||S_1|| + ||S_2|| + ||S_3|| \\ - ||S_1 \cap S_2|| -
-||S_1 \cap S_3|| - ||S_2 \cap S_3|| + ||S_1 \cap S_2 \cap S_3||.
-\end{multline*}
-We can write the general case as
-\[ \left|| \bigcup_{1 \leq i \leq n} S_i \right|| = \sum_{\substack{I
-    \subseteq \{1, \dots, n\} \\ I \neq \varnothing}} (-1)^{||I||+1}
-\left||\bigcap_{i \in I} S_i \right||, \]
-where the sum is taken over all nonempty subsets of $\{1, \dots, n\}$.
-Intuitively, adding the sizes of $S_1$ through $S_n$ overcounts
-elements in their intersections; subtracting elements in any
-intersection of two sets means elements in more than two sets are now
-undercounted; and so on.  Although the need for some sort of
-alternating sum seems intuitive, it is far from obvious that this is
-the right one.
-
-A proof can be given in terms of the binomial theorem, but we will not
-consider that proof here.  Instead, we consider a more abstract
-formulation of PIE, which leads to better notation and, more
-importantly, a lovely proof that avoids the need for any algebra
-whatsoever and paves the way for understanding GMIP.
-
-Suppose we have a finite set of elements $A$, and a finite set of
-properties $P$.  For each $p \in P$ and each $a \in A$, either $a$ has
-property $p$ (written $p(a)$) or it does not.  (To make the connection
-back to the previous formulation of PIE, we can identify each property
-$p$ with the subset $A_p = \{ a \in A \mid p(a) \}$ of elements of $A$
-having property $p$.)
-
-\newcommand{\ANP}{A_{\mathrm{NP}}}
-
-If $J \subseteq P$ is a subset of the set of properties, we write
-$J(a)$ to denote the fact that $a$ has all the properties in $J$.
-Likewise, we write $A_J = \{ a \in A \mid J(a) \}$ to denote the
-subset of $A$ with all the properties in $J$; note that
-$A_J = \bigcap_{p \in J} A_p$.  We have $A_\varnothing = A$, since
-every $a \in A$ trivially satisfies all the properties in the empty
-set of properties.  Finally, we write $\ANP$ to denote the set of
-those $a \in A$ with \emph{no} properties in $P$; that is,
-$\ANP = \{ a \in A \mid \forall p \in P.\, \neg p(a) \}$.
-
-\todo{Note this kind of setup is common in combinatorics.
-  Duality---same as looking for elements with \emph{all} properties;
-  just negate all the properties.}
-
-We may now express a generalized version of PIE as follows: \[
-||\ANP|| = \sum_{J \subseteq P} (-1)^{||J||} ||A_J||. \] (The previous
-formulation of PIE can be recovered by subtracting both sides from
-$||A|| = ||A_\varnothing||$, and specializing from properties to
-subsets.)
-
-The following proof is due to \citet{zeilberger1984garsia}, and
-indirectly to \citet{garsia1981rogers}:
-
-\newcommand{\bigA}{\mathcal{A}}
-\newcommand{\bigAe}{\bigA_{\mathrm{even}}}
-\newcommand{\bigAo}{\bigA_{\mathrm{odd}}}
-\newcommand{\bigANP}{\bigA_{\mathrm{NP}}}
-
-\begin{proof}
-  Let
-  \[ \bigA = \{ (a, J) \mid a \in A, J \subseteq P, J(a) \} \]
-  be the set of pairs $(a,J)$ where $a$ has all the properties in $J$.
-  $\bigA$ is in general larger than $A$, since there may be multiple
-  elements of $\bigA$ for each element of $A$: whenever
-  $(a,J) \in \bigA$ and $J' \subseteq J$ then $(a,J') \in \bigA$ as
-  well.  Define $\bigAe$ to be the set of $(a,J) \in \bigA$ where
-  $||J||$ is even, and $\bigAo$ similarly.  Also let $\bigANP$ be the
-  set of those $(a,J)$ where $a$ has no properties---note that in this
-  case $J$ is necessarily empty, since $a$ must satisfy all the
-  properties in $J$.  Hence $||\bigANP|| = ||\ANP||$.
-
-  Pick an arbitrary ordering of the properties in $P$, and let $s(a)$
-  denote the smallest property possessed by $a$ (if $a$ has any
-  properties).  Then define $\alpha : \bigA \to \bigA$ by \[
-  \alpha(a, J) = \begin{cases} (a, J \cup \{ s(a) \}) & s(a) \notin
-    J \\ (a, J \setminus \{ s(a) \}) & s(a) \in J \\ (a,J) &
-    \text{$a$ has no properties} \end{cases} \]  That is, $\alpha$
-  toggles the presence of the smallest property possessed by $a$, or
-  acts as the identity if $a$ has no properties.  We observe the
-  following:
+Let us first see GMIP the way it is usually presented.  \todo{PICTURE}
+The setup is as follows:
+\begin{itemize}
+\item There are two sets $A$ and $B$, each partitioned into a
+  ``positive'' part and a ``negative'' part.  In more type-theoretic
+  terms, $A$ and $B$ are disjoint sums---that is, $A = A^- + A^+$, and
+  similarly for $B$.
+\item There is a bijection $f^- : A^- \bij B^-$ between the negative
+  parts of $A$ and $B$, and similarly a bijection $f^+ : A^+ \bij
+  B^+$.
+\item Finally, there are \emph{signed involutions} $\alpha$ and
+  $\beta$ on $A$ and $B$ respectively.  That is, in the case of $\alpha$:
   \begin{itemize}
-  \item $\alpha$ is an involution, that is, $\alpha^2 =
-    \id$, and hence $\alpha$ is a permutation of $\bigA$.
-  \item $\alpha$ always sends odd-size $J$ to even-size $J$, and vice
-    versa---except when $a$ has no properties (in which case $J =
-    \varnothing$ is even).
+    \item $\alpha : A \bij A$ is a permutation of $A$ such that
+    \item all fixed points of $\alpha$ are in $A^+$;
+    \item all other, non-fixed elements are sent from $A^+$ to $A^-$
+      or vice versa (that is, $\alpha$ always switches the ``sign'' of
+      any element it does not fix); and
+    \item $\alpha$ is an involution, that is, $\alpha \circ \alpha = \id$.
   \end{itemize}
-  We conclude that $\alpha$ is a bijection bewteen $\bigAe \setminus
-  \bigANP$ and $\bigAo$, so in particular $||\bigAe|| - ||\bigANP|| =
-  ||\bigAo||$; rearranging, we have \[ ||\ANP|| = ||\bigANP|| = ||\bigAe|| -
-  ||\bigAo||. \] It remains only to show that \[ ||\bigAe|| -
-  ||\bigAo|| = \sum_{J \subseteq P} (-1)^{||J||} ||A_J||, \] which
-  follows from the fact that pairs $(a,J) \in \bigA$ are in 1-1
-  correspondence with elements of $A_J$.
-\end{proof}
+  Similarly, $\beta$ is a signed involution on $B$.  This situation is
+  illustrated in \todo{PICTURE}.  This seems like a rather complicated
+  setup!  As we will see, however, a lot of the complexity is merely
+  incidental.
+\end{itemize}
 
-\todo{WHAT IS A COMPUTATIONAL INTERPRETATION OF PIE?}
+Let $\Fix \alpha$ denote the set of fixed points of $\alpha$; by
+definition $\Fix \alpha \subseteq A^+$.  Clearly $||A^-|| = ||B^-||$
+(because of the existence of the bijection $f^-$), and similarly
+$||A^+|| = ||B^+||$ because of $f^+$. Also, since $\alpha$ is its own
+inverse, and ``sign-reversing'' on the elements it does not fix, it
+constitutes a bijection between $A^-$ and the unfixed elements of
+$A^+$; hence $||A^-|| = ||A^+|| - ||\Fix \alpha||$ and similarly
+$||B^-|| = ||B^+|| - ||\Fix \beta||$.  Putting this all together, we
+conclude that $||\Fix \alpha|| = ||\Fix \beta||$ as well.  The
+question is whether we can construct a canonical bijection
+$\Fix \alpha \bij \Fix \beta$ to witness this equality of
+cardinalities; the answer, of course, is yes
 
-\todo{OMG, now that I go back and reread the Gordon paper I actually
-  understand what it is doing. It's constructing a bijection in
-  exactly this sort of PIE situation---with two families of sets that
-  are ``sieve-equivalent'', that is, we have bijections $f_J : A_J
-  \bij B_J$ for each $J \subseteq P$.}
-
-\todo{Note that Gordon himself claims GCBP is equivalent to GMIP, but
-  gives no proof.}
-
-\subsection{Signed involutions and GMIP}
-\label{sec:signed-involutions}
-
-\todo{Basic setup of a set $\bigA$ partitioned into a
-  ``positive''/``even'' part and a ``negative''/``odd'' part, with an
-  involution that fixes the set we are interested in and is otherwise
-  sign/parity-reversing.  This situation comes up all the
-  time---whenever PIE is involved.  GMIP builds on this situation,
-  saying what we can do when we have two such partitioned sets that
-  correspond.}
-
-\todo{Why would the situation of two related partitioned sets come up?
-  There is still some part of the story I'm missing\dots}
-
-\todo{check out garsia1981method.}
+\todo{ the principle is set forth in this particular form
+  because of the particular way it arose from inclusion-exclusion type
+  arguments in combinatorics.}
 
 \section{Efficiency}
 \label{sec:efficiency}
@@ -1544,6 +1463,158 @@ Acknowledgments, if needed.
 
 
 \end{document}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% MATERIAL ON PIE
+
+% At first sight, however, it
+% seems unmotivated and baroque.  To properly understand this principle,
+% we must first take a detour through the \term{Principle of
+%   Inclusion-Exclusion} (PIE).
+
+% \subsection{The Principle of Inclusion-Exclusion}
+% \label{sec:PIE}
+
+% In its most basic version, PIE is usually presented in terms of unions
+% and intersections of sets.  Given a finite collection of finite sets
+% $S_1, S_2, \dots, S_n$, we can compute the size of their union in
+% terms of the sizes of all possible intersections, adding intersections
+% of an odd number of sets and subtracting even ones.  For example, when
+% $n = 3$,
+% \begin{multline*}
+% ||S_1 \cup S_2 \cup S_3|| = ||S_1|| + ||S_2|| + ||S_3|| \\ - ||S_1 \cap S_2|| -
+% ||S_1 \cap S_3|| - ||S_2 \cap S_3|| + ||S_1 \cap S_2 \cap S_3||.
+% \end{multline*}
+% We can write the general case as
+% \[ \left|| \bigcup_{1 \leq i \leq n} S_i \right|| = \sum_{\substack{I
+%     \subseteq \{1, \dots, n\} \\ I \neq \varnothing}} (-1)^{||I||+1}
+% \left||\bigcap_{i \in I} S_i \right||, \]
+% where the sum is taken over all nonempty subsets of $\{1, \dots, n\}$.
+% Intuitively, adding the sizes of $S_1$ through $S_n$ overcounts
+% elements in their intersections; subtracting elements in any
+% intersection of two sets means elements in more than two sets are now
+% undercounted; and so on.  Although the need for some sort of
+% alternating sum seems intuitive, it is far from obvious that this is
+% the right one.
+
+% A proof can be given in terms of the binomial theorem, but we will not
+% consider that proof here.  Instead, we consider a more abstract
+% formulation of PIE, which leads to better notation and, more
+% importantly, a lovely proof that avoids the need for any algebra
+% whatsoever and paves the way for understanding GMIP.
+
+% Suppose we have a finite set of elements $A$, and a finite set of
+% properties $P$.  For each $p \in P$ and each $a \in A$, either $a$ has
+% property $p$ (written $p(a)$) or it does not.  (To make the connection
+% back to the previous formulation of PIE, we can identify each property
+% $p$ with the subset $A_p = \{ a \in A \mid p(a) \}$ of elements of $A$
+% having property $p$.)
+
+% \newcommand{\ANP}{A_{\mathrm{NP}}}
+
+% If $J \subseteq P$ is a subset of the set of properties, we write
+% $J(a)$ to denote the fact that $a$ has all the properties in $J$.
+% Likewise, we write $A_J = \{ a \in A \mid J(a) \}$ to denote the
+% subset of $A$ with all the properties in $J$; note that
+% $A_J = \bigcap_{p \in J} A_p$.  We have $A_\varnothing = A$, since
+% every $a \in A$ trivially satisfies all the properties in the empty
+% set of properties.  Finally, we write $\ANP$ to denote the set of
+% those $a \in A$ with \emph{no} properties in $P$; that is,
+% $\ANP = \{ a \in A \mid \forall p \in P.\, \neg p(a) \}$.
+
+% \todo{Note this kind of setup is common in combinatorics.
+%   Duality---same as looking for elements with \emph{all} properties;
+%   just negate all the properties.}
+
+% We may now express a generalized version of PIE as follows: \[
+% ||\ANP|| = \sum_{J \subseteq P} (-1)^{||J||} ||A_J||. \] (The previous
+% formulation of PIE can be recovered by subtracting both sides from
+% $||A|| = ||A_\varnothing||$, and specializing from properties to
+% subsets.)
+
+% The following proof is due to \citet{zeilberger1984garsia}, and
+% indirectly to \citet{garsia1981rogers}:
+
+% \newcommand{\bigA}{\mathcal{A}}
+% \newcommand{\bigAe}{\bigA_{\mathrm{even}}}
+% \newcommand{\bigAo}{\bigA_{\mathrm{odd}}}
+% \newcommand{\bigANP}{\bigA_{\mathrm{NP}}}
+
+% \begin{proof}
+%   Let
+%   \[ \bigA = \{ (a, J) \mid a \in A, J \subseteq P, J(a) \} \]
+%   be the set of pairs $(a,J)$ where $a$ has all the properties in $J$.
+%   $\bigA$ is in general larger than $A$, since there may be multiple
+%   elements of $\bigA$ for each element of $A$: whenever
+%   $(a,J) \in \bigA$ and $J' \subseteq J$ then $(a,J') \in \bigA$ as
+%   well.  Define $\bigAe$ to be the set of $(a,J) \in \bigA$ where
+%   $||J||$ is even, and $\bigAo$ similarly.  Also let $\bigANP$ be the
+%   set of those $(a,J)$ where $a$ has no properties---note that in this
+%   case $J$ is necessarily empty, since $a$ must satisfy all the
+%   properties in $J$.  Hence $||\bigANP|| = ||\ANP||$.
+
+%   Pick an arbitrary ordering of the properties in $P$, and let $s(a)$
+%   denote the smallest property possessed by $a$ (if $a$ has any
+%   properties).  Then define $\alpha : \bigA \to \bigA$ by \[
+%   \alpha(a, J) = \begin{cases} (a, J \cup \{ s(a) \}) & s(a) \notin
+%     J \\ (a, J \setminus \{ s(a) \}) & s(a) \in J \\ (a,J) &
+%     \text{$a$ has no properties} \end{cases} \]  That is, $\alpha$
+%   toggles the presence of the smallest property possessed by $a$, or
+%   acts as the identity if $a$ has no properties.  We observe the
+%   following:
+%   \begin{itemize}
+%   \item $\alpha$ is an involution, that is, $\alpha^2 =
+%     \id$, and hence $\alpha$ is a permutation of $\bigA$.
+%   \item $\alpha$ always sends odd-size $J$ to even-size $J$, and vice
+%     versa---except when $a$ has no properties (in which case $J =
+%     \varnothing$ is even).
+%   \end{itemize}
+%   We conclude that $\alpha$ is a bijection bewteen $\bigAe \setminus
+%   \bigANP$ and $\bigAo$, so in particular $||\bigAe|| - ||\bigANP|| =
+%   ||\bigAo||$; rearranging, we have \[ ||\ANP|| = ||\bigANP|| = ||\bigAe|| -
+%   ||\bigAo||. \] It remains only to show that \[ ||\bigAe|| -
+%   ||\bigAo|| = \sum_{J \subseteq P} (-1)^{||J||} ||A_J||, \] which
+%   follows from the fact that pairs $(a,J) \in \bigA$ are in 1-1
+%   correspondence with elements of $A_J$.
+% \end{proof}
+
+% \todo{WHAT IS A COMPUTATIONAL INTERPRETATION OF PIE?}
+
+% \todo{OMG, now that I go back and reread the Gordon paper I actually
+%   understand what it is doing. It's constructing a bijection in
+%   exactly this sort of PIE situation---with two families of sets that
+%   are ``sieve-equivalent'', that is, we have bijections $f_J : A_J
+%   \bij B_J$ for each $J \subseteq P$.}
+
+% \todo{Note that Gordon himself claims GCBP is equivalent to GMIP, but
+%   gives no proof.}
+
+% \subsection{Signed involutions and GMIP}
+% \label{sec:signed-involutions}
+
+% \todo{Basic setup of a set $\bigA$ partitioned into a
+%   ``positive''/``even'' part and a ``negative''/``odd'' part, with an
+%   involution that fixes the set we are interested in and is otherwise
+%   sign/parity-reversing.  This situation comes up all the
+%   time---whenever PIE is involved.  GMIP builds on this situation,
+%   saying what we can do when we have two such partitioned sets that
+%   correspond.}
+
+% \todo{Why would the situation of two related partitioned sets come up?
+%   There is still some part of the story I'm missing\dots}
+
+% \todo{check out garsia1981method.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% OLD MATERIAL ON PARTIAL FUNCTIONS
 
 
 % \subsection{Partial functions}
@@ -1629,3 +1700,5 @@ Acknowledgments, if needed.
 % \todo{Now define partial bijections as a pair of pfuns such that left,
 %   right dom laws hold.  Note equivalence to other possible set of
 %   laws.  Prove composition (using nicer equational proof).}
+
+
