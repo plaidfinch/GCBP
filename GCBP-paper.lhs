@@ -14,7 +14,7 @@
 %format >=> = ">\!\!=\!\!\!>"
 %format <=< = "<\!\!\!=\!\!<"
 %format +++ = "+\!\!+\!\!+"
-%format >>> = "\mathbin{;}"
+%format >>> = "\andthen"
 
 %format ^   = "^"
 
@@ -145,6 +145,8 @@
 
 \DeclareMathOperator{\Fix}{Fix}
 
+\newcommand{\andthen}{\mathbin{;}}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
@@ -188,8 +190,8 @@
 
   We recommend viewing this paper as a PDF or printing it on a color
   printer, though it should still be comprehensible in black and
-  white.  The colors have been chosen to remain distinguishable to
-  individuals with common forms of colorblindness.
+  white.  The colors have been chosen to hopefully remain
+  distinguishable to individuals with common forms of colorblindness.
 \end{abstract}
 
 \category{CR-number}{subcategory}{third-level}
@@ -208,7 +210,7 @@ keyword1, keyword2
 
 Suppose we have four finite sets $A, B, A',$ and $B'$ with bijections
 $f : A \bij A'$ and $g : B \bij B'$.  Then, as illustrated in
-\pref{fig:adding-bijections}, we can easily ``add'' these bijections
+\pref{fig:adding-bijections}, we can ``add'' these bijections
 to produce a new bijection
 \[ h : A + B \bij A' + B' \]
 (where $+$ denotes the disjoint union of sets).
@@ -243,7 +245,7 @@ type (+) = Either
 (f + g) (Right y)  = Right  (g y)
 \end{code}
 (Note we are punning on |(+)| at the value and type levels.  This
-function is included in the standard \verb|Control.Arrow| module with
+function lives in the standard \verb|Control.Arrow| module with
 the name |(+++)|, but for our purposes we find it clearer to just
 define our own).  We can see that $(f + g)$ is a bijection as long as
 $f$ and $g$ are.
@@ -351,7 +353,7 @@ presentation of the algorithm is low-level and element-based (\ie
     involution principle} (GMIP), and prove that it is equivalent to
   the GCBP.  The equivalence of GCBP and GMIP seems to be a
   ``folklore'' result that is not explicitly recorded anywhere, and we
-  are able to give a nice \emph{computational} explanation of their
+  are able to give a \emph{computational} explanation of their
   equivalence, by implementing each in terms of the other.
 \item One downside of our high-level implementation of GCBP is that
   one direction of the computed bijection has quadratic performance,
@@ -437,10 +439,10 @@ before finally landing on the uppermost element of the light blue set.
   \label{fig:GCBP}
 \end{figure}
 
-A Haskell implementation is shown in \pref{fig:GCBP-uni-Haskell}.
-This implementation is somewhat simplified, since it takes $B = B'$
-with $g$ being the identity bijection between them, but it still
-serves to illustrate the basic idea.
+\pref{fig:GCBP-uni-Haskell} contains a Haskell implementation.  This
+implementation is somewhat simplified, since it takes $B = B'$ with
+$g$ being the identity bijection between them, but it still serves to
+illustrate the basic idea.
 \begin{figure}[htp]
   \centering
 \begin{code}
@@ -458,10 +460,11 @@ fixEither f a = case f a of
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
 
-This algorithm was introduced by \citet{gordon1983sieve}, who called it the
-\term{complementary bijection principle} \todo{note that Gordon's
-  principle is actually a bit more general?  What is computational
-  content of Gordon's original paper?} \todo{See notes later below}
+\citet{gordon1983sieve} first introduced this algorithm, and he called
+it the \term{complementary bijection principle} \todo{note that
+  Gordon's principle is actually a bit more general?  What is
+  computational content of Gordon's original paper?} \todo{See notes
+  later below}
 
 At this point, it's worth going through a careful, standard proof of
 the bijection principle.  We must prove two things: first, that the
@@ -499,7 +502,7 @@ juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.
   element of $A'$ as the output of $f(a)$.  We can explicitly construct
   $\overline f$ by running the same algorithm with $\overline h$
   and $\overline g$ as input in place of $h$ and $g$.  That is,
-  intuitively, we build build \pref{fig:GCBP} from right to left
+  intuitively, we build \pref{fig:GCBP} from right to left
   instead of left to right.  When run ``in reverse'' in this way on
   $f(a)$, we can see that the algorithm will visit exactly the same
   series of elements in reverse, stopping when it reaches the original
@@ -513,15 +516,14 @@ downsides:
 \item It makes heavy use of ``pointwise'' reasoning, messily following
   the fate of individual elements through an algorithm.  We would like
   a ``higher-level'' perspective on both the algorithm and proof.
-  Note we cannot just trivially rewrite the above algorithm in terms
-  of function composition and get rid of mentions of $a$, since the
-  algorithm may iterate a different number of times for each
-  particular $a \in A$.
+  Note we cannot just rewrite the above algorithm in terms of function
+  composition and get rid of mentions of $a$, since the algorithm may
+  iterate a different number of times for each particular $a \in A$.
 \item Relatedly, the proof requires constructing the forward and
   backward directions separately, and then proving that the results
-  are inverse.  It would be much more satisfying to construct both
-  directions of the bijection simultaneously, so that the resulting
-  bijection is ``correct by construction''.
+  are inverse.  It would be better to construct both directions of the
+  bijection simultaneously, so that the resulting bijection is
+  ``correct by construction''.
 \item Finally, as hinted earlier, the proof seems to make essential
   use of classical reasoning: the termination argument in particular
   is a proof by contradiction.  Having an algorithm at all is still
@@ -560,7 +562,7 @@ algorithm returns a valid bijection by construction, eliminating
 duplication of code and the possibility for the forward and backward
 directions to be out of sync.
 
-This is the right idea, but it is not quite good enough.  The problem
+This is the right idea, but it is not good enough.  The problem
 is that when it comes to bijections, the algorithm is an
 all-or-nothing sort of deal: we put two bijections in and get one out,
 but it is hard to find intermediate bijections that arise during
@@ -570,7 +572,7 @@ result.  For example \todo{example?}
 Instead, the idea is to generalize to \emph{partial} bijections, that
 is, bijections which may be undefined on some parts of their domain
 (\pref{fig:partial-bij}).  We can think of the algorithm as starting
-with a completely undefined bijection and building up more and more
+with a totally undefined bijection and building up more and more
 information, until finishing with a total bijection.
 
 \begin{figure}[htp]
@@ -616,7 +618,7 @@ data Bij m a b = B
   ,  ^^ bwd  :: Kleisli m b a
   }
 \end{code}
-These can be composed via a |Category| instance, and can be inverted:
+These compose via a |Category| instance, and also have inverses:
 \begin{code}
 instance Monad m => Category (Bij m) where
   id = B id id
@@ -702,8 +704,8 @@ and |Identity| newtypes for us.
 In what follows, we will use simple diagrams of labelled boxes and
 lines to abstractly represent sets and generalized bijections between
 them, since looking at the pictures gives a much better intuitive idea
-of what is going on than looking at code.  For example, a generalized
-bijection $f$ between sets $A$ and $B$ will be drawn as a thick line
+of what is going on than looking at code.  For example, we draw a
+generalized bijection $f$ between sets $A$ and $B$ as a thick line
 connecting two labelled boxes, as shown in \pref{fig:gen-bij-dia}.
 \begin{figure}
   \begin{center}
@@ -729,7 +731,7 @@ with a single thick line.
 We begin by defining some utility functions for working with total and
 partial bijections (\pref{fig:partial-total}). First, |applyTotal| and
 |applyPartial| let us run a bijection in the forward direction.  Next,
-we define |undef| as the completely undefined partial bijection, which
+we define |undef| as the totally undefined partial bijection, which
 we draw as follows:
 
 \begin{center}
@@ -741,10 +743,9 @@ we draw as follows:
 \end{center}
 
 Finally, the |partial| and |unsafeTotal| functions move back and forth
-between total and partial bijections.  Of course, treating a total
-bijection as a partial one is always safe; the other direction is only
-safe if we know that the ``partial'' bijection is, in fact, defined
-everywhere.
+between total and partial bijections.  Treating a total bijection as a
+partial one is always safe; the other direction is only safe if we
+know that the ``partial'' bijection is, in fact, defined everywhere.
 \begin{figure}
 \begin{code}
 applyTotal    ::  (a <=> b)    ->  a -> b
@@ -767,11 +768,11 @@ unsafeTotal       (f :<->: g)  =   (f >>> fromJust) :<=>: (g >>> fromJust)
 \end{figure}
 
 We now turn to developing tools for dealing with bijections involving
-sum types. It is useful to have a type class for ``things which can be
-composed in parallel''. If $f$ is some sort of relation between $A$
-and $A'$, and $g$ relates $B$ and $B'$, then their parallel sum $f \parsum g$
-relates the disjoint sums $A + B$ and $A' + B'$, which we visualize by
-stacking vertically:
+sum types. It is useful to have a type class for ``things which
+compose in parallel''. If $f$ is some sort of relation between $A$ and
+$A'$, and $g$ relates $B$ and $B'$, then their parallel sum
+$f \parsum g$ relates the disjoint sums $A + B$ and $A' + B'$, which
+we visualize by stacking vertically:
 
 \begin{center}
 \begin{diagram}[width=200]
@@ -793,15 +794,15 @@ stacking vertically:
 \end{diagram}
 \end{center}
 
-For example, normal functions $A \to A'$ can be composed in parallel:
-if $f : A \to A'$ and $g : B \to B'$ then
-$f \parsum g : A+B \to A'+B'$ is the function which runs $f$ on
-elements of $A$ and $g$ on elements of $B$.  Kleisli arrows over the
-same monad |m| can also be composed in parallel: the parallel sum of
-$f : A \to_m A'$ and $g : B \to_m B'$ works the same as the parallel
-sum of normal functions, but has the effects of whichever one actually
-runs.  Finally, since Kleisli arrows can be composed in parallel, so
-can generalized bijections.  The code is shown in \pref{fig:par-comp}.
+For example, normal functions $A \to A'$ compose in parallel: if
+$f : A \to A'$ and $g : B \to B'$ then $f \parsum g : A+B \to A'+B'$
+is the function which runs $f$ on elements of $A$ and $g$ on elements
+of $B$.  Kleisli arrows over the same monad |m| also compose in
+parallel: the parallel sum of $f : A \to_m A'$ and $g : B \to_m B'$
+works the same as the parallel sum of normal functions, but has the
+effects of whichever one actually runs.  Finally, since Kleisli arrows
+compose in parallel, so can generalized bijections.  The code is shown
+in \pref{fig:par-comp}.
 
 \begin{figure}
 \begin{code}
@@ -1335,7 +1336,8 @@ extend k = k >>> (undef ||| inverse(g)) >>> h
 \end{spec}
 Now consider the sequence of iterates
 \[ |h|, |extend h|, |extend^2 h|, |extend^3 h|, \dots \]
-XXX.  We now take the left projection of each, since XXX.
+\todo{explain}.  We now take the left projection of each, since
+\todo{explain why}.
 \[ |leftPartial(h)|, |leftPartial(extend h)|, |leftPartial(extend^2
   h)|, |leftPartial(extend^3 h)|, \dots \] We claim that all these
 left projections are compatible. \todo{NEEDS PICTURES!!}  This is
@@ -1369,19 +1371,19 @@ merge actually defines a \emph{total} bijection.  Intuitively,
 \section{The Garsia-Milne Involution Principle}
 \label{sec:gmip}
 
-\todo{Make analogy with weak \& strong induction: one seems stronger,
-  but actually they are equivalent.}
-
 There is an alternative principle, the \term{Garsia-Milne involution
-  principle} (GMIP), which also allows subtracting bijections.
-Although at first blush it seems more complex and powerful than the
-Gordon principle, it turns out that the two are equivalent; the
-situation is reminiscent of the relationship between ``weak'' and
-``strong'' induction on the natural numbers, which are completely
-equivalent despite their names.  Although the equivalence between GCBP
-and GMIP seems to be folklore, we have never seen a proof written
-down.  The proof is not hard---one might reasonably assign it as an
-exercise in an undergraduate course on combinatorics---but XXX.
+  principle} (GMIP) \citep{garsia1981method, zeilberger1984garsia},
+which also allows subtracting bijections.  Although at first blush it
+seems more complex and powerful than the Gordon principle, it turns
+out that the two are equivalent; the situation is reminiscent of the
+relationship between ``weak'' and ``strong'' induction on the natural
+numbers, which are completely equivalent despite their names.
+Although the equivalence between GCBP and GMIP seems to be folklore,
+we have never seen a proof written down.  The proof is not hard---one
+might reasonably assign it as an exercise in an undergraduate course
+on combinatorics---but \todo{elaborate; something about the insight
+  afforded by our presentation.  Simpler presentation of GMIP, and
+  intuitive explanation of why they are equivalent.}
 
 Let us first see GMIP the way it is usually presented.  \todo{PICTURE}
 The setup is as follows:
@@ -1403,11 +1405,11 @@ The setup is as follows:
       any element it does not fix); and
     \item $\alpha$ is an involution, that is, $\alpha \circ \alpha = \id$.
   \end{itemize}
-  Similarly, $\beta$ is a signed involution on $B$.  This situation is
-  illustrated in \todo{PICTURE}.  This seems like a rather complicated
-  setup!  As we will see, however, a lot of the complexity is merely
-  incidental.
+  Similarly, $\beta$ is a signed involution on $B$.
 \end{itemize}
+This situation is illustrated in \todo{PICTURE}, and you may be
+forgiven for thinking it seems rather complex!  As we will see,
+however, a lot of the complexity is merely incidental.
 
 Let $\Fix \alpha$ denote the set of fixed points of $\alpha$; by
 definition $\Fix \alpha \subseteq A^+$.  Clearly $||A^-|| = ||B^-||$
@@ -1431,17 +1433,24 @@ in $\Fix \beta$, we are done.  Otherwise, we land in $B^+$ and we then
     \ar[r]^{\alpha} & A^+ \ar[r]^{f^+} & ?,
   }
 \]
-also illustrated in \pref{fix:XXXX}.  We may land in $\Fix \beta$---in
+also illustrated in \pref{fig:XXX}.  We may land in $\Fix \beta$---in
 which case we map the original $a$ to that element of $\Fix
 \beta$---or we may land in $B^+$ again, in which case we repeat the
-procedure.
+procedure. The Pigeonhole Principle ensures that this process must
+end; it cannot ``get stuck'' because everything is a bijection.
 
-This seems suspiciously familiar!  We can reformulate the problem a
-bit to make the relationship to the GCBP more clear. \todo{really need
-  a picture here.}  First, let's give a name to the set
-$A^+ - \Fix \alpha$: we'll call it $A^\circ$, and similarly $B^\circ =
-B^+ - \Fix \beta$.  Let's also give $\Fix \alpha$ the name $X$, and
-$\Fix \beta$ the name $Y$.  Under this new naming scheme, XXX
+This seems suspiciously familiar!  In fact, can reformulate the
+problem to make the relationship to the GCBP more clear. \todo{really
+  need a picture here.}  \todo{Redo this section.  START FROM a
+  reformulated version, based on sum type, with different names,
+  e.g. U, V, X, Y? and bijections.  Then show how we can define signed
+  involutions from it and so on, and also how we can get this
+  situation from GMIP situation. Hence it is really just the GMIP
+  situation in disguise?  Need to write this out on paper.}  First,
+let's give a name to the set difference $A^+ - \Fix \alpha$: we'll
+call it $A^\circ$, and similarly $B^\circ = B^+ - \Fix \beta$.  Let's
+also give $\Fix \alpha$ the name $X$, and $\Fix \beta$ the name $Y$.
+Under this new naming scheme, \todo{say something here}
 \begin{itemize}
 \item We stop thinking of $X$ and $Y$ as fixed points of anything;
   they are just arbitrary sets.
@@ -1453,20 +1462,32 @@ $\Fix \beta$ the name $Y$.  Under this new naming scheme, XXX
   no longer any need to think of them as sign-reversing involutions.
 \item $f^+ : A^\circ + X \bij B^\circ + Y$ is a bijection between two
   sum types.
-\item $f^- : A^- \bij B^-$ still.
+\item $f^- : A^- \bij B^-$ remains unchanged.
 \end{itemize}
 If we can come up with some bijection $A^\circ \bij B^\circ$, we can
 use GCBP to subtract it from $f^+$, resulting in a bijection $X \bij
 Y$.  But this is obvious from the picture: we should choose
 \[
   \xymatrix{
-    A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ
+    A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ.
   }
 \]
+Running GCBP with $f^+$ and $\alpha \andthen f^{-} \andthen \beta$
+ends up carrying out the same process as GMIP, outlined above; later,
+we will prove this formally.  In the end, GMIP is ``really'' just GCBP
+where instead of a single bijection to subtract, we have three
+bijections which we need to compose in order to get the bijection to
+subtract.  GMIP is usually set forth in the form involving
+sign-reversing involutions because of the particular way it arose from
+inclusion-exclusion type arguments in combinatorics, where such
+sign-reversing involutions were already a common feature.
 
-\todo{ the principle is set forth in this particular form
-  because of the particular way it arose from inclusion-exclusion type
-  arguments in combinatorics.}
+\todo{Some code implementing GMIP in terms of GCBP?}
+
+We can also easily implement GCBP in terms of GMIP: all we need to do
+is ``duplicate'' \todo{finish this explanation}.x
+
+\todo{Formal equational proof that these are equivalent?}
 
 \section{Efficiency}
 \label{sec:efficiency}
