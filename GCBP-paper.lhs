@@ -170,8 +170,8 @@
 
 % I do not actually like this title or subtitle, just putting
 % something here for now
-\title{Subtracting Isos}
-\subtitle{Computing with Bijection Principles}
+\title{What's the Difference?}
+\subtitle{A Functional Pearl on Subtracting Bijections}
 
 % What's the Difference?
 % Subtracting Isos for Fun and Profit
@@ -245,8 +245,8 @@ type (+) = Either
 (f + g) (Right y)  = Right  (g y)
 \end{code}
 (Note we are punning on |(+)| at the value and type levels.  This
-function lives in the standard \verb|Control.Arrow| module with
-the name |(+++)|, but for our purposes we find it clearer to just
+function lives in the standard \verb|Data.Bifunctor| module with
+the name |bimap|, but for our purposes we find it clearer to just
 define our own).  We can see that $(f + g)$ is a bijection as long as
 $f$ and $g$ are.
 
@@ -266,12 +266,13 @@ $||B|| = ||B'||$; since $||A + B|| = ||A|| + ||B||$, and similarly for
 $||A' + B'||$ (keeping in mind that $+$ is \emph{disjoint} union), we
 can just subtract the second equation from the first to conclude that
 $||A|| = ||A'||$.  Since $A$ and $A'$ are finite sets with the same
-size, there \emph{must exist} some bijection $A \bij A'$.  But what if
-we want to actually \emph{compute} a concrete bijection $A \bij A'$?
-The fact that $A$ and $A'$ have the same size, in and of itself, does
-not help us actually match up their elements.  The goal is to somehow
-use the \emph{computational content} of the bijections $h$ and $g$ to
-come up with a (suitably canonical) computational definition for $h - g$.
+size, there \emph{must exist} some bijection $A \bij A'$.  But this is
+not constructive: what if we want to actually \emph{compute} a
+concrete bijection $A \bij A'$?  The fact that $A$ and $A'$ have the
+same size, in and of itself, does not help us actually match up their
+elements.  The goal is to somehow use the \emph{computational content}
+of the bijections $h$ and $g$ to come up with a (suitably canonical)
+definition for $h - g$.
 
 To see why this problem is not as trivial as it may first seem,
 consider \pref{fig:subtracting-bijections}.
@@ -308,53 +309,52 @@ likewise from $B$ (dark orange) to $A'$ (light blue). In general,
 then, we cannot do anything so simple as just ``drop'' $B$ and $B'$.
 We will somehow need to make use of $g$ as well.
 
-\bay{Should we say this here? Or put it somewhere else?}
-One slightly strange consequence to note is that if we do find a way
-to define $h - g$, we can now see that it will \emph{not} satisfy the
-identity $(h - g) + g = h$, because the left-hand side will be a sum
-of bijections, which therefore looks like two separate bijections glued
-together (as in \pref{fig:adding-bijections}), whereas $h$ itself may
-not be.  This is not a problem in and of itself, but \todo{but what?
-  We just need to be careful... we just need to be aware...}
+% \bay{Should we say this here? Or put it somewhere else?}
+% One slightly strange consequence to note is that if we do find a way
+% to define $h - g$, we can now see that it will \emph{not} satisfy the
+% identity $(h - g) + g = h$, because the left-hand side will be a sum
+% of bijections, which therefore looks like two separate bijections glued
+% together (as in \pref{fig:adding-bijections}), whereas $h$ itself may
+% not be.  This is not a problem in and of itself, but \todo{but what?
+%   We just need to be careful... we just need to be aware...}
 
-So, why would anyone care?  This problem was first studied (and
-solved) in the context of combinatorics, where proving merely that two
-sets must have the same size is usually considered unsatisfactory: the
-goal is to exhibit an explicit bijection that serves as a
-(constructive) witness of the fact.  Subtracting bijections also comes
-up in the context of defining \term{virtual species}, where it is
+Why would anyone care?  This problem was first studied (and solved) in
+the context of combinatorics, where proving merely that two sets must
+have the same size is usually considered unsatisfactory: the goal is
+to exhibit an explicit bijection that serves as a (constructive)
+witness of the fact.  Subtracting bijections also comes up in the
+context of defining \term{virtual species} \todo{cite}, where it is
 needed to prove that the sum of virtual species is
 well-defined. \bay{double-check this, link to blog post?}  \bay{say
   something else about computational relevance?  I actually want this
   for my other project with Jacques but hard to explain here exactly
-  where and why it comes up.}  To the extent that we want to use
-results and techniques from combinatorics and related fields in the
-context of a proof assistant based on constructive logic, a
-constructive version of subtracting bijections is important.
-\todo{Add citations to this paragraph.} \todo{``But, perhaps most
-  saliently for this context, it's just interesting to understand how
-  it works.  If you are a functional programmer who cares about computation...''}
+  where and why it comes up.}  In addition, to the extent that we want
+to use results and techniques from combinatorics in the context of a
+proof assistant based on constructive logic, a constructive version of
+subtracting bijections is important.  \todo{Add citations to this
+  paragraph.} \todo{``But, perhaps most saliently for this context,
+  it's just interesting to understand how it works.  If you are a
+  functional programmer who cares about computation...''}
 
-As we will see, although there is a known algorithm for constructing
-the difference of two bijections (the \emph{Gordon complementary
-  bijection principle}, or GCBP), the usual proof of the algorithm's
-correctness is itself non-constructive!  Moreover, the usual
-presentation of the algorithm is low-level and element-based (\ie
-``pointful'').  Our contributions are as follows:
+In one sense, the problem has already been solved, first by
+\citet{gordon1983sieve} and then, in a different form, by
+\citet{garsia1981method}.  However, the usual presentation of their
+techniques is low-level and element-based (\ie ``pointful''), which
+obscures the high-level details; in addition, since \todo{something
+  about constructing the two directions independently, so not clear
+  why it must be a bijection.}  Our contributions are as follows:
 
 \begin{itemize}
 \item We present an algebra of partial bijections and their operations.
-\item Using our algebra of partial bijections, we give a high-level,
-  constructive proof of the GCBP.  To our knowledge, this is the first
-  constructive \emph{proof} of the GCBP.  The high-level nature of the
-  construction also gives additional insight into the workings of the
-  principle.
+\item Using our algebra of partial bijections, we give a high-level
+  construction the GCBP, which \todo{finish}
 \item We explain a related bijection principle, the \emph{Garsia-Milne
     involution principle} (GMIP), and prove that it is equivalent to
   the GCBP.  The equivalence of GCBP and GMIP seems to be a
   ``folklore'' result that is not explicitly recorded anywhere, and we
   are able to give a \emph{computational} explanation of their
-  equivalence, by implementing each in terms of the other.
+  equivalence, by implementing each in terms of the other, and proving
+  that translating back and forth is the identity in both directions.
 \item One downside of our high-level implementation of GCBP is that
   one direction of the computed bijection has quadratic performance,
   which is not a problem with the usual low-level
@@ -439,22 +439,18 @@ before finally landing on the uppermost element of the light blue set.
   \label{fig:GCBP}
 \end{figure}
 
-\pref{fig:GCBP-uni-Haskell} contains a Haskell implementation.  This
-implementation is somewhat simplified, since it takes $B = B'$ with
-$g$ being the identity bijection between them, but it still serves to
-illustrate the basic idea.
+\pref{fig:GCBP-uni-Haskell} contains a basic Haskell implementation of
+this process.
 \begin{figure}[htp]
   \centering
 \begin{code}
-pingpong :: (a + c -> a' + c) -> (a -> a')
-pingpong bij a = case bij (Left a) of
-  Left b   -> b
-  Right c  -> fixEither (bij . Right) c
+pingpong :: (a + b -> a' + b') -> (b' -> b) -> (a -> a')
+pingpong h ginv = untilLeft (h . Right . ginv) . h . Left
 
-fixEither :: (c -> a + c) -> (c -> a)
-fixEither f a = case f a of
-  Left b   -> b
-  Right a' -> fixEither f a'
+untilLeft :: (b' -> a' + b') -> (a' + b' -> a')
+untilLeft step ab = case ab of
+  Left  a' -> a'
+  Right b' -> untilLeft step (step b')
 \end{code}
   \caption{Ping-ponging in Haskell}
   \label{fig:GCBP-uni-Haskell}
