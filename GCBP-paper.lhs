@@ -322,17 +322,20 @@ Why would anyone care?  This problem was first studied (and solved) in
 the context of combinatorics, where proving merely that two sets must
 have the same size is usually considered unsatisfactory: the goal is
 to exhibit an explicit bijection that serves as a (constructive)
-witness of the fact.  Subtracting bijections also comes up in the
-context of defining \term{virtual species} \todo{cite}, where it is
-needed to prove that the sum of virtual species is
-well-defined. \bay{double-check this, link to blog post?}  \bay{say
-  something else about computational relevance?  I actually want this
-  for my other project with Jacques but hard to explain here exactly
-  where and why it comes up.}  In addition, to the extent that we want
+witness of the fact.
+% Subtracting bijections also comes up in the
+% context of defining \term{virtual species}, where it is
+% needed to prove that the sum of virtual species is
+% well-defined. \bay{double-check this, link to blog post?}  \bay{say
+%   something else about computational relevance?  I actually want this
+%   for my other project with Jacques but hard to explain here exactly
+%   where and why it comes up.}
+In addition, to the extent that we want
 to use results and techniques from combinatorics in the context of a
 proof assistant based on constructive logic, a constructive version of
 subtracting bijections is important.  \todo{Add citations to this
-  paragraph.} \todo{``But, perhaps most saliently for this context,
+  paragraph.}
+\todo{``But, perhaps most saliently for this context,
   it's just interesting to understand how it works.  If you are a
   functional programmer who cares about computation...''}
 
