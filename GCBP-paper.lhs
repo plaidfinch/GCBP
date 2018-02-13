@@ -1,4 +1,4 @@
-% -*- mode: LaTeX; compile-command: "cabal --sandbox-config-file=$HOME/research/GCBP/cabal.sandbox.config exec -- runhaskell Shake" -*-
+% -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
 \documentclass[natbib, preprint]{sigplanconf}
 

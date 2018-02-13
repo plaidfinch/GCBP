@@ -1,0 +1,12 @@
+resolver: lts-9.21
+packages: []
+
+extra-deps:
+- diagrams-pgf-1.4
+- diagrams-rasterific-1.4
+- texrunner-0.0.1.1
+
+flags:
+  diagrams-builder:
+    pgf: true
+    rasterific: true
