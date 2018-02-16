@@ -366,31 +366,31 @@ obscures the high-level details; in addition, since \todo{something
   high-level character.
 \end{itemize}
 
-\todo{Go back and edit the contributions \& introduction.}
-
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
 
 Let us return to the problem of computing some $h - g : A \bij A'$
-from $h : A + B \bij A' + B'$ and $g : B \bij B'$.  The key to
-defining $h - g$ is to use $h$ and $g$ to ``ping-pong'' back and forth
-between sets until landing in the right place.
+from $h : A + B \bij A' + B'$ and $g : B \bij B'$ and describe the
+solution of Gordon~\cite{Gordon1983sieve} as it is typically
+presented.  The key to defining $h - g$ is to use $h$ and $g$ to
+``ping-pong'' back and forth between sets until landing in the right
+place.
 
 Starting with an arbitrary element of $A$, our goal is to find an
 element of $A'$ to match it with.  First, run it through
 $h : A + B \bij A' + B'$.  If we land in $A'$, we are done.
-Otherwise, we end up with an element of $B'$.  Run it through
+Otherwise, we end up with an element of $B'$.  Run this through
 $g : B \bij B'$ \emph{backwards}, yielding an element of $B$.  Now run
-$h$ again, and so on.  Keep iterating this process until finally
-landing in $A'$; we match the original element of $A$ to the element
-of $A'$ so obtained.
-\todo{equational presentation of process, $h$ followed by iterating
-  |inverse(g) >>> h|}
-\pref{fig:GCBP} illustrates this process.  The
-top two elements of the (dark blue) set on the upper-left map
-immediately into the two lower elements of the light blue set; the
-third element of the dark blue set, however, requires two iterations
-before finally landing on the uppermost element of the light blue set.
+$h$ again. This may yield an element of $A'$, in which case we can
+stop, or an element of $B'$; we continue iterating this process until
+finally landing in $A'$. We then match the original element of $A$ to
+the element of $A'$ so obtained.
+
+\pref{fig:GCBP} illustrates this process.  The top two elements of the
+(dark blue) set on the upper-left map immediately into the two lower
+elements of the light blue set; the third element of the dark blue
+set, however, requires two iterations before finally landing on the
+uppermost element of the light blue set.
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -441,9 +441,15 @@ before finally landing on the uppermost element of the light blue set.
   \caption{Ping-ponging}
   \label{fig:GCBP}
 \end{figure}
-
-\pref{fig:GCBP-uni-Haskell} contains a basic Haskell implementation of
-this process.
+Symbolically, for each $a \in A$ we find the smallest $n$ such that
+$(h \comp \overline{g})^n \comp h$ applied to $a$ yields some
+$a' \in A'$.  \pref{fig:GCBP-uni-Haskell} contains a basic Haskell
+implementation of this process.  (It is worth pointing out that the
+Haskell implementation is a bit noisier because of the need for |Left|
+and |Right| constructors; typical mathematical presentations treat $A$
+as a mere subset of $A + B$, so that an element $a \in A$ \emph{is
+  also} an element of $A + B$, without the need for an explicit
+injection function.)
 \begin{figure}[htp]
   \centering
 \begin{code}
@@ -459,18 +465,19 @@ untilLeft step ab = case ab of
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
 
-\citet{gordon1983sieve} first introduced this algorithm, and he called
+\citet{gordon1983sieve} first introduced this algorithm, and called
 it the \term{complementary bijection principle} \todo{note that
   Gordon's principle is actually a bit more general?  What is
   computational content of Gordon's original paper?} \todo{See notes
   later below}
 
 At this point, it's worth going through a careful, standard proof of
-the bijection principle.  We must prove two things: first, that the
-algorithm terminates; second, that it actually produces a bijection,
-as claimed.  We denote the inverse of a bijection $f : X \bij Y$ by
-$\overline{f} : Y \bij X$, and denote the composition of bijections by
-juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.
+the complementary bijection principle.  We must prove two things:
+first, that the algorithm terminates; second, that it actually
+produces a bijection, as claimed.  We denote the inverse of a
+bijection $f : X \bij Y$ by $\overline{f} : Y \bij X$, and denote the
+composition of bijections by juxtaposition, that is,
+$fg(a) = (f \comp g)(a) = f(g(a))$.
 
 \begin{proof}
   We first prove that the algorithm terminates.  Let $a \in A$ and
