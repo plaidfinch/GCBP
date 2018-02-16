@@ -1,4 +1,0 @@
-lhs2TeX -o GCBP-paper.tex GCBP-paper.lhs
-
-pdflatex --enable-write18 GCBP-paper.tex
-
