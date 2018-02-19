@@ -1396,29 +1396,32 @@ us give a name to this iterated operation:
 \begin{spec}
 extend g h k = k >>> (undef ||| inverse(g)) >>> h
 \end{spec}
-Now consider the sequence of iterates
-\[ |h|, |extend g h h|, |extend g h^2 h|, |extend g h^3 h|, \dots \]
-\todo{explain}.  We now take the left projection of each, since
-\todo{explain why}.
-\[ |leftPartial(h)|, |leftPartial(extend g h h)|, |leftPartial(extend
-  g h^2
-  h)|, |leftPartial(extend g h^3 h)|, \dots \] We claim that all these
-left projections are compatible. \todo{NEEDS PICTURES!!}  This is
-because the path an element of $A$ takes under iteration of |extend g h|
-can bounce around in the bottom sets ($B$ and $B'$), but stops (by
-definition!) once it reaches $A'$.  Suppose it takes some $a \in A$
-exactly $n$ iterations of |extend g h| to reach some $a' \in A'$.  If we
-iterate fewer than $n$ times, $a$ will be mapped to some element of
-$B'$, and hence the left projection will be undefined at $a$.  If we
-iterate exactly $n$ times, $a$ will be mapped to $a' \in A'$, and
-hence it will map to $a'$ in the left projection as well.  If we
-iterate more than $n$ times, the resulting partial bijection will be
-undefined at $a$, because after reaching $a'$ it will be composed with
-|undef|.  So any given $a$ only ever maps to one particular $a'$, or
-is undefined.  Also, there can never be two different elements of $A$
-which map to the same $A'$: two paths can never ``converge'' in this
-way since we are composing partial \emph{bijections}, which in
-particular are injective where they are defined.
+Now consider the sequence of partial bijections
+\[ |h|,\quad |extend g h h|,\quad |extend g h^2 h|,\quad |extend g h^3 h|,\quad \dots, \]
+that is, the first is $h$, the next is |h >>> (undef |||||| inverse(g)) >>>
+h|, then \[ |h >>> (undef |||||| inverse(g)) >>> h >>> (undef ||||||
+inverse(g)) >>> h|, \] and so on.  These are successive prefixes of \pref{fig:ping-pong}.
+Now take the left projection of each:
+\[ |leftPartial h|,\quad |leftPartial(extend g h h)|,\quad
+  |leftPartial(extend g h^2 h)|,\quad |leftPartial(extend g h^3
+  h)|,\quad \dots . \] We claim that all these left projections are
+compatible. \todo{NEEDS PICTURES!!}  This is because the path an
+element of $A$ takes under iteration of |extend g h| can bounce around
+in the bottom sets ($B$ and $B'$), but stops (by definition!) once it
+reaches $A'$.  Suppose it takes some $a \in A$ exactly $n$ iterations
+to reach some $a' \in A'$.  If we iterate fewer than $n$ times, $a$
+will be mapped to some element of $B'$, and hence the left projection
+will be undefined at $a$.  If we iterate exactly $n$ times, $a$ will
+be mapped to $a' \in A'$, and hence it will map to $a'$ in the left
+projection as well.  If we iterate more than $n$ times, the resulting
+partial bijection will be undefined at $a$, because after reaching
+$a'$ it will be composed with |undef|.  So for any given $a \in A$,
+there is exactly one value of $n$ such that |leftPartial(extend g h^n
+h)| is defined at $a$.  Also, there can never be two different
+elements of $A$ which map to the same $A'$: two paths can never
+``converge'' in this way since we are composing partial
+\emph{bijections}, which in particular are injective where they are
+defined.
 
 Hence, we consider the infinite merge
 \[ |leftPartial(h) <||||> leftPartial(extend g h h) <||||>
@@ -1426,7 +1429,9 @@ Hence, we consider the infinite merge
 For every element of $A$, there is some finite $n$ for which
 |leftPartial(extend g h^n h)| is defined on it, and hence this infinite
 merge actually defines a \emph{total} bijection.  Intuitively,
-\todo{explain intuitively what this infinite merge is doing.}
+this is doing exactly the same thing that the original pointwise
+implementation was doing, but without having to explicitly talk about
+individual points $a \in A$.
 
 \todo{Implement and demo.  Prove it is equivalent to reference
   implementation?  Or that it produces a bijection?}
@@ -1440,11 +1445,11 @@ which also allows subtracting bijections.  Although at first blush it
 seems more complex and powerful than the Gordon principle, it turns
 out that the two are equivalent; the situation is reminiscent of the
 relationship between ``weak'' and ``strong'' induction on the natural
-numbers, which are completely equivalent despite their names.
-Although the equivalence between GCBP and GMIP seems to be folklore,
-we have never seen a proof written down.  The proof is not hard---one
-might reasonably assign it as an exercise in an undergraduate course
-on combinatorics---but \todo{elaborate; something about the insight
+numbers, which are equivalent despite their names.  Although the
+equivalence between GCBP and GMIP seems to be folklore, we have never
+seen a proof written down.  The proof is not hard---one might
+reasonably assign it as an exercise in an undergraduate course on
+combinatorics---but \todo{elaborate; something about the insight
   afforded by our presentation.  Simpler presentation of GMIP, and
   intuitive explanation of why they are equivalent.}
 
