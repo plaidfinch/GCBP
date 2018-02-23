@@ -16,6 +16,9 @@
 %format +++ = "+\!\!+\!\!+"
 %format >>> = "\andthen"
 
+%format <== = "\sqsubseteq"
+%format ==> = "\sqsupseteq"
+
 %format ^   = "^"
 
 %format ^^  = "\;"
@@ -672,16 +675,19 @@ should be the identity ``up to any |m| effects''.
   dom :: Functor m => (Kleisli m a b) -> (Kleisli m a a)
   dom (K f) = K (\a -> const a <$> f a)
 \end{spec}%$
-We can now impose the laws
+We also require that the monad |m| has some relation |<==| on
+values of type |m a|, which we can think of as an ``information
+ordering''.  For |m = Identity|, we have |a <== b| if and only
+if |a = b|; for |m = Maybe|, |Nothing <== Just a| and |Just a <== Just
+a|.  We can now impose the laws
 \begin{spec}
-  fwd >>> bwd = dom fwd
-  bwd >>> fwd = dom bwd
+  fwd >>> bwd ==> dom fwd
+  bwd >>> fwd ==> dom bwd
 \end{spec}
 which intuitively say that |fwd >>> bwd| and |bwd >>> fwd| must both
-act like |id|, except for some possible effects---and even the effects
-must match, in the sense that |bwd| cannot introduce any effects not
-already introduced by |fwd|, and vice versa.  When |m = Identity|
-there are no effects at all, and indeed, |dom f = id| since |const a
+act like |id|, except for some possible effects---XXX, and vice versa.
+When |m = Identity| there are no effects at all, and indeed, |dom f =
+id| since |const a
 <$> f a = Identity a|, so the laws reduce to the familiar |fwd >>> bwd
 = id| and |bwd >>> fwd = id|.  In the case |m = Maybe|, the laws
 essentially say that |fwd a = Just b| if and only if |bwd b = Just
@@ -690,8 +696,9 @@ defined, and moreover, they must either be both defined or both
 undefined.  This justifies drawing partial bijections by connecting
 two sets with some collection of undirected (\ie bidirectional) line
 segments, as in \pref{fig:partial-bij}.
-
 %$
+
+\todo{|m = Set|? or |[]|?  Set leads to ``multibijections''.}
 
 Finally, we can recover specific types for total and partial bijections as
 \begin{code}
@@ -1359,20 +1366,20 @@ separately.
 
 We define a type class |Mergeable|, shown in \pref{fig:mergeable}, for
 categories with a monoidal structure given by a binary operator
-|(<||||>)| and a distinguished identity morphism |undef|.  |Kleisli m|
-is |Mergeable| as long as the monad |m| has a suitable monoidal
-structure (via an |Alternative| instance), and this lifts to a
-corresponding instance of |Mergeable| for partial bijections.
-
+|(<||||>)| and a distinguished identity morphism |undef|.  Kleisli
+arrows |Kleisli m a b| are |Mergeable| as long as the monad |m| has a
+suitable monoidal structure (via an |Alternative| instance), and this
+lifts to a corresponding instance of |Mergeable| for partial
+bijections.
 \begin{figure}
 \begin{spec}
 class Category arr => Mergeable arr where
-  undef  :: arr a b
-  (<||>) :: arr a b -> arr a b -> arr a b
+  undef   :: arr a b
+  (<||>)  :: arr a b -> arr a b -> arr a b
 
 instance (Monad m, Alternative m)
   => Mergeable (Kleisli m) where
-  undef = K $ const empty
+  undef = K (const empty)
   K f <||> K g = K $ \a -> f a <|> g a
 
 instance Mergeable (<->) where
