@@ -187,12 +187,12 @@
 % What's the Difference?
 % Subtracting Isos for Fun and Profit
 
-\authorinfo{Kenneth Foner}
-           {University of Pennsylvania, USA}
-           {kfoner@@seas.upenn.edu}
 \authorinfo{Brent A. Yorgey}
            {Hendrix College, Conway, AR, USA}
            {yorgey@@hendrix.edu}
+\authorinfo{Kenneth Foner}
+           {University of Pennsylvania, USA}
+           {kfoner@@seas.upenn.edu}
 
 \maketitle
 
@@ -329,11 +329,11 @@ We will somehow need to make use of $g$ as well.
 % not be.  This is not a problem in and of itself, but \todo{but what?
 %   We just need to be careful... we just need to be aware...}
 
-Why would anyone care?  This problem was first studied (and solved) in
-the context of combinatorics, where proving merely that two sets must
-have the same size is usually considered unsatisfactory: the goal is
-to exhibit an explicit bijection that serves as a (constructive)
-witness of the fact.
+But---why would anyone care?  This problem was first studied (and
+solved) in the context of combinatorics, where proving merely that two
+sets must have the same size is usually considered unsatisfactory: the
+goal is to exhibit an explicit bijection that serves as a
+(constructive) witness of the fact.
 % Subtracting bijections also comes up in the
 % context of defining \term{virtual species}, where it is
 % needed to prove that the sum of virtual species is
@@ -614,16 +614,25 @@ information, until finishing with a total bijection.
   \label{fig:partial-bij}
 \end{figure}
 
-Whereas a (total) bijection consists of a pair of inverse functions |a -> b|
-and |b -> a|, a partial bijection consists of a pair of \emph{partial}
-functions |a -> Maybe b| and |b -> Maybe a|, subject to a suitable
-compatibility condition.  We can work uniformly with both by
-generalizing to an arbitrary \emph{Kleisli} category,
+Whereas a (total) bijection consists of a pair of inverse functions |a
+-> b| and |b -> a|, a partial bijection consists of a pair of
+\emph{partial} functions |a -> Maybe b| and |b -> Maybe a| which are
+``inverse'' in a suitable sense (to be precisely defined later).  We
+can work uniformly with both by generalizing to an arbitrary
+\emph{Kleisli} category,
 \begin{spec}
 newtype Kleisli m a b = K { runKleisli :: a -> m b }
 \end{spec}
-consisting of functions |a -> m b| for any monad |m|.  Picking |m =
-Identity| yields normal total functions (up to some extra |newtype|
+consisting of functions |a -> m b| for any monad |m|.  In one sense,
+this generality is overkill: working concretely with total and partial
+bijections instead of a common generalization would require a bit of
+code duplication but would be quite a bit simpler.  However, working
+in a more general setting reveals some underlying algebraic structure,
+and hints at potential extensions and generalizations to be
+discovered.
+
+In any case, picking |m = Identity| in the definition of |Kleisli m a
+b| yields normal total functions (up to some extra |newtype|
 wrappers); picking |m = Maybe| yields partial functions.  The
 |Category| instance for |Kleisli m| provides the identity |id ::
 Kleisli m a a| along with a composition operator
@@ -685,20 +694,24 @@ a|.  We can now impose the laws
   bwd >>> fwd ==> dom bwd
 \end{spec}
 which intuitively say that |fwd >>> bwd| and |bwd >>> fwd| must both
-act like |id|, except for some possible effects---XXX, and vice versa.
+act like |id|, except for some possible effects---, and vice versa.
 When |m = Identity| there are no effects at all, and indeed, |dom f =
 id| since |const a
 <$> f a = Identity a|, so the laws reduce to the familiar |fwd >>> bwd
 = id| and |bwd >>> fwd = id|.  In the case |m = Maybe|, the laws
 essentially say that |fwd a = Just b| if and only if |bwd b = Just
 a|---that is, |fwd| and |bwd| must agree wherever they are both
-defined, and moreover, they must either be both defined or both
-undefined.  This justifies drawing partial bijections by connecting
-two sets with some collection of undirected (\ie bidirectional) line
+defined, and moreover, they must be defined and undefined in the same
+places. This justifies drawing partial bijections by connecting two
+sets with some collection of undirected (\ie bidirectional) line
 segments, as in \pref{fig:partial-bij}.
 %$
 
-\todo{|m = Set|? or |[]|?  Set leads to ``multibijections''.}
+As an aside, we remark that choosing |m = Set| (which is a monad in
+the mathematical sense, if not a |Monad| in Haskell) leads to
+``multibijections'' \todo{picture?}.  We leave to future work the
+question of whether these have any interesting analogue to the
+bijection principles discussed here.
 
 Finally, we can recover specific types for total and partial bijections as
 \begin{code}
@@ -1386,6 +1399,7 @@ instance Mergeable (<->) where
   undef = B undef undef
   (B f g) <||> ~(B f' g') = B (f <||> f') (g <||> g')
 \end{spec}
+%$
 \caption{The |Mergeable| type class} \label{fig:mergeable}
 \end{figure}
 Notice that we use an \emph{irrefutable pattern match} \todo{cite} in
@@ -1514,55 +1528,75 @@ which case we map the original $a$ to that element of $\Fix
 procedure. The Pigeonhole Principle ensures that this process must
 end; it cannot ``get stuck'' because everything is a bijection.
 
-This seems suspiciously familiar!  In fact, can reformulate the
-problem to make the relationship to the GCBP more clear. \todo{really
-  need a picture here.}  \todo{Redo this section.  START FROM a
-  reformulated version, based on sum type, with different names,
-  e.g. U, V, X, Y? and bijections.  Then show how we can define signed
-  involutions from it and so on, and also how we can get this
-  situation from GMIP situation. Hence it is really just the GMIP
-  situation in disguise?  Need to write this out on paper.}  First,
-let's give a name to the set difference $A^+ - \Fix \alpha$: we'll
-call it $A^\circ$, and similarly $B^\circ = B^+ - \Fix \beta$.  Let's
-also give $\Fix \alpha$ the name $X$, and $\Fix \beta$ the name $Y$.
-Under this new naming scheme, \todo{say something here}
+This seems suspiciously familiar!  In fact, there is a close
+relationship to the GCBP, but it is somewhat obscured by the way GMIP
+is usually presented.  First, let us see an alternative presentation
+of GMIP.  Suppose we have six sets $U$, $V$, $W$, $U'$, $V'$, $W'$,
+and four bijections:
 \begin{itemize}
-\item We stop thinking of $X$ and $Y$ as fixed points of anything;
-  they are just arbitrary sets.
-\item It is not particulary interesting to have involutions which are
-  defined to be the identity on certain sets.  So we just remove $X$
-  and $Y$ from the domains of of $\alpha$ and $\beta$, respectively,
-  and just think of $\alpha : A^\circ \bij A^-$ and
-  $\beta : B^\circ \bij B^-$ as bijections between two sets.  There is
-  no longer any need to think of them as sign-reversing involutions.
-\item $f^+ : A^\circ + X \bij B^\circ + Y$ is a bijection between two
-  sum types.
-\item $f^- : A^- \bij B^-$ remains unchanged.
+\item $f : U+V \bij U'+V'$
+\item $g : W \bij W'$
+\item $v : V \bij W$
+\item $v' : V' \bij W'$
 \end{itemize}
-If we can come up with some bijection $A^\circ \bij B^\circ$, we can
-use GCBP to subtract it from $f^+$, resulting in a bijection $X \bij
-Y$.  But this is obvious from the picture: we should choose
-\[
-  \xymatrix{
-    A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ.
-  }
-\]
-Running GCBP with $f^+$ and $\alpha \andthen f^{-} \andthen \beta$
-ends up carrying out the same process as GMIP, outlined above; later,
-we will prove this formally.  In the end, GMIP is ``really'' just GCBP
-where instead of a single bijection to subtract, we have three
-bijections which we need to compose in order to get the bijection to
-subtract.  GMIP is usually set forth in the form involving
-sign-reversing involutions because of the particular way it arose from
-inclusion-exclusion type arguments in combinatorics, where such
-sign-reversing involutions were already a common feature.
+This situation is illustrated in \pref{fig:XXX}.  Ultimately we are
+interested in constructing a bijection $U \bij U'$.  But we can easily
+construct a bijection $v ; g ; \overline{v'} : V \bij V'$, which we
+can then subtract from $f : U+V \bij U'+V'$ using GCBP.  The sets $W$
+and $W'$ don't really add much.
 
-\todo{Some code implementing GMIP in terms of GCBP?}
+In fact, the situation described above is equivalent to the usual
+setup of GMIP.
 
-We can also easily implement GCBP in terms of GMIP: all we need to do
-is ``duplicate'' \todo{finish this explanation}.x
+% This seems suspiciously familiar!  In fact, can reformulate the
+% problem to make the relationship to the GCBP more clear. \todo{really
+%   need a picture here.}  \todo{Redo this section.  START FROM a
+%   reformulated version, based on sum type, with different names,
+%   e.g. U, V, X, Y? and bijections.  Then show how we can define signed
+%   involutions from it and so on, and also how we can get this
+%   situation from GMIP situation. Hence it is really just the GMIP
+%   situation in disguise?  Need to write this out on paper.}  First,
+% let's give a name to the set difference $A^+ - \Fix \alpha$: we'll
+% call it $A^\circ$, and similarly $B^\circ = B^+ - \Fix \beta$.  Let's
+% also give $\Fix \alpha$ the name $X$, and $\Fix \beta$ the name $Y$.
+% Under this new naming scheme, \todo{say something here}
+% \begin{itemize}
+% \item We stop thinking of $X$ and $Y$ as fixed points of anything;
+%   they are just arbitrary sets.
+% \item It is not particulary interesting to have involutions which are
+%   defined to be the identity on certain sets.  So we just remove $X$
+%   and $Y$ from the domains of of $\alpha$ and $\beta$, respectively,
+%   and just think of $\alpha : A^\circ \bij A^-$ and
+%   $\beta : B^\circ \bij B^-$ as bijections between two sets.  There is
+%   no longer any need to think of them as sign-reversing involutions.
+% \item $f^+ : A^\circ + X \bij B^\circ + Y$ is a bijection between two
+%   sum types.
+% \item $f^- : A^- \bij B^-$ remains unchanged.
+% \end{itemize}
+% If we can come up with some bijection $A^\circ \bij B^\circ$, we can
+% use GCBP to subtract it from $f^+$, resulting in a bijection $X \bij
+% Y$.  But this is obvious from the picture: we should choose
+% \[
+%   \xymatrix{
+%     A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ.
+%   }
+% \]
+% Running GCBP with $f^+$ and $\alpha \andthen f^{-} \andthen \beta$
+% ends up carrying out the same process as GMIP, outlined above; later,
+% we will prove this formally.  In the end, GMIP is ``really'' just GCBP
+% where instead of a single bijection to subtract, we have three
+% bijections which we need to compose in order to get the bijection to
+% subtract.  GMIP is usually set forth in the form involving
+% sign-reversing involutions because of the particular way it arose from
+% inclusion-exclusion type arguments in combinatorics, where such
+% sign-reversing involutions were already a common feature.
 
-\todo{Formal equational proof that these are equivalent?}
+% \todo{Some code implementing GMIP in terms of GCBP?}
+
+% We can also easily implement GCBP in terms of GMIP: all we need to do
+% is ``duplicate'' \todo{finish this explanation}.x
+
+% \todo{Formal equational proof that these are equivalent?}
 
 \section{Efficiency}
 \label{sec:efficiency}
