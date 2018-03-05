@@ -1598,7 +1598,21 @@ and four bijections:
 \item $v : V \bij W$
 \item $v' : V' \bij W'$
 \end{itemize}
-This situation is illustrated in \pref{fig:XXX}.  Ultimately we are
+This situation is illustrated in \pref{fig:alt-GMIP}.
+\begin{figure}
+\begin{diagram}[width=200]
+  import Bijections
+
+  dia =
+    drawGenBij tex
+      ( ((sg "U" +++ sg "V") +++ sg "W")
+          .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
+        ((sg "U'" +++ sg "V'") +++ sg "W'")
+      )
+\end{diagram}
+\caption{An alternate presentation of GMIP} \label{fig:alt-GMIP}
+\end{figure}
+Ultimately we are
 interested in constructing a bijection $U \bij U'$.  But we can easily
 construct a bijection $v ; g ; \overline{v'} : V \bij V'$, which we
 can then subtract from $f : U+V \bij U'+V'$ using GCBP.
