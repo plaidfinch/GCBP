@@ -1826,6 +1826,41 @@ where sign-reversing involutions were already a familiar feature)
 \section{Efficiency}
 \label{sec:efficiency}
 
+Let us return to our implementation of GCBP.  It essentially has a
+form like form \[ f \mrg g\;f \mrg g^2\;f \mrg g^3\;f \mrg \dots \]
+Operationally, to compute the output on some particular $a$, we
+\begin{enumerate}
+\item Check if $f\; a$ is defined.  If yes, output it and stop.
+\item Check if $(g\; f)\; a$ is defined.  If yes, output it and stop.
+\item Check if $(g^2\; f)\; a$ is defined.
+\item \dots
+\end{enumerate}
+To check if $(g^k\; f)\; a$ is defined requires following a path of
+length $k$ to see where it ends: \todo{picture}
+Overall, this yields quadratic performance, since to compute the
+output for a particular $a$, we must follow a path of length $1$, then
+length $2$, then length $3$\dots  Moreover, from an operational point
+of view this is manifestly stupid since most of the work is redone on
+every iteration---the path we follow on each iteration is the same as
+the path from the previous iteration, extended by one step!
+
+The solution is to memoize.  Each partial bijection stores a map from
+inputs to outputs; then it is just a quick lookup to find out where
+$a$ ended up at the end of the previous iteration, and a constant
+amount of work to compose one more step.  This
+
+\todo{Show how to implement this.  Demonstrate it is faster.}
+
+However, there is still a problem: we are computing \emph{two}
+directions of a bijection at once.  Memoization helps with the
+\emph{forward} direction, because each iteration composes a new
+partial bijection \emph{on the right}.  \todo{pictures}  In the
+backwards direction, however, the part of the path that has already
+been computed doesn't help, since we are extending on the wrong side.
+
+The solution is sneaky.  \todo{finish; palindromes}
+
+
 \todo{PALINDROMES}
 
 \todo{Notice that we're doing nested calls to |(>=>)| in both
