@@ -1533,8 +1533,8 @@ combinatorics---but \todo{elaborate; something about the insight
   afforded by our presentation.  Simpler presentation of GMIP, and
   intuitive explanation of why they are equivalent.}
 
-Let us first see GMIP the way it is usually presented.  \todo{PICTURE}
-The setup is as follows:
+Let us first see GMIP the way it is usually presented.
+The setup is illustrated in \pref{fig:GMIP}, and can be described as follows:
 \begin{itemize}
 \item There are two sets $A$ and $B$, each partitioned into a
   ``positive'' part and a ``negative'' part.  In more type-theoretic
@@ -1555,20 +1555,21 @@ The setup is as follows:
   \end{itemize}
   Similarly, $\beta$ is a signed involution on $B$.
 \end{itemize}
-This situation is illustrated in \pref{fig:GMIP}, and you may be
-forgiven for thinking it seems rather complex!  As we will see,
-however, a lot of the complexity is merely incidental.
+You may be forgiven for thinking this seems rather complex!  As we
+will see, however, a lot of the complexity is merely incidental.
 
 \begin{figure}
   \centering
   \begin{diagram}[width=200]
-    import Data.Bool
+    import Data.Bool  (bool)
+    import Data.Maybe (fromJust)
+
     signedset name involution flip =
       mconcat
       [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
       , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
       , mconcat
-        [ circle 0.4
+        [ circle 0.4 # dashingL [0.05, 0.05] 0
         , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
         ]
         # translate ((bool id negate flip) 0.3 ^& 0.7)
@@ -1576,8 +1577,42 @@ however, a lot of the complexity is merely incidental.
       , hrule 2
       ]
       # fontSizeL 0.4
+      # named name
 
+    dia :: Diagram B
     dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+      # arrowBetweenAtY   ht  "f^+" ["A", "B"]
+      # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
+      # involutionArrow ht (-1) "\\alpha" "A"
+      # involutionArrow ht 1    "\\beta"  "B"
+      where
+        ht = 0.7
+
+    arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
+      let oa = location a
+          ob = location b
+          e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
+          e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
+      in  atop
+            ( mconcat
+              [ arrowBetween' arrowOpts e1 e2
+              , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
+              ]
+              # fontSizeL 0.4
+            )
+
+    arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
+
+    involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
+      let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
+          e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
+      in  atop (
+            mconcat
+            [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
+            , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
+            ]
+            # fontSizeL 0.4
+          )
   \end{diagram}
   \caption{Setup for GMIP}
   \label{fig:GMIP}
@@ -1604,11 +1639,71 @@ in $\Fix \beta$, we are done.  Otherwise, we land in $B^+$ and we then
     \ar[r]^{\alpha} & A^+ \ar[r]^{f^+} & ?,
   }
 \]
-also illustrated in \pref{fig:XXX}.  We may land in $\Fix \beta$---in
-which case we map the original $a$ to that element of $\Fix
-\beta$---or we may land in $B^+$ again, in which case we repeat the
-procedure. The Pigeonhole Principle ensures that this process must
-end; it cannot ``get stuck'' because everything is a bijection.
+as illustrated in \pref{fig:GMIP-loop}.  We may land in
+$\Fix \beta$---in which case we map the original $a$ to that element
+of $\Fix \beta$---or we may land in $B^+$ again, in which case we
+repeat the procedure. The Pigeonhole Principle ensures that this
+process must end; it cannot ``get stuck'' because everything is a
+bijection.
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    import Data.Bool  (bool)
+    import Data.Maybe (fromJust)
+
+    signedset name involution flip =
+      mconcat
+      [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
+      , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
+      , mconcat
+        [ circle 0.4 # dashingL [0.05, 0.05] 0
+        , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
+        ]
+        # translate ((bool id negate flip) 0.3 ^& 0.7)
+      , circle 1 # scaleY 1.5
+      , hrule 2
+      ]
+      # fontSizeL 0.4
+      # named name
+
+    dia :: Diagram B
+    dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+      # arrowBetweenAtY   ht  "f^+" ["A", "B"]
+      # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
+      # involutionArrow ht (-1) "\\alpha" "A"
+      # involutionArrow ht 1    "\\beta"  "B"
+      where
+        ht = 0.7
+
+    arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
+      let oa = location a
+          ob = location b
+          e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
+          e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
+      in  atop
+            ( mconcat
+              [ arrowBetween' arrowOpts e1 e2
+              , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
+              ]
+              # fontSizeL 0.4
+            )
+
+    arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
+
+    involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
+      let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
+          e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
+      in  atop (
+            mconcat
+            [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
+            , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
+            ]
+            # fontSizeL 0.4
+          )
+  \end{diagram}
+  \caption{Going around the loop in GMIP}
+  \label{fig:GMIP-loop}
+\end{figure}
 
 This seems suspiciously familiar!  In fact, there is a close
 relationship to the GCBP, but it is somewhat obscured by the way GMIP
@@ -1667,10 +1762,16 @@ Conversely, given $A^+$, $A^-$, $f^+$, $f^-$, $\alpha$, and $\beta$:
 \item $W = A^-$,
 \item and similarly define $U'$, $V'$, and $W'$ in terms of $\beta$,
   $B^+$, and $B^-$.
-\item Define $v : V \bij W$ by the action of $\alpha$ on $V$---the
-  image of $\alpha$ on $V = A^+ - \Fix \alpha$ must be $W = A^-$.
+\item Finally define $v : V \bij W$ as the action of $\alpha$ on
+  $V$---the image of $\alpha$ on $V = A^+ - \Fix \alpha$ must be
+  $W = A^-$, and this must be a bijection since $\alpha$ is
+  self-inverse.
 \end{itemize}
 
+XXX So what's with the sign-reversing involutions?  (the
+principle is typically presented like this due to the specific way it
+often arises from inclusion-exclusion arguments in combinatorics,
+where sign-reversing involutions were already a familiar feature)
 
 % This seems suspiciously familiar!  In fact, can reformulate the
 % problem to make the relationship to the GCBP more clear. \todo{really
