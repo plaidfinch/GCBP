@@ -1555,10 +1555,33 @@ The setup is as follows:
   \end{itemize}
   Similarly, $\beta$ is a signed involution on $B$.
 \end{itemize}
-This situation is illustrated in \todo{PICTURE}, and you may be
+This situation is illustrated in \pref{fig:GMIP}, and you may be
 forgiven for thinking it seems rather complex!  As we will see,
 however, a lot of the complexity is merely incidental.
 
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    import Data.Bool
+    signedset name involution flip =
+      mconcat
+      [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
+      , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
+      , mconcat
+        [ circle 0.4
+        , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
+        ]
+        # translate ((bool id negate flip) 0.3 ^& 0.7)
+      , circle 1 # scaleY 1.5
+      , hrule 2
+      ]
+      # fontSizeL 0.4
+
+    dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+  \end{diagram}
+  \caption{Setup for GMIP}
+  \label{fig:GMIP}
+\end{figure}
 Let $\Fix \alpha$ denote the set of fixed points of $\alpha$; by
 definition $\Fix \alpha \subseteq A^+$.  Clearly $||A^-|| = ||B^-||$
 (because of the existence of the bijection $f^-$), and similarly
