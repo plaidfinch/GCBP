@@ -1846,7 +1846,14 @@ Given two |m|-bijections $|f, g :: Bij m a a|$, we define a
 Notice that |g| and |g'| are composed ``the wrong way around'', which
 necessitates the more restrictive type.
 
-\todo{PALINDROMES}
+Normally this would be useless, since in general |g . g'| is not the
+inverse of |f . f'|, even when the types are restricted in this way.
+But there is one situation in which this does yield something useful:
+when the bijection we ultimately want to compute is a palindrome!
+\todo{finish}
+
+
+
 
 \todo{Notice that we're doing nested calls to |(>=>)| in both
   directions, so necessarily one direction is going to be
