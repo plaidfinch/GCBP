@@ -28,6 +28,8 @@
 %format :<=>: = "\mathbin{:\leftrightarrow:}"
 %format :<->: = "\mathbin{:\rightleftharpoons:}"
 
+%format ^.    = "\odot"
+
 %format inverse(a) = "\overline{" a "}"
 %format leftPartial(f) = "\langle" f "|"
 %format rightPartial(f) = "|" f "\rangle"
@@ -1773,81 +1775,48 @@ principle is typically presented like this due to the specific way it
 often arises from inclusion-exclusion arguments in combinatorics,
 where sign-reversing involutions were already a familiar feature)
 
-% This seems suspiciously familiar!  In fact, can reformulate the
-% problem to make the relationship to the GCBP more clear. \todo{really
-%   need a picture here.}  \todo{Redo this section.  START FROM a
-%   reformulated version, based on sum type, with different names,
-%   e.g. U, V, X, Y? and bijections.  Then show how we can define signed
-%   involutions from it and so on, and also how we can get this
-%   situation from GMIP situation. Hence it is really just the GMIP
-%   situation in disguise?  Need to write this out on paper.}  First,
-% let's give a name to the set difference $A^+ - \Fix \alpha$: we'll
-% call it $A^\circ$, and similarly $B^\circ = B^+ - \Fix \beta$.  Let's
-% also give $\Fix \alpha$ the name $X$, and $\Fix \beta$ the name $Y$.
-% Under this new naming scheme, \todo{say something here}
-% \begin{itemize}
-% \item We stop thinking of $X$ and $Y$ as fixed points of anything;
-%   they are just arbitrary sets.
-% \item It is not particulary interesting to have involutions which are
-%   defined to be the identity on certain sets.  So we just remove $X$
-%   and $Y$ from the domains of of $\alpha$ and $\beta$, respectively,
-%   and just think of $\alpha : A^\circ \bij A^-$ and
-%   $\beta : B^\circ \bij B^-$ as bijections between two sets.  There is
-%   no longer any need to think of them as sign-reversing involutions.
-% \item $f^+ : A^\circ + X \bij B^\circ + Y$ is a bijection between two
-%   sum types.
-% \item $f^- : A^- \bij B^-$ remains unchanged.
-% \end{itemize}
-% If we can come up with some bijection $A^\circ \bij B^\circ$, we can
-% use GCBP to subtract it from $f^+$, resulting in a bijection $X \bij
-% Y$.  But this is obvious from the picture: we should choose
-% \[
-%   \xymatrix{
-%     A^\circ \ar[r]^{\alpha} & A^- \ar[r]^{f^-} & B^- \ar[r]^{\beta} & B^\circ.
-%   }
-% \]
-% Running GCBP with $f^+$ and $\alpha \andthen f^{-} \andthen \beta$
-% ends up carrying out the same process as GMIP, outlined above; later,
-% we will prove this formally.  In the end, GMIP is ``really'' just GCBP
-% where instead of a single bijection to subtract, we have three
-% bijections which we need to compose in order to get the bijection to
-% subtract.  GMIP is usually set forth in the form involving
-% sign-reversing involutions because of the particular way it arose from
-% inclusion-exclusion type arguments in combinatorics, where such
-% sign-reversing involutions were already a common feature.
+We have already seen how to implement this reformulated GMIP in terms
+of GCBP. \todo{show code}
 
-% \todo{Some code implementing GMIP in terms of GCBP?}
+What about implementing GCBP in terms of GMIP?  This can also be done,
+and it is not too hard: the trick is to duplicate $B$ and $B'$, like
+so: \todo{picture} \todo{show code}
 
-% We can also easily implement GCBP in terms of GMIP: all we need to do
-% is ``duplicate'' \todo{finish this explanation}.x
-
-% \todo{Formal equational proof that these are equivalent?}
+\todo{Formal equational proof that these are equivalent?}
 
 \section{Efficiency}
 \label{sec:efficiency}
 
 Let us return to our implementation of GCBP.  It essentially has a
-form like form \[ f \mrg g\;f \mrg g^2\;f \mrg g^3\;f \mrg \dots \]
-Operationally, to compute the output on some particular $a$, we
+form like \todo{replace this with actual details.  Trying to simplify
+  is just more confusing.}
+\[ f \mrg g\;f \mrg g^2\;f \mrg g^3\;f \mrg \dots \] Operationally, to
+compute the output on some particular $a$, we perform the following
+series of steps.
 \begin{enumerate}
 \item Check if $f\; a$ is defined.  If yes, output it and stop.
 \item Check if $(g\; f)\; a$ is defined.  If yes, output it and stop.
-\item Check if $(g^2\; f)\; a$ is defined.
+\item Check if $(g^2\; f)\; a$ is defined. If yes, output it and stop.
 \item \dots
 \end{enumerate}
 To check if $(g^k\; f)\; a$ is defined requires following a path of
-length $k$ to see where it ends: \todo{picture}
-Overall, this yields quadratic performance, since to compute the
-output for a particular $a$, we must follow a path of length $1$, then
-length $2$, then length $3$\dots  Moreover, from an operational point
-of view this is manifestly stupid since most of the work is redone on
-every iteration---the path we follow on each iteration is the same as
-the path from the previous iteration, extended by one step!
+length $k$ to see where it ends: \todo{picture} Overall, this yields
+quadratic performance, since to compute the output for a particular
+$a$, we must follow a path of length $1$, then length $2$, then length
+$3$\dots until we find one that terminates in the top half of the
+diagram (that is, in the set $B$ \todo{check this}).  But this is
+manifestly stupid, since most of the work is redone on every
+iteration---the path on each iteration is the same as the path from
+the previous iteration, extended by one step.
 
-The solution is to memoize.  Each partial bijection stores a map from
-inputs to outputs; then it is just a quick lookup to find out where
-$a$ ended up at the end of the previous iteration, and a constant
-amount of work to compose one more step.  This
+The solution is memoization: along with each partial bijection, we
+store a map associating inputs on which it is defined to the
+corresponding outputs. With these maps in place, evaluating a partial
+bijection on a particular input may take any amount of time initially,
+but subsequent evaluations at the same input take only constant time.
+\todo{Finish: once we have computed $g^k f$ at some particular a,
+  evaluating $g^{k+1} f$ at a takes only constant additional time.  This
+  makes the whole process linear.}
 
 \todo{Show how to implement this.  Demonstrate it is faster.}
 
@@ -1857,9 +1826,25 @@ directions of a bijection at once.  Memoization helps with the
 partial bijection \emph{on the right}.  \todo{pictures}  In the
 backwards direction, however, the part of the path that has already
 been computed doesn't help, since we are extending on the wrong side.
+\todo{We can see this empirically with an example like\dots}
 
-The solution is sneaky.  \todo{finish; palindromes}
-
+We lose the benefits from memoization since when extending a partial
+bijection \emph{on the right}, the inverse direction gets extended
+\emph{on the left}.  The solution is the same as the punchline to the
+old joke:
+\begin{quote}
+  \textit{Patient: Doctor, it hurts when I do this.\\
+    Doctor:  Well, don't do that then.
+  }
+\end{quote}
+Given two |m|-bijections $|f, g :: Bij m a a|$, we define a
+``na\"ive composition'' operator |(^.)| as follows:
+\begin{spec}
+(^.) :: (Bij m a a) -> (Bij m a a) -> (Bij m a a)
+(B f g) ^. (B f' g') = B (f . f') (g . g')
+\end{spec}
+Notice that |g| and |g'| are composed ``the wrong way around'', which
+necessitates the more restrictive type.
 
 \todo{PALINDROMES}
 
