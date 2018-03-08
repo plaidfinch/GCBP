@@ -144,7 +144,7 @@ instance Parallel (<->) where
 -- Extend a palindromic composition by doing the composition
 -- "backwards", to avoid quadratic runtime in the backwards direction.
 extendPalindrome :: (a <-> b) -> (b <-> a) -> (a <-> b) -> (a <-> b)
-extendPalindrome (f :<->: f') (g :<->: g') (h :<->: h')
+extendPalindrome (g :<->: g') (h :<->: h') (f :<->: f')
   = (f >>> g >>> h)
     :<->:
     (f' >>> g' >>> h')

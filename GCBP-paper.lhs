@@ -1515,6 +1515,16 @@ this is doing exactly the same thing that the original pointwise
 implementation was doing, but without having to explicitly talk about
 individual points $a \in A$.
 
+Concretely, we have the following implementation of GCBP:
+\begin{code}
+gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp minuend subtrahend = unsafeTotal . merge $ gcbpIterates minuend subtrahend
+
+gcbpIterates :: (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
+gcbpIterates minuend subtrahend = map leftPartial $
+  iterate (step minuend subtrahend) (partial minuend)
+\end{code}
+
 \todo{Implement and demo.  Prove it is equivalent to reference
   implementation?  Or that it produces a bijection?}
 
@@ -1837,34 +1847,49 @@ old joke:
     Doctor:  Well, don't do that then.
   }
 \end{quote}
-Given two |m|-bijections $|f, g :: Bij m a a|$, we define a
-``na\"ive composition'' operator |(^.)| as follows:
-\begin{spec}
-(^.) :: (Bij m a a) -> (Bij m a a) -> (Bij m a a)
-(B f g) ^. (B f' g') = B (f . f') (g . g')
-\end{spec}
-Notice that |g| and |g'| are composed ``the wrong way around'', which
-necessitates the more restrictive type.
+% Given two |m|-bijections $|f, g :: Bij m a a|$, we define a
+% ``na\"ive composition'' operator |(^.)| as follows:
+% \begin{spec}
+% (^.) :: (Bij m a a) -> (Bij m a a) -> (Bij m a a)
+% (B f g) ^. (B f' g') = B (f . f') (g . g')
+% \end{spec}
+% Notice that |g| and |g'| are composed ``the wrong way around'', which
+% necessitates the more restrictive type.
 
-Normally this would be useless, since in general |g . g'| is not the
-inverse of |f . f'|, even when the types are restricted in this way.
-But there is one situation in which this does yield something useful:
-when the bijection we ultimately want to compute is a palindrome!
-\todo{finish}
+% Normally this would be useless, since in general |g . g'| is not the
+% inverse of |f . f'|, even when the types are restricted in this way.
+% But there is one situation in which this does yield something useful:
+% when the bijection we ultimately want to compute is a palindrome!
+
+% Above actually doesn't work, the version that simply does naive
+% composition is too restrictive.  We need a version that takes an
+% existing a <-> b  bijection and extends it with two more bijections
+% at a time: one b <-> a and one a <-> b.
+
+Question: when is
+\[ (f_1 f_2 f_3 \dots f_n)^{-1} = f_1^{-1} f_2^{-1} f_3^{-1} \dots
+  f_n^{-1}? \] Answer: when $f_1 \dots f_n$ is a palindrome!  Luckily,
+GCBP is in fact computing a palindrome, namely,
+$h \overline{g} h \overline{g} h \dots h$.  So we define an operation
+|extendPalindrome g h| which in general turns $(h g)^n h$ into
+$(h g)^{n+1} h$, by postcomposing with another copy of $g$ and $h$.
+\begin{code}
+extendPalindrome
+  ::  (a <-> b) ->  (b <-> a) ->  (a <-> b) -> (a <-> b)
+
+extendPalindrome     (g :<->: g')  (h :<->: h')  (f :<->: f')
+  = (f >>> g >>> h) :<->: (f' >>> g' >>> h')
+\end{code}
+Notice how this composes $f'$, $g'$, and $h'$ ``backwards'': one would
+expect
+\[ |(f :<->: f') >>> (g :<->: g') >>> (h :<->: h') = (f >>> g >>> h)
+  :<->: (h' >>> g' >>> f')|, \] but in this specific case the
+``naive'' ordering works, since we know $f$ is a palindrome built from
+|g| and |h|:
+\[ hg[(hg)^n h] = [(hg)^n h] g h = (hg)^{n+1}h. \]
+Now we redefine |gcbp| as follows:
 
 
-
-
-\todo{Notice that we're doing nested calls to |(>=>)| in both
-  directions, so necessarily one direction is going to be
-  left-associated and one will be right-associated, leading to
-  quadratic behavior in one direction or the other.  Solution: compose
-  partial bijections the ``naive'' (wrong) way, $f \comp g$ and
-  $\overline f \comp \overline g$ (instead of $(\overline g \comp
-  \overline f)$).  This
-  works in this particular case because we're computing a PALINDROME
-  so the order actually doesn't matter. (Enforcing this in the type
-  system would be tricky but possible.)}
 
 % \appendix
 % \section{Appendix Title}
