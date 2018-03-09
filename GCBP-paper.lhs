@@ -1518,12 +1518,17 @@ individual points $a \in A$.
 Concretely, we have the following implementation of GCBP:
 \begin{code}
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbp minuend subtrahend = unsafeTotal . merge $ gcbpIterates minuend subtrahend
+gcbp h g = unsafeTotal
+  . foldr (<||>) undef
+  . map leftPartial
+  . iterate (extend g' h')
+  $ partial h'
+  where
+    g' = partial g
+    h' = partial h
+\end{code} %$
 
-gcbpIterates :: (a + c <=> b + d) -> (c <=> d) -> [a <-> b]
-gcbpIterates minuend subtrahend = map leftPartial $
-  iterate (step minuend subtrahend) (partial minuend)
-\end{code}
+It starts with $h$ (treated as a partial bijection), iterates 
 
 \todo{Implement and demo.  Prove it is equivalent to reference
   implementation?  Or that it produces a bijection?}
