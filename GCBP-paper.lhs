@@ -1684,13 +1684,21 @@ bijection.
       # named name
 
     dia :: Diagram B
-    dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
-      # arrowBetweenAtY   ht  "f^+" ["A", "B"]
-      # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
-      # involutionArrow ht (-1) "\\alpha" "A"
-      # involutionArrow ht 1    "\\beta"  "B"
+    dia = mconcat
+      [ pt # translate (0.3 ^& 0.9) # named "start"
+      , pt # translate (4.3 ^& 0.9) # named "Bp"
+      , pt # translate (4 ^& (-1.2)) # named "Bm"
+      , pt # translate (0 ^& (-1.2)) # named "Am"
+      , pt # translate ((-0.3) ^& 1.1) # named "Ap"
+      , hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+        # arrowBetweenAtY   ht  "f^+" ["A", "B"]
+        # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
+        # involutionArrow ht (-1) "\\alpha" "A"
+        # involutionArrow ht 1    "\\beta"  "B"
+      ]
       where
         ht = 0.7
+        pt = circle 0.1 # fc red # lw none
 
     arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
       let oa = location a
