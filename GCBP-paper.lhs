@@ -1528,7 +1528,7 @@ gcbp h g = unsafeTotal
     h' = partial h
 \end{code} %$
 
-It starts with $h$ (treated as a partial bijection), iterates 
+It starts with $h$ (treated as a partial bijection), iterates
 
 \todo{Implement and demo.  Prove it is equivalent to reference
   implementation?  Or that it produces a bijection?}
@@ -1685,20 +1685,27 @@ bijection.
 
     dia :: Diagram B
     dia = mconcat
-      [ pt # translate (0.3 ^& 0.9) # named "start"
-      , pt # translate (4.3 ^& 0.9) # named "Bp"
-      , pt # translate (4 ^& (-1.2)) # named "Bm"
-      , pt # translate (0 ^& (-1.2)) # named "Am"
-      , pt # translate ((-0.3) ^& 1.1) # named "Ap"
+      [ pt # named "start" # translate (0.3 ^& 0.9)
+      , pt # named "Bp"    # translate (4.3 ^& 0.9)
+      , pt # named "Bm"    # translate (4 ^& (-1.2))
+      , pt # named "Am"    # translate (0 ^& (-1.2))
+      , pt # named "Ap"    # translate ((-0.3) ^& 1.1)
+      , text "?" # fc red # fontSizeL 0.4 # named "FB?"   # translate (3 ^& 1.7)
       , hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
         # arrowBetweenAtY   ht  "f^+" ["A", "B"]
         # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
         # involutionArrow ht (-1) "\\alpha" "A"
         # involutionArrow ht 1    "\\beta"  "B"
       ]
+      # connect' arrowOptsLoop "start" "Bp"
+      # connect' arrowOptsLoop "Bp" "Bm"
+      # connect' arrowOptsLoop "Bm" "Am"
+      # connect' arrowOptsLoop "Am" "Ap"
+      # connect' (arrowOptsLoop & shaftStyle %~ dashingL [0.05, 0.05] 0)
+          "Ap" "FB?"
       where
         ht = 0.7
-        pt = circle 0.1 # fc red # lw none
+        pt = circle 0.07 # fc red # lw none
 
     arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
       let oa = location a
@@ -1714,6 +1721,11 @@ bijection.
             )
 
     arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
+    arrowOptsLoop = with & gaps .~ local 0.2
+                         & shaftStyle %~ lc red
+                         & headStyle  %~ fc red
+                         & tailStyle  %~ fc red
+                         & arrowShaft .~ arc xDir (-1/6 @@@@ turn)
 
     involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
       let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
