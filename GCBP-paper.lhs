@@ -168,14 +168,14 @@
 \setlength{\pdfpageheight}{\paperheight}
 \setlength{\pdfpagewidth}{\paperwidth}
 
-\conferenceinfo{CONF 'yy}{Month d--d, 20yy, City, ST, Country}
-\copyrightyear{2016}
+\conferenceinfo{ICFP '18}{September 23--29, 2018, St. Louis, Missouri, USA}
+\copyrightyear{2018}
 \copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
 \copyrightdoi{nnnnnnn.nnnnnnn}
 
 % Uncomment the publication rights you want to use.
 %\publicationrights{transferred}
-%\publicationrights{licensed}     % this is the default
+\publicationrights{licensed}     % this is the default
 %\publicationrights{author-pays}
 
 \titlebanner{DRAFT --- do not distribute}       % These are ignored unless
@@ -344,11 +344,13 @@ We will somehow need to make use of $g$ as well.
 % not be.  This is not a problem in and of itself, but \todo{but what?
 %   We just need to be careful... we just need to be aware...}
 
-But---why would anyone care?  This problem was first studied (and
-solved) in the context of combinatorics, where proving merely that two
-sets must have the same size is usually considered unsatisfactory: the
-goal is to exhibit an explicit bijection that serves as a
-(constructive) witness of the fact.
+Before attacking this problem, it's worth taking a minute to consider
+why it is worth studying.  This problem was first studied (and solved)
+in the context of combinatorics, where proving merely that two sets
+must have the same size is usually considered unsatisfactory: the goal
+is to exhibit an explicit bijection that serves as a (constructive)
+witness of the fact, and helps uncover additional structure or give
+some intuition as to ``why'' the sets have the same size.
 % Subtracting bijections also comes up in the
 % context of defining \term{virtual species}, where it is
 % needed to prove that the sum of virtual species is
@@ -356,34 +358,37 @@ goal is to exhibit an explicit bijection that serves as a
 %   something else about computational relevance?  I actually want this
 %   for my other project with Jacques but hard to explain here exactly
 %   where and why it comes up.}
-In addition, to the extent that we want
-to use results and techniques from combinatorics in the context of a
-proof assistant based on constructive logic, a constructive version of
-subtracting bijections is important.  \todo{Add citations to this
-  paragraph.}
-\todo{``But, perhaps most saliently for this context,
-  it's just interesting to understand how it works.  If you are a
-  functional programmer who cares about computation...''}
+Relatedly, in order to use techniques from combinatorics in the context of a
+proof assistant based on constructive logic, being able to subtract
+bijections constructively is important.
+% \todo{Add citations to this
+%   paragraph.}
+% \todo{``But, perhaps most saliently for this context,
+%   it's just interesting to understand how it works.  If you are a
+%   functional programmer who cares about computation...''}
 
 In one sense, the problem has already been solved, first by
-\citet{gordon1983sieve} and then, in a different form, by
-\citet{garsia1981method}.  However, the usual presentation of their
+\citet{garsia1981method} and then, in a different form, by
+\citet{gordon1983sieve}.  However, the usual presentation of their
 techniques is low-level and element-based (\ie ``pointful''), which
-obscures the high-level details; in addition, since \todo{something
-  about constructing the two directions independently, so not clear
-  why it must be a bijection.}  Our contributions are as follows:
+obscures the high-level details; in addition, since the construction
+is usually presented in one direction at a time, there is an extra
+burden of proof to show that the two directions so constructed
+actually form a bijection.  Our contributions are as follows:
 
 \begin{itemize}
-\item We present an algebra of partial bijections and their operations.
+\item We present an algebra of partial bijections and their
+  properties. \todo{Do we actually present properties?}
 \item Using our algebra of partial bijections, we give a high-level
-  construction the GCBP, which \todo{finish}
+  construction of the Gordon complementary bijection principle (GCBP),
+  which computes the difference of two bijections.
 \item We explain a related bijection principle, the \emph{Garsia-Milne
     involution principle} (GMIP), and prove that it is equivalent to
-  the GCBP.  The equivalence of GCBP and GMIP seems to be a
-  ``folklore'' result that is not explicitly recorded anywhere, and we
-  are able to give a \emph{computational} explanation of their
-  equivalence, by implementing each in terms of the other, and proving
-  that translating back and forth is the identity in both directions.
+  GCBP.  The equivalence of GCBP and GMIP seems to be a ``folklore''
+  result that is not explicitly recorded anywhere, and we are able to
+  give a \emph{computational} explanation of their equivalence, by
+  implementing each in terms of the other, and proving that
+  translating back and forth is the identity in both directions.
 \item One downside of our high-level implementation of GCBP is that
   one direction of the computed bijection has quadratic performance,
   which is not a problem with the usual low-level
@@ -405,8 +410,8 @@ place.
 Starting with an arbitrary element of $A$, our goal is to find an
 element of $A'$ to match it with.  First, run it through
 $h : A + B \bij A' + B'$.  If we land in $A'$, we are done.
-Otherwise, we end up with an element of $B'$.  Run this through
-$g : B \bij B'$ \emph{backwards}, yielding an element of $B$.  Now run
+Otherwise, we end up with an element of $B'$.  Run this backwards through
+$g : B \bij B'$, yielding an element of $B$.  Now run
 $h$ again. This may yield an element of $A'$, in which case we can
 stop, or an element of $B'$; we continue iterating this process until
 finally landing in $A'$. We then match the original element of $A$ to
@@ -468,14 +473,16 @@ uppermost element of the light blue set.
   \label{fig:GCBP}
 \end{figure}
 Symbolically, for each $a \in A$ we find the smallest $n$ such that
-$(h \comp \overline{g})^n \comp h$ applied to $a$ yields some
-$a' \in A'$.  \pref{fig:GCBP-uni-Haskell} contains a basic Haskell
-implementation of this process.  (It is worth pointing out that the
-Haskell implementation is a bit noisier because of the need for |Left|
-and |Right| constructors; typical mathematical presentations treat $A$
-as a mere subset of $A + B$, so that an element $a \in A$ \emph{is
-  also} an element of $A + B$, without the need for an explicit
-injection function.)
+$(h \overline{g})^n h$ applied to $a$ yields some $a' \in A'$. (We
+denote the inverse of a bijection $f : X \bij Y$ by
+$\overline{f} : Y \bij X$, and denote the composition of bijections by
+juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.)
+\pref{fig:GCBP-uni-Haskell} contains a basic Haskell implementation of
+this process.  (It is worth pointing out that the Haskell
+implementation is a bit noisier because of the need for |Left| and
+|Right| constructors; typical mathematical presentations treat $A$ as
+a mere subset of $A + B$, so that an element $a \in A$ \emph{is also}
+an element of $A + B$, without the need to explicitly inject it.)
 \begin{figure}[htp]
   \centering
 \begin{code}
@@ -484,18 +491,18 @@ pingpong h ginv = untilLeft (h . Right . ginv) . h . Left
 
 untilLeft :: (b' -> a' + b') -> (a' + b' -> a')
 untilLeft step ab = case ab of
-  Left  a' -> a'
-  Right b' -> untilLeft step (step b')
+  Left   a'  -> a'
+  Right  b'  -> untilLeft step (step b')
 \end{code}
   \caption{Ping-ponging in Haskell}
   \label{fig:GCBP-uni-Haskell}
 \end{figure}
 
-\citet{gordon1983sieve} first introduced this algorithm, and called
-it the \term{complementary bijection principle} \todo{note that
-  Gordon's principle is actually a bit more general?  What is
-  computational content of Gordon's original paper?} \todo{See notes
-  later below}
+\citet{gordon1983sieve} introduced this algorithm, and called it
+the \term{complementary bijection principle}. (Actually, Gordon's
+principle is quite a bit more general than this, involving a whole
+tower of bijections on chains of nested subsets, but we do not
+consider the principle in full generality here.)
 
 \todo{Is it still worth going through the proof if we aren't going to
   give a constructive one?}
@@ -540,23 +547,21 @@ $fg(a) = (f \comp g)(a) = f(g(a))$.
   instead of left to right.  When run ``in reverse'' in this way on
   $f(a)$, we can see that the algorithm will visit exactly the same
   series of elements in reverse, stopping when it reaches the original
-  $a$ since will be the first element not in $B$.
+  $a$ since it will be the first element not in $B$.
 \end{proof}
 
-\todo{The following probably needs to be rewritten if we aren't
-  actually going to give a constructive proof.}
-This proof would convince any combinatorialist, but it has several
-downsides:
+This construction and proof would convince any combinatorialist, but
+it has several downsides:
 
 \begin{itemize}
 \item It makes heavy use of ``pointwise'' reasoning, messily following
   the fate of individual elements through an algorithm.  We would like
   a ``higher-level'' perspective on both the algorithm and proof.
-  Note we cannot just rewrite the above algorithm in terms of function
-  composition and get rid of mentions of $a$, since the algorithm may
+  Note we cannot simply rewrite the above algorithm in terms of function
+  composition and get rid of any mentions of $a$, since the algorithm may
   iterate a different number of times for each particular $a \in A$.
-\item Relatedly, the proof requires constructing the forward and
-  backward directions separately, and then proving that the results
+\item Relatedly, in this presentation we construct the forward and
+  backward directions separately, and then prove that the results
   are inverse.  It would be better to construct both directions of the
   bijection simultaneously, so that the resulting bijection is
   ``correct by construction''.
