@@ -197,15 +197,14 @@ gcbpIterates minuend subtrahend = map leftPartial $
 
 gmip :: (a <=> a')
      -> (b <=> b')
-     -> (a' <=> b')
      -> (fa + a <=> fb + b)
+     -> (a' <=> b')
      -> (fa <=> fb)
-gmip involA involB f' f =
-  gcbp (reassocR $ f ||| f') ((involA >>> f' >>> inverse involB) ||| f')
+gmip involA involB h g =
+  gcbp h (involA >>> g >>> inverse involB)
 
 gcbp' :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbp' minuend subtrahend =
-  gmip id id subtrahend minuend
+gcbp' = gmip id id
 
 -- TODO: gmip all by itself (is this worth it?)
 
