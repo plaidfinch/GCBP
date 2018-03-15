@@ -232,14 +232,12 @@ keyword1, keyword2
 
 \section{Introduction}
 
-\bay{Do we need a more compelling/less technical introduction?}
-
-Suppose we have four finite sets $A, B, A',$ and $B'$ with bijections
-$f : A \bij A'$ and $g : B \bij B'$.  Then, as illustrated in
-\pref{fig:adding-bijections}, we can ``add'' these bijections
-to produce a new bijection
-\[ h : A + B \bij A' + B' \]
-(where $+$ denotes the disjoint union of sets).
+Suppose we have four finite types (sets) $A, B, A',$ and $B'$ with
+bijections $f : A \bij A'$ and $g : B \bij B'$.  Then, as illustrated
+in \pref{fig:adding-bijections}, we can ``add'' these bijections to
+produce a new bijection
+\[ h : A + B \bij A' + B', \]
+where $+$ denotes a sum type (or a disjoint union of sets).
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=150]
@@ -260,9 +258,9 @@ to produce a new bijection
   \caption{Adding bijections}
   \label{fig:adding-bijections}
 \end{figure}
-To construct $h$, we simply take $h = f + g$, that is, the function
-which applies $f$ on elements of $A$, and $g$ on elements of $B$. In
-Haskell:
+We take $h$ to be the function which applies $f$ on elements of $A$,
+and $g$ on elements of $B$, which we denote as $h = f + g$. In
+Haskell, we could encode this as follows:
 \begin{code}
 type (+) = Either
 
@@ -271,10 +269,10 @@ type (+) = Either
 (f + g) (Right y)  = Right  (g y)
 \end{code}
 (Note we are punning on |(+)| at the value and type levels.  This
-function lives in the standard \verb|Data.Bifunctor| module with
-the name |bimap|, but for our purposes we find it clearer to just
-define our own).  We can see that $(f + g)$ is a bijection as long as
-$f$ and $g$ are.
+function already lives in the standard \verb|Data.Bifunctor| module
+with the name |bimap|---in the |Bifunctor Either| instance---but for
+our purposes it is clearer to just define our own).  We can see
+that $(f + g)$ is a bijection as long as $f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
 \emph{difference}?  That is, given bijections $h$ and $g$ with
@@ -294,10 +292,10 @@ can just subtract the second equation from the first to conclude that
 $||A|| = ||A'||$.  Since $A$ and $A'$ are finite sets with the same
 size, there \emph{must exist} some bijection $A \bij A'$.  But this is
 not constructive: what if we want to actually \emph{compute} a
-concrete bijection $A \bij A'$?  The fact that $A$ and $A'$ have the
-same size, in and of itself, does not help us actually match up their
-elements.  The goal is to somehow use the \emph{computational content}
-of the bijections $h$ and $g$ to come up with a (suitably canonical)
+bijection $A \bij A'$?  The fact that $A$ and $A'$ have the same size,
+in and of itself, does not help us actually match up their elements.
+The goal is to somehow use the \emph{computational content} of the
+bijections $h$ and $g$ to come up with a (suitably canonical)
 definition for $h - g$.
 
 To see why this problem is not as trivial as it may first seem,
@@ -310,12 +308,14 @@ consider \pref{fig:subtracting-bijections}.
     dia = vsep 1 . map centerX $  -- $
       [ hsep 3
         [ drawBComplex (bc2 # labelBC ["$h$"])
-        , text "$-$"
-        , drawBComplex (bc1 # labelBC ["$g$"])
+        , text "$-$" # translateY (-2.5)
+        , drawBComplex (bc1 # labelBC ["$g$"]) # translateY (-2.5)
         ]
       , hsep 3
         [ text "$=$"
         , drawBComplex ((a0 .- empty -.. b0) # labelBC ["$h - g$?"])
+          <>
+          text "?"
         ]
       ]
     bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
