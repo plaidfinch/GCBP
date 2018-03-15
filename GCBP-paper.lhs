@@ -199,7 +199,20 @@
 \maketitle
 
 \begin{abstract}
-  \todo{Write an abstract.}
+  It is a straightforward exercise to write a program to ``add'' two
+  bijections---resulting in a bijection between two sum types, which
+  runs the first bijection on elements from the left summand and the
+  second bijection on the right. It is much less obvious how to
+  ``subtract'' one bijection from another.  This problem has been
+  studied in the context of combinatorics, with several computational
+  principles known for producing the ``difference'' of two bijections.
+  We consider the problem from a computational and algebraic
+  perspective, showing how to construct such bijections at a high
+  level, avoiding pointwise reasoning or being forced to construct the
+  forward and backward directions separately---without sacrificing
+  performance.  Along the way we also shed light on the equivalence
+  between the principles of Gordon and Garsia-Milne, a folklore result
+  without, to our knowledge, a published proof.
 
   We recommend viewing this paper as a PDF or printing it on a color
   printer, though it should still be comprehensible in black and
@@ -1061,104 +1074,109 @@ leftPartial f = left >>> f >>> inverse left
 \caption{|left| and |leftPartial|} \label{fig:left-partial}
 \end{figure}
 
-We can write down a few algebraic laws about the way |left|, |assoc|,
-and parallel composition interact.  Rather than formal algebraic
-proofs, we give pictorial proofs instead.
+% We don't actually need these laws since there's really nothing to
+% prove!  Our definition of gmip was way too complicated; with a
+% better definition the proof of equivalence between gmip and gcbp is
+% two lines.
 
-\begin{lem}
-  |left >>> inverse left = id|
-\end{lem}
-\begin{center}
-\begin{diagram}[width=150]
-    import Bijections
+% We can write down a few algebraic laws about the way |left|, |assoc|,
+% and parallel composition interact.  Rather than formal algebraic
+% proofs, we give pictorial proofs instead.
 
-    dia :: Diagram B
-    dia = hsep 1
-      [ b1
-      , tex "=" # translateY (-height b2 / 2)
-      , b2
-      ]
-      where
-        b1, b2 :: Diagram B
-        b2 = drawGenBij tex
-          ( sg "A" .- lk "" -.. sg "A" )
-        b1 = drawGenBij tex
-          ( sg "A"
-              .- lks "\\mathit{left}" [("A","A")] -.
-            (sg "A" +++ sg "B")
-              .- lks "\\overline{\\mathit{left}}" [("A","A")] -..
-            sg "A"
-          )
-\end{diagram}
-\end{center}
+% \begin{lem}
+%   |left >>> inverse left = id|
+% \end{lem}
+% \begin{center}
+% \begin{diagram}[width=150]
+%     import Bijections
 
-Note that it is \emph{not} automatically the case that |f >>>
-inverse f = id| when |f| is a partial bijection; indeed, it is not even
-the case that |inverse left >>> left = id| (in fact |inverse left >>>
-left = id |||||| undef|).
+%     dia :: Diagram B
+%     dia = hsep 1
+%       [ b1
+%       , tex "=" # translateY (-height b2 / 2)
+%       , b2
+%       ]
+%       where
+%         b1, b2 :: Diagram B
+%         b2 = drawGenBij tex
+%           ( sg "A" .- lk "" -.. sg "A" )
+%         b1 = drawGenBij tex
+%           ( sg "A"
+%               .- lks "\\mathit{left}" [("A","A")] -.
+%             (sg "A" +++ sg "B")
+%               .- lks "\\overline{\\mathit{left}}" [("A","A")] -..
+%             sg "A"
+%           )
+% \end{diagram}
+% \end{center}
 
-\begin{lem}
-  |left >>> assoc = left >>> left|
-\end{lem}
-\begin{center}
-  \begin{diagram}[width=240]
-  import Bijections
+% Note that it is \emph{not} automatically the case that |f >>>
+% inverse f = id| when |f| is a partial bijection; indeed, it is not even
+% the case that |inverse left >>> left = id| (in fact |inverse left >>>
+% left = id |||||| undef|).
 
-  dia = hsep 1
-    [ drawGenBij tex
-      ( sg "A"
-          .- lks "\\mathit{left}" [("A","A")] -.
-        (sg "A" +++ (sg "B" +++ sg "C"))
-          .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
-        ((sg "A" +++ sg "B") +++ sg "C")
-      )
-    , tex "=" # translateY (-2)
-    , drawGenBij tex
-      ( sg "A"
-          .- lks "\\mathit{left}" [("A","A")] -.
-        (sg "A" +++ sg "B")
-          .- lks "\\mathit{left}" [("A","A"),("B","B")] -..
-        ((sg "A" +++ sg "B") +++ sg "C")
-      )
-    , tex "=" # translateY (-2)
-    , drawGenBij tex
-      ( sg "A"
-          .- lks "" [("A","A")] -..
-        ((sg "A" +++ sg "B") +++ sg "C")
-      )
-    ]
-\end{diagram}
-\end{center}
+% \begin{lem}
+%   |left >>> assoc = left >>> left|
+% \end{lem}
+% \begin{center}
+%   \begin{diagram}[width=240]
+%   import Bijections
 
-By taking the inverse of both sides, we also deduce the corollary
-|inverse assoc >>> inverse left = inverse left >>> inverse left|.
+%   dia = hsep 1
+%     [ drawGenBij tex
+%       ( sg "A"
+%           .- lks "\\mathit{left}" [("A","A")] -.
+%         (sg "A" +++ (sg "B" +++ sg "C"))
+%           .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
+%         ((sg "A" +++ sg "B") +++ sg "C")
+%       )
+%     , tex "=" # translateY (-2)
+%     , drawGenBij tex
+%       ( sg "A"
+%           .- lks "\\mathit{left}" [("A","A")] -.
+%         (sg "A" +++ sg "B")
+%           .- lks "\\mathit{left}" [("A","A"),("B","B")] -..
+%         ((sg "A" +++ sg "B") +++ sg "C")
+%       )
+%     , tex "=" # translateY (-2)
+%     , drawGenBij tex
+%       ( sg "A"
+%           .- lks "" [("A","A")] -..
+%         ((sg "A" +++ sg "B") +++ sg "C")
+%       )
+%     ]
+% \end{diagram}
+% \end{center}
 
-\begin{lem}
-  |left >>> (f |||||| g) = f >>> left|
-\end{lem}
-\begin{center}
-  \begin{diagram}[width=200]
-    import Bijections
+% By taking the inverse of both sides, we also deduce the corollary
+% |inverse assoc >>> inverse left = inverse left >>> inverse left|.
 
-    dia = hsep 1
-      [ drawGenBij tex
-        ( sg "A"
-            .- lks "\\mathit{left}" [("A","A")] -.
-          (sg "A" +++ sg "B")
-            .- lks "f \\parsum g" [("A","A'"),("B","B'")] -..
-          (sg "A'" +++ sg "B'")
-        )
-      , tex "="
-      , drawGenBij tex
-        ( sg "A"
-            .- lks "f" [("A","A'")] -.
-          sg "A'"
-            .- lks "\\mathit{left}" [("A'","A'")] -..
-          (sg "A'" +++ sg "B'")
-        )
-      ]
-\end{diagram}
-\end{center}
+% \begin{lem}
+%   |left >>> (f |||||| g) = f >>> left|
+% \end{lem}
+% \begin{center}
+%   \begin{diagram}[width=200]
+%     import Bijections
+
+%     dia = hsep 1
+%       [ drawGenBij tex
+%         ( sg "A"
+%             .- lks "\\mathit{left}" [("A","A")] -.
+%           (sg "A" +++ sg "B")
+%             .- lks "f \\parsum g" [("A","A'"),("B","B'")] -..
+%           (sg "A'" +++ sg "B'")
+%         )
+%       , tex "="
+%       , drawGenBij tex
+%         ( sg "A"
+%             .- lks "f" [("A","A'")] -.
+%           sg "A'"
+%             .- lks "\\mathit{left}" [("A'","A'")] -..
+%           (sg "A'" +++ sg "B'")
+%         )
+%       ]
+% \end{diagram}
+% \end{center}
 
 \section{GCBP, take 1}
 
