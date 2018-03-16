@@ -13,6 +13,7 @@ cabal.sandbox.config
 *.prof
 *.aux
 *.out
+*.cut
 *.hp
 .stack-work/
 .shake/
