@@ -1129,10 +1129,19 @@ $A + B$ in one direction, and drops $B$ in the other direction:
       ( sg "A" .- lks "\\mathit{left}" [("A","A")] -.. (sg "A" +++ sg "B") )
   \end{diagram}
 \end{center}
-From this we define the left partial
-projection, notated |leftPartial|, which allows us to take a bijection
-between sum types and project out only the edges between the left
-sides of the sums:
+From this we define the \term{left partial projection}.  If |f : A+B
+<-> A'+B'|, then the left partial projection of $f$, denoted
+|leftPartial(f)|, has the type |leftPartial(f) : A <-> A'|, and
+consists of only those edges of |f| which go between |A| and |A'|.
+Any edges involving elements in |B| or |B'| are dropped.  This can be
+accomplished simply by sandwiching |f| in between |left| and
+|inverse(left)|, as shown in \pref{fig:left-partial}; code for |left|
+and |leftPartial| is shown in \pref{fig:left-partial-code}. (|right|
+and |rightPartial| could be defined similarly, but we do not need
+them.) \pref{fig:left-partial-ex} shows an example of computing the
+left partial projection |leftPartial(h)|, using the same bijection $h$
+from the introduction.
+\begin{figure}
 \begin{center}
 \begin{diagram}[width=200]
   import Bijections
@@ -1158,15 +1167,23 @@ sides of the sums:
     # hsep 1
 \end{diagram}
 \end{center}
+\caption{Constructing the left partial projection via |left|} \label{fig:left-partial}
+\end{figure}
 
-For example, \pref{fig:left-partial-ex} shows the computation of the
-left partial projection |leftPartial(h)|, using the same bijection $h$
-from the introduction. Code for |left| and |leftPartial| is shown in
-\pref{fig:left-partial}.  Of course |right| and |rightPartial| could
-be defined similarly, but we do not need them.
+\begin{figure}
+\begin{code}
+left :: a <-> a + b
+left = (Left >>> Just) :<->: either Just (const Nothing)
+
+leftPartial :: (a + b <-> a' + b') -> (a <-> a')
+leftPartial f = left >>> f >>> inverse left
+\end{code}
+\caption{|left| and |leftPartial|} \label{fig:left-partial-code}
+\end{figure}
+
 \begin{figure}
   \centering
-  \begin{diagram}[width=200]
+  \begin{diagram}[width=300]
     import Bijections
 
     dia = hsep 3
@@ -1198,16 +1215,6 @@ be defined similarly, but we do not need them.
   \end{diagram}
   \caption{Computing the left partial projection |leftPartial(h)|}
   \label{fig:left-partial-ex}
-\end{figure}
-\begin{figure}
-\begin{code}
-left :: a <-> a + b
-left = (Left >>> Just) :<->: either Just (const Nothing)
-
-leftPartial :: (a + c <-> b + d) -> (a <-> b)
-leftPartial f = left >>> f >>> inverse left
-\end{code}
-\caption{|left| and |leftPartial|} \label{fig:left-partial}
 \end{figure}
 
 % We don't actually need these laws since there's really nothing to
@@ -1414,7 +1421,7 @@ level, however, we must somehow keep track of everything at once.
 Let's see how we might start building up something like
 \pref{fig:ping-pong}.  First of all, we can't compose
 $h : A+B \bij A' + B'$ with $|inverse(g)| : B' \bij B$ directly, since
-that is a type error. (Note, once again, that in typical mathematical
+their types do not match. (Note, once again, that in typical mathematical
 presentations, this is glossed since a subtyping relationship
 $B' \leq A' + B'$ is assumed.)  However, if we compose |inverse(g)| in
 parallel with $|undef : A' <-> A|$ we get
