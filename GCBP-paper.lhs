@@ -1,3 +1,6 @@
+% -*- mode: LaTeX; compile-command: "./build.sh" -*-
+
+
 % More distinct colors?
 
 % Kenny got lost:
@@ -15,8 +18,6 @@
 % Remove dom?  
 % Remove assoc etc.?
 
-% -*- mode: LaTeX; compile-command: "./build.sh" -*-
-
 \documentclass[natbib, preprint]{sigplanconf}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,6 +33,7 @@
 %format <=< = "<\!\!\!=\!\!<"
 %format +++ = "+\!\!+\!\!+"
 %format >>> = "\andthen"
+%format ||| = "+"
 
 %format <== = "\sqsubseteq"
 %format ==> = "\sqsupseteq"
@@ -168,7 +170,7 @@
 \newcommand{\compat}{\mathbin{||||}}
 \newcommand{\mrg}{\sqcup}
 
-\newcommand{\parsum}{\mathbin{||||||}}
+\newcommand{\parsum}{+}
 
 \newtheorem{thm}{Theorem}
 \newtheorem{lem}[thm]{Lemma}
@@ -391,28 +393,25 @@ techniques is low-level and element-based (\ie ``pointful''), which
 obscures the high-level details; in addition, since the construction
 is usually presented in one direction at a time, there is an extra
 burden of proof to show that the two directions so constructed
-actually form a bijection.  Our contributions are as follows:
+actually form a bijection.
 
-\begin{itemize}
-\item We present an algebra of partial bijections and their
-  properties. \todo{Do we actually present properties?}
-\item Using our algebra of partial bijections, we give a high-level
-  construction of the Gordon complementary bijection principle (GCBP),
-  which computes the difference of two bijections.
-\item We explain a related bijection principle, the \emph{Garsia-Milne
-    involution principle} (GMIP), and prove that it is equivalent to
-  GCBP.  The equivalence of GCBP and GMIP seems to be a ``folklore''
-  result that is not explicitly recorded anywhere, and we are able to
-  give a \emph{computational} explanation of their equivalence, by
-  implementing each in terms of the other, and proving that
-  translating back and forth is the identity in both directions.
-\item One downside of our high-level implementation of GCBP is that
-  one direction of the computed bijection has quadratic performance,
-  which is not a problem with the usual low-level
-  implementation. However, we show how to optimize the implementation
-  so that both directions run in linear time, while retaining its
-  high-level character.
-\end{itemize}
+Using an algebra of \term{partial bijections}, we will give a
+high-level construction of the Gordon complementary bijection
+principle (GCBP), which computes the difference of two bijections.
+One downside of our high-level implementation of GCBP is that one
+direction of the computed bijection has quadratic performance, which
+is not a problem with the usual low-level implementation. However, we
+will then show how to optimize the implementation so that both
+directions run in linear time, while retaining its high-level
+character.
+
+% \item We explain a related bijection principle, the \emph{Garsia-Milne
+%     involution principle} (GMIP), and prove that it is equivalent to
+%   GCBP.  The equivalence of GCBP and GMIP seems to be a ``folklore''
+%   result that is not explicitly recorded anywhere, and we are able to
+%   give a \emph{computational} explanation of their equivalence, by
+%   implementing each in terms of the other, and proving that
+%   translating back and forth is the identity in both directions.
 
 \section{The Gordon Complementary Bijection Principle}
 \label{sec:GCBP}
@@ -584,7 +583,7 @@ it has several downsides:
   ``correct by construction''.
 \end{itemize}
 
-\section{The Algebra of Partial Bijections}
+\section{Partial Bijections}
 \label{sec:algebra}
 
 We solve these problems by eschewing point-based reasoning in favor of
@@ -665,7 +664,6 @@ notation
 \begin{spec}
   f >>> g = g . f
 \end{spec}
-Composing partial functions works XXX
 
 We can now define a general type of |m|-bijections as
 \begin{code}
@@ -687,74 +685,110 @@ instance Monad m => Groupoid (Bij m) where
   inverse (B f g) = B g f
 \end{code}
 
+Composing two partial functions works the way we would expect: the
+composite |f >>> g| is defined on $a$ if and only if $f$ is defined on
+$a$ and $g$ is defined on $f(a)$.  Thinking pictorially, when we
+compose two partial bijections, we keep only those paths which travel
+continuously across the entire diagram, as shown in
+\pref{fig:partial-compose}.
+
+\begin{figure}
+  \centering
+  \begin{diagram}[width=200]
+    {-# LANGUAGE LambdaCase #-}
+    import Bijections
+
+    dia = hsep 3
+      [ drawBComplex (a .- bij1 -. b .- bij2 -.. c)
+      , text "$=$"
+      , drawBComplex (a .- bijC -.. c)
+      ]
+      where
+        a = nset 4 (colors!!0)
+        b = nset 5 (colors!!2)
+        c = nset 3 (colors!!4)
+        bij1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 2 -> Just 3; 3 -> Just 2; _ -> Nothing}) -- $
+        bij2 = single $ bijFun [0..4] (\case { 0 -> Just 0; 1 -> Just 2; 3 -> Just 1; _ -> Nothing}) -- $
+        -- Manually compose bij1 >>> bij2
+        bijC = single $ bijFun [0..3] (\case { 0 -> Just 2; 2 -> Just 1; _ -> Nothing})  -- $
+  \end{diagram}
+  \caption{Composing partial bijections}
+  \label{fig:partial-compose}
+\end{figure}
+
 However, not just any pair of Kleisli arrows qualifies as a
 generalized bijection.  When |m = Identity|, a generalized bijection
 should consist of two inverse functions, that is, functions whose
 composition is |id|.  When |m = Maybe|, composing the two functions
 does not have to yield the identity, since it may be undefined in some
 places---but it should certainly be the identity when restricted to
-points on which the functions are defined. In general, for any monad
-|m|, we can say that the composition of the |fwd| and |bwd| morphisms
-should be the identity ``up to any |m| effects''.
+points on which the functions are defined.  More formally, we should
+have |fwd a = Just b| if and only if |bwd b = Just a|.  This justifies
+drawing partial bijections by connecting two sets with some collection
+of undirected (\ie bidirectional) line segments, as in
+\pref{fig:partial-bij}.  (These laws can be generalized to any monad
+|m| with some sort of ``information ordering'' relation; intuitively
+the composition of the |fwd| and |bwd| morphisms should be the
+identity ``up to any |m| effects''.)
 
-To express this formally, we introduce the function |dom| (short for
-\emph{domain}), which intuitively extracts just the ``effects'' of a
-morphism |f|: for each |a|, the effects generated by running |f a| are
-retained, but the output of type |b| is discarded and replaced by |a|
-itself.  This is illustrated in \pref{fig:dom}, and an implementation
-of |dom| is shown in \pref{fig:domcode}.
-\begin{figure}[htp]
-  \centering
-  \begin{diagram}[width=120]
-    {-# LANGUAGE LambdaCase #-}
-    import Bijections
+% To express this formally, we introduce the function |dom| (short for
+% \emph{domain}), which intuitively extracts just the ``effects'' of a
+% morphism |f|: for each |a|, the effects generated by running |f a| are
+% retained, but the output of type |b| is discarded and replaced by |a|
+% itself.  This is illustrated in \pref{fig:dom}, and an implementation
+% of |dom| is shown in \pref{fig:domcode}.
+% \begin{figure}[htp]
+%   \centering
+%   \begin{diagram}[width=120]
+%     {-# LANGUAGE LambdaCase #-}
+%     import Bijections
 
-    dia = hsep 3
-      [ (a .- pbij -.. b)
-        # labelBC ["$f$"]
-        # drawBComplex
-      , (a .- pbijdom -.. a)
-        # labelBC ["$\\mathit{dom}\\; f$"]
-        # drawBComplex
-      ]
-      where
-        a = nset 4 (colors!!0)
-        b = nset 4 (colors!!2)
-    pbij = single $ bijFun [0..3] (\case { 1 -> Just 0; 3 -> Just 3; _ -> Nothing}) -- $
-    pbijdom = single $ bijFun [0..3] (\case { 1 -> Just 1; 3 -> Just 3; _ -> Nothing}) -- $
-  \end{diagram}
-  \caption{|dom| on a partial bijection |f : Kleisli Maybe a b|}
-  \label{fig:dom}
-\end{figure}
-\begin{figure}
-\begin{spec}
-  dom :: Functor m => (Kleisli m a b) -> (Kleisli m a a)
-  dom (K f) = K (\a -> const a <$> f a)
-\end{spec}%$
-\caption{The |dom| function} \label{fig:domcode}
-\end{figure}
-We also require that the monad |m| has some relation |<==| on
-values of type |m a|, which we can think of as an ``information
-ordering''.  For |m = Identity|, we have |a <== b| if and only
-if |a = b|; for |m = Maybe|, |Nothing <== Just a| and |Just a <== Just
-a|.  We can now impose the laws
-\begin{spec}
-  fwd >>> bwd ==> dom fwd
-  bwd >>> fwd ==> dom bwd
-\end{spec}
-which intuitively say that |fwd >>> bwd| and |bwd >>> fwd| must both
-act like |id|, except for some possible effects---, and vice versa.
-When |m = Identity| there are no effects at all, and indeed, |dom f =
-id| since |const a
-<$> f a = Identity a|, so the laws reduce to the familiar |fwd >>> bwd
-= id| and |bwd >>> fwd = id|.  In the case |m = Maybe|, the laws
-essentially say that |fwd a = Just b| if and only if |bwd b = Just
-a|---that is, |fwd| and |bwd| must agree wherever they are both
-defined, and moreover, they must be defined and undefined in the same
-places. This justifies drawing partial bijections by connecting two
-sets with some collection of undirected (\ie bidirectional) line
-segments, as in \pref{fig:partial-bij}.
-%$
+%     dia = hsep 3
+%       [ (a .- pbij -.. b)
+%         # labelBC ["$f$"]
+%         # drawBComplex
+%       , (a .- pbijdom -.. a)
+%         # labelBC ["$\\mathit{dom}\\; f$"]
+%         # drawBComplex
+%       ]
+%       where
+%         a = nset 4 (colors!!0)
+%         b = nset 4 (colors!!2)
+%     pbij = single $ bijFun [0..3] (\case { 1 -> Just 0; 3 -> Just 3; _ -> Nothing}) -- $
+%     pbijdom = single $ bijFun [0..3] (\case { 1 -> Just 1; 3 -> Just 3; _ -> Nothing}) -- $
+%   \end{diagram}
+%   \caption{|dom| on a partial bijection |f : Kleisli Maybe a b|}
+%   \label{fig:dom}
+% \end{figure}
+% \begin{figure}
+% \begin{spec}
+%   dom :: Functor m => (Kleisli m a b) -> (Kleisli m a a)
+%   dom (K f) = K (\a -> const a <$> f a)
+% \end{spec}%$
+% \caption{The |dom| function} \label{fig:domcode}
+% \end{figure}
+% We also require that the monad |m| has some relation |<==| on
+% values of type |m a|, which we can think of as an ``information
+% ordering''.  For |m = Identity|, we have |a <== b| if and only
+% if |a = b|; for |m = Maybe|, |Nothing <== Just a| and |Just a <== Just
+% a|.  We can now impose the laws
+% \begin{spec}
+%   fwd >>> bwd ==> dom fwd
+%   bwd >>> fwd ==> dom bwd
+% \end{spec}
+% which intuitively say that |fwd >>> bwd| and |bwd >>> fwd| must both
+% act like |id|, except for some possible effects.
+% When |m = Identity| there are no effects at all, and indeed, |dom f =
+% id| since |const a
+% <$> f a = Identity a|, so the laws reduce to the familiar |fwd >>> bwd
+% = id| and |bwd >>> fwd = id|.  In the case |m = Maybe|, the laws
+% essentially say that |fwd a = Just b| if and only if |bwd b = Just
+% a|---that is, |fwd| and |bwd| must agree wherever they are both
+% defined, and moreover, they must be defined and undefined in the same
+% places. This justifies drawing partial bijections by connecting two
+% sets with some collection of undirected (\ie bidirectional) line
+% segments, as in \pref{fig:partial-bij}.
+% %$
 
 As an aside, we remark that choosing |m = Set| (which is a monad in
 the mathematical sense, if not a |Monad| in Haskell) leads to
@@ -782,8 +816,8 @@ data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
 \end{spec}
 automatically handling the required newtype wrapping and unwrapping.
 The declarations for these pattern synonyms are shown in
-\pref{fig:pat-syns} for completeness, though the details are
-unimportant.
+\pref{fig:pat-syns} for completeness, though the syntax is somewhat
+complex and the details are unimportant.
 
 \begin{figure}
 \begin{code}
@@ -806,7 +840,7 @@ generalized bijection $f$ between sets $A$ and $B$ as a thick line
 connecting two labelled boxes, as shown in \pref{fig:gen-bij-dia}.
 \begin{figure}
   \begin{center}
-    \begin{diagram}[width=100]
+    \begin{diagram}[width=75]
       import Bijections
 
       dia = drawGenBij tex
@@ -829,8 +863,9 @@ We now define some utility functions for working with total and
 partial bijections (\pref{fig:partial-total}). First, |applyTotal| and
 |applyPartial| let us run a bijection in the forward direction.  Next,
 we define |undef| as the totally undefined partial bijection, which
-we draw as follows:
+we draw as two unconnected boxes, as in \pref{fig:undefined}.
 
+\begin{figure}
 \begin{center}
 \begin{diagram}[width=75]
   import Bijections
@@ -838,14 +873,19 @@ we draw as follows:
   dia = drawGenBij tex (sg "A" .- emptyLk "\\varnothing" -.. sg "B")
 \end{diagram}
 \end{center}
+\caption{The undefined partial bijection} \label{fig:undefined}
+\end{figure}
 
 Finally, the |partial| and |unsafeTotal| functions move back and forth
 between total and partial bijections.  Treating a total bijection as a
 partial one is always safe, and we will sometimes omit calls to
-|partial| in informal discussion.  On the other hand, moving in the
+|partial| in informal discussion, thinking of total bijections as a
+``subtype'' of partial bijections.  On the other hand, moving in the
 other direction is only safe if we know that the ``partial'' bijection
 is, in fact, defined everywhere. Evaluating |unsafeTotal f| at some
-input for which |f| is undefined will result in a runtime error.
+input for which |f| is undefined will result in a runtime error.  (With
+a richer type system we could of course make a safe version of
+|unsafeTotal| which requires a proof of totality.)
 \begin{figure}
 \begin{code}
 applyTotal    ::  (a <=> b)    ->  a -> b
@@ -872,8 +912,8 @@ sum types. It is useful to have a type class for ``things which
 compose in parallel''. If $f$ is some sort of relation between $A$ and
 $A'$, and $g$ relates $B$ and $B'$, then their parallel sum
 $f \parsum g$ relates the disjoint sums $A + B$ and $A' + B'$, which
-we visualize by stacking vertically:
-
+we visualize by stacking vertically (\pref{fig:bij-sum}).
+\begin{figure}
 \begin{center}
 \begin{diagram}[width=200]
   import Bijections
@@ -893,15 +933,18 @@ we visualize by stacking vertically:
     # hsep 1
 \end{diagram}
 \end{center}
-
+\caption{Parallel composition (sum) of generalized bijections}
+\end{figure}
 For example, normal functions $A \to A'$ compose in parallel: if
 $f : A \to A'$ and $g : B \to B'$ then $f \parsum g : A+B \to A'+B'$
 is the function which runs $f$ on elements of $A$ and $g$ on elements
-of $B$.  Kleisli arrows over the same monad |m| also compose in
+of $B$; we saw this parallel composition of functions in the
+introduction.  Kleisli arrows over the same monad |m| also compose in
 parallel: the parallel sum of $f : A \to_m A'$ and $g : B \to_m B'$
 works the same as the parallel sum of normal functions, but has the
 effects of whichever one actually runs.  Finally, since Kleisli arrows
-compose in parallel, so can generalized bijections.  The code is shown
+compose in parallel, so can generalized bijections, by composing the
+forward and backward directions separately.  The code is shown
 in \pref{fig:par-comp}.
 
 \begin{figure}
@@ -912,8 +955,11 @@ class Category arr => Parallel arr where
 factor :: Functor m => m a + m b -> m (a + b)
 factor = either (fmap Left) (fmap Right)
 
+instance Parallel (->) where
+  (|||) = bimap
+
 instance Monad m => Parallel (Kleisli m) where
-  K f ||| K g = K (bimap f g >>> factor)
+  K f ||| K g = K ((f ||| g) >>> factor)
 
 instance Monad m => Parallel (Bij m) where
   (B f g) ||| (B h i) = B (f ||| h) (g ||| i)
