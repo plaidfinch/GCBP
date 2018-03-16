@@ -231,7 +231,7 @@
 %% extraction tools.
 
 %% Author with single affiliation.
-\author{Brent Yorgey}
+\author{Brent A. Yorgey}
 % \authornote{with author1 note}          %% \authornote is optional;
 %                                         %% can be repeated if necessary
 % \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
