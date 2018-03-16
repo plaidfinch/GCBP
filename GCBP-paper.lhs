@@ -1048,76 +1048,76 @@ instance Monad m => Parallel (Bij m) where
 \caption{Parallel composition} \label{fig:par-comp}
 \end{figure}
 
-Next, we can construct general bijections witnessing the
-associativity of the type-level sum constructor.  |assoc| is a
-generalized bijection relating $A + (B+C)$ to $(A+B)+C$:
-\begin{center}
-\begin{diagram}[width=60]
-  import Bijections
+% Next, we can construct general bijections witnessing the
+% associativity of the type-level sum constructor.  |assoc| is a
+% generalized bijection relating $A + (B+C)$ to $(A+B)+C$:
+% \begin{center}
+% \begin{diagram}[width=60]
+%   import Bijections
 
-  dia = drawGenBij tex
-    (
-      (sg "A" +++ (sg "B" +++ sg "C"))
-      .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")]
-      -.. ((sg "A" +++ sg "B") +++ sg "C")
-    )
-\end{diagram}
-\end{center}
-|reassocL| takes a generalized bijection between a nested sum and
-reassociates both sides, by composing with |inverse(assoc)| and |assoc|:
-\begin{center}
-\begin{diagram}[width=200]
-  import Bijections
+%   dia = drawGenBij tex
+%     (
+%       (sg "A" +++ (sg "B" +++ sg "C"))
+%       .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")]
+%       -.. ((sg "A" +++ sg "B") +++ sg "C")
+%     )
+% \end{diagram}
+% \end{center}
+% |reassocL| takes a generalized bijection between a nested sum and
+% reassociates both sides, by composing with |inverse(assoc)| and |assoc|:
+% \begin{center}
+% \begin{diagram}[width=200]
+%   import Bijections
 
-  dia =
-    [ drawGenBij tex
-        (   (sg "A" +++ (sg "B" +++ sg "C"))
-        .-  lk "f"
-        -.. (sg "A'" +++ (sg "B'" +++ sg "C'"))
-        )
-    , tex "\\implies"
-    , drawGenBij tex
-        (   ((sg "A" +++ sg "B") +++ sg "C")
-        .-  lks "\\overline{\\mathit{assoc}}" [("A","A"), ("B","B"), ("C","C")]
-        -.  (sg "A" +++ (sg "B" +++ sg "C"))
-        .-  lk "f"
-        -.  (sg "A'" +++ (sg "B'" +++ sg "C'"))
-        .-  lks "\\mathit{assoc}" [("A'","A'"), ("B'","B'"), ("C'","C'")]
-        -.. ((sg "A'" +++ sg "B'") +++ sg "C'")
-        )
-    ]
-    # map centerY
-    # hsep 1
-\end{diagram}
-\end{center}
-The code for |assoc| and |reassocL| is shown in \pref{fig:assoc}.
+%   dia =
+%     [ drawGenBij tex
+%         (   (sg "A" +++ (sg "B" +++ sg "C"))
+%         .-  lk "f"
+%         -.. (sg "A'" +++ (sg "B'" +++ sg "C'"))
+%         )
+%     , tex "\\implies"
+%     , drawGenBij tex
+%         (   ((sg "A" +++ sg "B") +++ sg "C")
+%         .-  lks "\\overline{\\mathit{assoc}}" [("A","A"), ("B","B"), ("C","C")]
+%         -.  (sg "A" +++ (sg "B" +++ sg "C"))
+%         .-  lk "f"
+%         -.  (sg "A'" +++ (sg "B'" +++ sg "C'"))
+%         .-  lks "\\mathit{assoc}" [("A'","A'"), ("B'","B'"), ("C'","C'")]
+%         -.. ((sg "A'" +++ sg "B'") +++ sg "C'")
+%         )
+%     ]
+%     # map centerY
+%     # hsep 1
+% \end{diagram}
+% \end{center}
+% The code for |assoc| and |reassocL| is shown in \pref{fig:assoc}.
 
-\begin{figure}
-\begin{code}
-(<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
-f <~> g = B (K (f >>> return) (K (g >>> return))
+% \begin{figure}
+% \begin{code}
+% (<~>) :: Monad m => (a -> b) -> (b -> a) -> Bij m a b
+% f <~> g = B (K (f >>> return) (K (g >>> return))
 
-assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
-assoc =
-  either (Left >>> Left) (either (Right >>> Left) Right)
-  <~>
-  either (either Left (Left >>> Right)) (Right >>> Right)
+% assoc :: Monad m => Bij m (a + (b + c)) ((a + b) + c)
+% assoc =
+%   either (Left >>> Left) (either (Right >>> Left) Right)
+%   <~>
+%   either (either Left (Left >>> Right)) (Right >>> Right)
 
-reassocL
-  :: Monad m
-  => Bij m (a + (b + c)) (a' + (b' + c'))
-  -> Bij m ((a + b) + c) ((a' + b') + c')
-reassocL bij = inverse assoc >>> bij >>> assoc
-\end{code}
-\caption{Associativity of sum} \label{fig:assoc}
-\end{figure}
-
-% XXX put in reassocR iff we need it
-% reassocR
+% reassocL
 %   :: Monad m
-%   => Bij m ((a + b) + c) ((a' + b') + c')
-%   -> Bij m (a + (b + c)) (a' + (b' + c'))
-% reassocR bij = assoc >>> bij >>> inverse assoc
+%   => Bij m (a + (b + c)) (a' + (b' + c'))
+%   -> Bij m ((a + b) + c) ((a' + b') + c')
+% reassocL bij = inverse assoc >>> bij >>> assoc
+% \end{code}
+% \caption{Associativity of sum} \label{fig:assoc}
+% \end{figure}
+
+% % XXX put in reassocR iff we need it
+% % reassocR
+% %   :: Monad m
+% %   => Bij m ((a + b) + c) ((a' + b') + c')
+% %   -> Bij m (a + (b + c)) (a' + (b' + c'))
+% % reassocR bij = assoc >>> bij >>> inverse assoc
 
 We also define |left|, the partial bijection which injects $A$ into
 $A + B$ in one direction, and drops $B$ in the other direction:
