@@ -909,8 +909,8 @@ pattern (:<->:) f g = B (K f) (K g)
 pattern (:<=>:) f g <- B  (K ((>>> runIdentity) -> f))
                           (K ((>>> runIdentity) -> g))
   where
-  f :<=>: g = B  (K (f >>> Identity))
-                 (K (g >>> Identity))
+    f :<=>: g = B  (K (f >>> Identity))
+                   (K (g >>> Identity))
 \end{code}
 \caption{Pattern synonyms for total and partial bijections} \label{fig:pat-syns}
 \end{figure}
@@ -947,7 +947,6 @@ partial bijections (\pref{fig:partial-total}). First, |applyTotal| and
 |applyPartial| let us run a bijection in the forward direction.  Next,
 we define |undef| as the totally undefined partial bijection, which
 we draw as two unconnected boxes, as in \pref{fig:undefined}.
-
 \begin{figure}
 \begin{center}
 \begin{diagram}[width=75]
@@ -958,7 +957,6 @@ we draw as two unconnected boxes, as in \pref{fig:undefined}.
 \end{center}
 \caption{The undefined partial bijection} \label{fig:undefined}
 \end{figure}
-
 Finally, the |partial| and |unsafeTotal| functions move back and forth
 between total and partial bijections.  Treating a total bijection as a
 partial one is always safe, and we will sometimes omit calls to
@@ -1016,7 +1014,7 @@ we visualize by stacking vertically (\pref{fig:bij-sum}).
     # hsep 1
 \end{diagram}
 \end{center}
-\caption{Parallel composition (sum) of generalized bijections}
+\caption{Parallel composition (sum) of generalized bijections} \label{fig:bij-sum}
 \end{figure}
 For example, normal functions $A \to A'$ compose in parallel: if
 $f : A \to A'$ and $g : B \to B'$ then $f \parsum g : A+B \to A'+B'$
@@ -1035,11 +1033,11 @@ in \pref{fig:par-comp}.
 class Category arr => Parallel arr where
   (|||) :: arr a c -> arr b d -> arr (a + b) (c + d)
 
-factor :: Functor m => m a + m b -> m (a + b)
-factor = either (fmap Left) (fmap Right)
-
 instance Parallel (->) where
   (|||) = bimap
+
+factor :: Functor m => m a + m b -> m (a + b)
+factor = either (fmap Left) (fmap Right)
 
 instance Monad m => Parallel (Kleisli m) where
   K f ||| K g = K ((f ||| g) >>> factor)
