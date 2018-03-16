@@ -1,3 +1,20 @@
+% More distinct colors?
+
+% Kenny got lost:
+% - bra-ket notation for left partial projection??
+% - be sure to have pictures for ext_g,h
+% - take out GMIP
+% - expand explanation of palindrome inverses
+% - "manifestly stupid": don't insult the reader!
+% - p. 6:
+%    Two copies of f_i *have to be run*.  Actually expand out f_2 or
+%    f_3?
+%   Note, computing cycle length is at least as much computation as just
+%   computing the pointwise version!
+
+% Remove dom?  
+% Remove assoc etc.?
+
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
 \documentclass[natbib, preprint]{sigplanconf}
@@ -565,28 +582,14 @@ it has several downsides:
   are inverse.  It would be better to construct both directions of the
   bijection simultaneously, so that the resulting bijection is
   ``correct by construction''.
-\item Finally, as hinted earlier, the proof seems to make essential
-  use of classical reasoning: the termination argument in particular
-  is a proof by contradiction.  Having an algorithm at all is still
-  better than nothing, but having a classical proof of correctness is
-  irksome: intuitively, it doesn't seem like anything fundamentally
-  non-constructive is going on, and the classical proof makes it
-  problematic to implement GCBP in a proof assistant based on
-  constructive logic.
-
-  To give a constructive proof of termination, we need some sort of
-  termination measure on which we can do well-founded induction, but
-  it is not \emph{a priori} obvious what measure to use, especially
-  when working at the level of individual elements.
 \end{itemize}
 
 \section{The Algebra of Partial Bijections}
 \label{sec:algebra}
 
-We solve all these problems at once by eschewing point-based reasoning
-in favor of a high-level algebric approach, which we use to directly
-construct---and constructively verify---a bijection which is the
-``difference'' of two other bijections.
+We solve these problems by eschewing point-based reasoning in favor of
+a high-level algebric approach, which we use to directly construct a
+bijection which is the ``difference'' of two other bijections.
 
 Since the GCBP takes two bijections as input and yields a bijection as
 output, one might think to begin by defining a type of bijections:
@@ -598,12 +601,11 @@ data Bijection a b = Bijection
 \end{spec}
 satisfying the invariants that |to . from = id| and |from . to =
 id|. (In a dependently typed language, one might well include these
-conditions as part of the definition. \todo{Mention our Agda
-  development here?})  The idea would be to somehow piece together the
-GCBP algorithm out of high-level operations on bijections, so that the
-whole algorithm returns a valid bijection by construction, eliminating
-duplication of code and the possibility for the forward and backward
-directions to be out of sync.
+conditions as part of the definition.)  The idea would be to somehow
+piece together the GCBP algorithm out of high-level operations on
+bijections, so that the whole algorithm returns a valid bijection by
+construction, eliminating duplication of code and the possibility for
+the forward and backward directions to be out of sync.
 
 This is the right idea, but it is not good enough.  The problem
 is that when it comes to bijections, the algorithm is an
@@ -656,12 +658,14 @@ b| yields normal total functions (up to some extra |newtype|
 wrappers); picking |m = Maybe| yields partial functions.  The
 |Category| instance for |Kleisli m| provides the identity |id ::
 Kleisli m a a| along with a composition operator
-\[ |(.) :: (Kleisli m b c) -> (Kleisli m a b) -> (Kleisli m a c)|. \]  In
-order to match up with the pictures, where we tend to draw functions
-going from left to right, we will also make use of the notation
+\[ |(.) :: (Kleisli m b c) -> (Kleisli m a b) -> (Kleisli m a c)|. \]
+In order to match up with the pictures, where we tend to draw
+functions going from left to right, we will also make use of the
+notation
 \begin{spec}
   f >>> g = g . f
 \end{spec}
+Composing partial functions works XXX
 
 We can now define a general type of |m|-bijections as
 \begin{code}
@@ -779,7 +783,7 @@ data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
 automatically handling the required newtype wrapping and unwrapping.
 The declarations for these pattern synonyms are shown in
 \pref{fig:pat-syns} for completeness, though the details are
-unimportant
+unimportant.
 
 \begin{figure}
 \begin{code}
