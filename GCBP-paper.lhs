@@ -891,13 +891,13 @@ type a <-> b = Bij Maybe a b
 \end{code}
 
 To make working with total and partial bijections more convenient, we
-can define \emph{pattern synonyms} \todo{cite} which let us pretend as
+can define \emph{pattern synonyms} \citep{pickering2016pattern} which let us pretend as
 if we had directly declared types like
 \begin{spec}
 data a <=> b = (a -> b) :<=>: (b -> a)
 data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
 \end{spec}
-automatically handling the required newtype wrapping and unwrapping.
+automatically handling the required |newtype| wrapping and unwrapping.
 The declarations for these pattern synonyms are shown in
 \pref{fig:pat-syns} for completeness, though the syntax is somewhat
 complex and the details are unimportant.
