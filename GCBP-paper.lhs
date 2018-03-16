@@ -1,9 +1,5 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-
-% More distinct colors?
-
-% Kenny got lost:
 % - bra-ket notation for left partial projection??
 % - be sure to have pictures for ext_g,h
 % - take out GMIP
@@ -15,10 +11,38 @@
 %   Note, computing cycle length is at least as much computation as just
 %   computing the pointwise version!
 
-% Remove dom?  
 % Remove assoc etc.?
 
-\documentclass[natbib, preprint]{sigplanconf}
+\documentclass[acmsmall,review,anonymous]{acmart}\settopmatter{printfolios=true}
+
+%% Journal information
+%% Supplied to authors by publisher for camera-ready submission;
+%% use defaults for review submission.
+\acmJournal{PACMPL}
+\acmVolume{1}
+\acmNumber{ICFP} % CONF = POPL or ICFP or OOPSLA
+\acmArticle{1}
+\acmYear{2018}
+\acmMonth{1}
+\acmDOI{} % \acmDOI{10.1145/nnnnnnn.nnnnnnn}
+\startPage{1}
+
+%% Copyright information
+%% Supplied to authors (based on authors' rights management selection;
+%% see authors.acm.org) by publisher for camera-ready submission;
+%% use 'none' for review submission.
+\setcopyright{none}
+%\setcopyright{acmcopyright}
+%\setcopyright{acmlicensed}
+%\setcopyright{rightsretained}
+%\copyrightyear{2018}           %% If different from \acmYear
+
+%% Bibliography style
+\bibliographystyle{ACM-Reference-Format}
+%% Citation style
+%% Note: author/year citations are required for papers published as an
+%% issue of PACMPL.
+\citestyle{acmauthoryear}   %% For author/year citations
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% lhs2TeX
@@ -136,14 +160,14 @@
 %\newif\ifcomments\commentsfalse
 
 \ifcomments
-\newcommand{\authornote}[3]{\textcolor{#1}{[#3 ---#2]}}
+\newcommand{\personalnote}[3]{\textcolor{#1}{[#3 ---#2]}}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 \else
-\newcommand{\authornote}[3]{}
+\newcommand{\personalnote}[3]{}
 \newcommand{\todo}[1]{}
 \fi
 
-\newcommand{\bay}[1]{\authornote{blue}{BAY}{#1}}
+\newcommand{\bay}[1]{\personalnote{blue}{BAY}{#1}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Semantic markup
@@ -183,39 +207,67 @@
 
 \begin{document}
 
-\special{papersize=8.5in,11in}
-\setlength{\pdfpageheight}{\paperheight}
-\setlength{\pdfpagewidth}{\paperwidth}
-
-\conferenceinfo{ICFP '18}{September 23--29, 2018, St. Louis, Missouri, USA}
-\copyrightyear{2018}
-\copyrightdata{978-1-nnnn-nnnn-n/yy/mm}
-\copyrightdoi{nnnnnnn.nnnnnnn}
-
-% Uncomment the publication rights you want to use.
-%\publicationrights{transferred}
-\publicationrights{licensed}     % this is the default
-%\publicationrights{author-pays}
-
-\titlebanner{DRAFT --- do not distribute}       % These are ignored unless
-% \preprintfooter{short description of paper}   % 'preprint' option specified.
-
-% I do not actually like this title or subtitle, just putting
-% something here for now
-\title{What's the Difference?}
+%% Title information
+\title{What's the Difference?}         %% [Short Title] is optional;
+                                        %% when present, will be used in
+                                        %% header instead of Full Title.
+% \titlenote{with title note}             %% \titlenote is optional;
+%                                         %% can be repeated if necessary;
+%                                         %% contents suppressed with 'anonymous'
 \subtitle{A Functional Pearl on Subtracting Bijections}
+% \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
+%                                         %% can be repeated if necessary;
+%                                         %% contents suppressed with 'anonymous'
 
-% What's the Difference?
-% Subtracting Isos for Fun and Profit
 
-\authorinfo{Brent A. Yorgey}
-           {Hendrix College, Conway, AR, USA}
-           {yorgey@@hendrix.edu}
-\authorinfo{Kenneth Foner}
-           {University of Pennsylvania, USA}
-           {kfoner@@seas.upenn.edu}
+%% Author information
+%% Contents and number of authors suppressed with 'anonymous'.
+%% Each author should be introduced by \author, followed by
+%% \authornote (optional), \orcid (optional), \affiliation, and
+%% \email.
+%% An author may have multiple affiliations and/or emails; repeat the
+%% appropriate command.
+%% Many elements are not rendered, but should be provided for metadata
+%% extraction tools.
 
-\maketitle
+%% Author with single affiliation.
+\author{Brent Yorgey}
+% \authornote{with author1 note}          %% \authornote is optional;
+%                                         %% can be repeated if necessary
+% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+\affiliation{
+  % \position{Position1}
+  \department{Department of Mathematics and Computer Science}              %% \department is recommended
+  \institution{Hendrix College}            %% \institution is required
+  % \streetaddress{Street1 Address1}
+  \city{Conway}
+  \state{AR}
+  % \postcode{Post-Code1}
+  \country{USA}                    %% \country is recommended
+}
+\email{yorgey@@hendrix.edu}          %% \email is recommended
+
+%% Author with single affiliation.
+\author{Kenneth Foner}
+% \authornote{with author1 note}          %% \authornote is optional;
+%                                         %% can be repeated if necessary
+% \orcid{nnnn-nnnn-nnnn-nnnn}             %% \orcid is optional
+\affiliation{
+  % \position{Position1}
+  % \department{Department of Mathematics and Computer Science}              %% \department is recommended
+  \institution{University of Pennsylvania}            %% \institution is required
+  % \streetaddress{Street1 Address1}
+  \city{Philadelphia}
+  \state{PA}
+  % \postcode{Post-Code1}
+  \country{USA}                    %% \country is recommended
+}
+\email{kfoner@@seas.upenn.edu}          %% \email is recommended
+
+
+% \authorinfo{Kenneth Foner}
+%            {University of Pennsylvania, USA}
+%            {kfoner@@seas.upenn.edu}
 
 \begin{abstract}
   It is a straightforward exercise to write a program to ``add'' two
@@ -239,15 +291,39 @@
   distinguishable to individuals with common forms of colorblindness.
 \end{abstract}
 
-\category{CR-number}{subcategory}{third-level}
 
-% general terms are not compulsory anymore,
-% you may leave them out
-\terms
-term1, term2
+%% 2012 ACM Computing Classification System (CSS) concepts
+%% Generate at 'http://dl.acm.org/ccs/ccs.cfm'.
+\begin{CCSXML}
+<ccs2012>
+<concept>
+<concept_id>10011007.10011006.10011008</concept_id>
+<concept_desc>Software and its engineering~General programming languages</concept_desc>
+<concept_significance>500</concept_significance>
+</concept>
+<concept>
+<concept_id>10003456.10003457.10003521.10003525</concept_id>
+<concept_desc>Social and professional topics~History of programming languages</concept_desc>
+<concept_significance>300</concept_significance>
+</concept>
+</ccs2012>
+\end{CCSXML}
 
-\keywords
-keyword1, keyword2
+\ccsdesc[500]{Software and its engineering~General programming languages}
+\ccsdesc[300]{Social and professional topics~History of programming languages}
+%% End of generated code
+
+
+%% Keywords
+%% comma separated list
+\keywords{keyword1, keyword2, keyword3}  %% \keywords are mandatory in final camera-ready submission
+
+
+%% \maketitle
+%% Note: \maketitle command must come after title commands, author
+%% commands, abstract environment, Computing Classification System
+%% environment and commands, and keywords command.
+\maketitle
 
 \section{Introduction}
 
@@ -418,7 +494,7 @@ character.
 
 Let us return to the problem of computing some $h - g : A \bij A'$
 from $h : A + B \bij A' + B'$ and $g : B \bij B'$ and describe the
-solution of Gordon~\cite{Gordon1983sieve} as it is typically
+solution of Gordon~\cite{gordon1983sieve} as it is typically
 presented.  The key to defining $h - g$ is to use $h$ and $g$ to
 ``ping-pong'' back and forth between sets until landing in the right
 place.
@@ -494,11 +570,11 @@ denote the inverse of a bijection $f : X \bij Y$ by
 $\overline{f} : Y \bij X$, and denote the composition of bijections by
 juxtaposition, that is, $fg(a) = (f \comp g)(a) = f(g(a))$.)
 \pref{fig:GCBP-uni-Haskell} contains a basic Haskell implementation of
-this process.  (It is worth pointing out that the Haskell
+this process.  It is worth pointing out that the Haskell
 implementation is a bit noisier because of the need for |Left| and
 |Right| constructors; typical mathematical presentations treat $A$ as
-a mere subset of $A + B$, so that an element $a \in A$ \emph{is also}
-an element of $A + B$, without the need to explicitly inject it.)
+a subset (subtype) of $A + B$, so that an element $a \in A$ \emph{is also}
+an element of $A + B$, without the need to explicitly inject it.
 \begin{figure}[htp]
   \centering
 \begin{code}
@@ -520,15 +596,10 @@ principle is quite a bit more general than this, involving a whole
 tower of bijections on chains of nested subsets, but we do not
 consider the principle in full generality here.)
 
-\todo{Is it still worth going through the proof if we aren't going to
-  give a constructive one?}
 At this point, it's worth going through a careful, standard proof of
 the complementary bijection principle.  We must prove two things:
 first, that the algorithm terminates; second, that it actually
-produces a bijection, as claimed.  We denote the inverse of a
-bijection $f : X \bij Y$ by $\overline{f} : Y \bij X$, and denote the
-composition of bijections by juxtaposition, that is,
-$fg(a) = (f \comp g)(a) = f(g(a))$.
+produces a bijection, as claimed.
 
 \begin{proof}
   We first prove that the algorithm terminates.  Let $a \in A$ and
@@ -567,7 +638,7 @@ $fg(a) = (f \comp g)(a) = f(g(a))$.
 \end{proof}
 
 This construction and proof would convince any combinatorialist, but
-it has several downsides:
+they have several downsides:
 
 \begin{itemize}
 \item It makes heavy use of ``pointwise'' reasoning, messily following
@@ -581,6 +652,18 @@ it has several downsides:
   are inverse.  It would be better to construct both directions of the
   bijection simultaneously, so that the resulting bijection is
   ``correct by construction''.
+\item The proof seems to make essential use of classical reasoning:
+  the termination argument in particular is a proof by contradiction.
+  Having an algorithm at all is still better than nothing, but having
+  a classical proof of correctness is irksome. Intuitively, it doesn't
+  seem like anything fundamentally non-constructive is going on, and
+  the classical proof makes it problematic to implement GCBP in a
+  proof assistant based on constructive logic.
+  \citet{gudmundsson2017formalizing} has only recently given such a
+  constructive formal proof, but it relies heavily on low-level
+  pointwise reasoning.  We leave to future work the problem of turning
+  our high-level construction into a corresponding high-level
+  constructive proof.
 \end{itemize}
 
 \section{Partial Bijections}
@@ -1994,23 +2077,13 @@ Now we redefine |gcbp| as follows:
 
 % This is the text of the appendix, if you need one.
 
-\acks
+\begin{acks}
 
-Acknowledgments, if needed.
+  Acknowledgments, if needed.
 
-\bibliographystyle{abbrvnat}
+\end{acks}
+
 \bibliography{GCBP-paper}
-
-% The bibliography should be embedded for final submission.
-
-% \begin{thebibliography}{}
-% \softraggedright
-
-% \bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
-% P. Q. Smith, and X. Y. Jones. ...reference text...
-
-% \end{thebibliography}
-
 
 \end{document}
 

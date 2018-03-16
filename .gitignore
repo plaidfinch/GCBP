@@ -12,6 +12,7 @@ cabal-dev
 cabal.sandbox.config
 *.prof
 *.aux
+*.out
 *.hp
 .stack-work/
 .shake/
@@ -22,6 +23,7 @@ cabal.sandbox.config
 *.ptb
 *.bbl
 *.blg
+*.bst
 .DS_Store
 diagrams-latex.sty
 shake
