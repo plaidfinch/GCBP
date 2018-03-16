@@ -1,17 +1,7 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-% - bra-ket notation for left partial projection??
-% - be sure to have pictures for ext_g,h
-% - take out GMIP
 % - expand explanation of palindrome inverses
 % - "manifestly stupid": don't insult the reader!
-% - p. 6:
-%    Two copies of f_i *have to be run*.  Actually expand out f_2 or
-%    f_3?
-%   Note, computing cycle length is at least as much computation as just
-%   computing the pointwise version!
-
-% Remove assoc etc.?
 
 \documentclass[acmsmall,review,anonymous]{acmart}\settopmatter{printfolios=true}
 
@@ -93,6 +83,9 @@
 %format f2
 %format g1
 %format g2
+
+%format fi     = "f_i"
+%format fip1   = "f_{i+1}"
 
 %%format arr   = "(\longrightarrow)"
 %%format `arr` = "\longrightarrow"
@@ -1425,7 +1418,7 @@ their types do not match. (Note, once again, that in typical mathematical
 presentations, this is glossed since a subtyping relationship
 $B' \leq A' + B'$ is assumed.)  However, if we compose |inverse(g)| in
 parallel with $|undef : A' <-> A|$ we get
-\[ |undef |||||| inverse(g) : A'+B' <-> A+B|. \] Composing $h$ with
+\[ |undef |||||| inverse(g) : A'+B' <-> A+B|. \] Sequencing $h$ with
 this followed by another copy of $h$ gives the first iteration of
 GCBP, shown in \pref{fig:hg}.
 \begin{figure}
@@ -1461,7 +1454,7 @@ undefined on the first two elements of $A$ (dark blue).  Those
 elements already mapped to $B$ (light blue) under $h$, so they are
 already ``done'': the only reason to keep iterating is to find out
 what will happen to the third element.  But as soon as we start
-iterating we lose the knowledge of what happened to the first two!
+iterating we lose the knowledge of what happened to the first two.
 
 One (bad!) idea is to ``recycle'' elements that have landed in $B$,
 sending them back to where they started so the cycle can repeat.  That
@@ -1503,27 +1496,31 @@ constructed so far, namely, \[ |f1 = h >>> (leftPartial(inverse(h)) |||||| inver
 and use its inverse to ``plug the hole'' over the second copy of
 |inverse(g)|, that is,
 \[ |f2 = f1 >>> (leftPartial(inverse(f1)) |||||| inverse(g)) >>> h|, \]
-and so on.  This ensures that every time an orbit lands in $B$, it
+and so on; in general we would define
+\[ |fip1 = fi >>> (leftPartial(inverse(fi)) |||||| inverse(g)) >>>
+  h|. \] This ensures that every time a path lands in $B$, it
 is sent back to the element in $A$ it started from, allowing it to
 cycle through again while it is ``waiting'' for other elements to land
 in $B$.
 
-Unfortunately, this is quite inefficient.  For one thing, it is
-evident that each $f_{i+1}$ contains two copies of $f_i$, leading to
-exponential time complexity to evaluate $f_n$ at a given input (at
-least barring any clever optimizations).  Second, there is something
-else we have swept under the rug up to this point: how do we know how
-long to keep iterating?  Note that because of the way we send each
-orbit back to the start while waiting for other orbits to complete, at
-the point when the last orbit completes the other orbits may be in the
-middle of a cycle.  So in fact, we must iterate for a number of steps
-equal to the least common multiple of the cycle lengths, until all the
-cycles ``line up'' and land in $B$ at the same time. This can be
-exponentially bad as well. For example, suppose we have cycles of
-lengths $2$, $3$, $5$, $7$, and $11$: instead of iterating just $11$
-times, we have to wait through
+Unfortunately, this is quite inefficient.  For one thing, evaluating
+$f_{i+1}$ on a particular input requires evaluating two copies of
+$f_i$, leading to exponential time complexity to evaluate $f_n$ at a
+given input (at least barring any clever optimizations).  Second,
+there is something else we have swept under the rug up to this point:
+how do we know how long to keep iterating?  Note that because of the
+way we send each path back to the start while waiting for other paths
+to complete, at the point when the last path completes the others may
+be in the middle of a cycle.  So in fact, we must iterate for a number
+of steps equal to the least common multiple of the cycle lengths,
+until all the cycles ``line up'' and the paths all land in $B$ at the
+same time. This can be exponentially bad as well. For example, suppose
+we have cycles of lengths $2$, $3$, $5$, $7$, and $11$: instead of
+iterating just $11$ times, we have to wait through
 $2\cdot 3 \cdot 5 \cdot 7 \cdot 11 = 2310$ iterations for all the
-cycles to line up!
+cycles to line up!  Even worse, computing the lengths of the cycles in
+the first place would seem to require essentially running the original
+pointful GCBP algorithm, nullifying the point of the whole exercise.
 
 Fortunately, there is a much better way to emulate at a high level
 what is really going on when we carry out GCBP elementwise, but it
@@ -1533,20 +1530,24 @@ bijections.
 \section{Compatibility and merging}
 
 We want to think of the iteration process as monotonically revealing
-more and more information about the final bijection.  This motivates
+more and more information about the final bijection.  As soon as one
+path completes, we have learned the fate of its starting element, and
+once learned, we should never ``unlearn'' such a fact.  This motivates
 thinking about partial bijections in terms of their information
 content, and formalizing what it means for one partial bijection to be
 ``more informative'' than another.  We start by formalizing some
 intuitive notions about partial \emph{functions}, and then lift them
 to coresponding notions on partial bijections.
 
-\todo{Need some code to go with this part!}
-We say that two partial functions $f, g : A \pfun B$ are
+We say that two partial functions |f, g : A -> Maybe B| are
 \term{compatible}, written $f \compat g$, if they agree at all points
-where both are defined.  Formally, $f \compat g$ if and only if |dom g
->>> f = dom f >>> g|, that is, restricting $f$ to $g$'s domain yields
-the same partial function as restricting $g$ to $f$'s
-domain.
+where both are defined, that is, for all |a : A| and |b : B|, |f a =
+Just b| if and only if |g a = Just b|.
+
+% Formally, $f \compat g$ if and only if |dom g
+% >>> f = dom f >>> g|, that is, restricting $f$ to $g$'s domain yields
+% the same partial function as restricting $g$ to $f$'s
+% domain.
 
 % \begin{diagram}[width=200]
 % {-# LANGUAGE LambdaCase #-}
@@ -1579,12 +1580,12 @@ domain.
 %% it's too small.  Perhaps need to rethink it.  It's not that
 %% important anyway.
 
-If |f| is a total function, |dom f = id|, and hence when |f| and |g|
-are total functions, $f \compat g$ if and only if $f = g$: since total
-functions are defined everywhere, the only way for them to be
-compatible is to be equal.
+% If |f| is a total function, |dom f = id|, and hence when |f| and |g|
+% are total functions, $f \compat g$ if and only if $f = g$: since total
+% functions are defined everywhere, the only way for them to be
+% compatible is to be equal.
 
-If two partial functions $f, g : A \pfun B$ are compatible, we can
+If two partial functions |f, g : A -> Maybe B| are compatible, we can
 define their \term{merge} as \[ (f \mrg g)(x) = f(x) \mrg g(x), \]
 where $\mrg$ on |Maybe| values yields whichever value is |Just|, or
 |Nothing| if both are |Nothing|.  If both are |Just|, compatibility
@@ -1612,8 +1613,7 @@ class Category arr => Mergeable arr where
   undef   :: arr a b
   (<||>)  :: arr a b -> arr a b -> arr a b
 
-instance (Monad m, Alternative m)
-  => Mergeable (Kleisli m) where
+instance (Monad m, Alternative m) => Mergeable (Kleisli m) where
   undef = K (const empty)
   K f <||> K g = K $ \a -> f a <|> g a
 
@@ -1625,360 +1625,464 @@ instance Mergeable (<->) where
 \caption{The |Mergeable| type class} \label{fig:mergeable}
 \end{figure}
 Notice that we use an \emph{irrefutable pattern match} in the
-definition of |(<||||>)| for partial bijections; we will see the
-reason for this later.
+definition of |(<||||>)| for partial bijections, which means |h <||||>
+h'| can output something of the form |B (...) (...)| \emph{before}
+demanding evaluation of |h'|.  Evaluation of |h'| will only be
+demanded if evaluation of |h| on a particular input is undefined.
+This ensures that a chain of merged partial bijections can be
+evaluated lazily on a particular input, stopping as soon as the first
+partial bijection defined on the given input is found.  This will be
+especially important in the next section, in which we will fold an
+\emph{infinite} list via |(<||||>)|.
 
-\todo{It's because of the infinite merge in gcbp.  Be sure we actually
-  do explain this later.}
 \section{GCBP via merge}
 
-The GCBP construction, as illustrated in \pref{fig:ping-pong},
-consists in starting with $h : A+B \bij A'+B'$, and then iteratively
-extending it by the composite |(undef |||||| inverse(g)) >>> h|.  Let
-us give a name to this iterated operation:
+As we have seen, the GCBP construction consists in starting with
+$h : A+B \bij A'+B'$, and then iteratively extending it by the
+composite |(undef |||||| inverse(g)) >>> h|.  Let us give a name to
+this iterated operation:
 \begin{spec}
 extend g h k = k >>> (undef ||| inverse(g)) >>> h
 \end{spec}
-Now consider the sequence of partial bijections
-\[ |h|,\quad |extend g h h|,\quad |extend g h^2 h|,\quad |extend g h^3 h|,\quad \dots, \]
-that is, the first is $h$, the next is |h >>> (undef |||||| inverse(g)) >>>
-h|, then \[ |h >>> (undef |||||| inverse(g)) >>> h >>> (undef ||||||
-inverse(g)) >>> h|, \] and so on.  These are successive prefixes of \pref{fig:ping-pong}.
-Now take the left projection of each:
-\[ |leftPartial h|,\quad |leftPartial(extend g h h)|,\quad
-  |leftPartial(extend g h^2 h)|,\quad |leftPartial(extend g h^3
-  h)|,\quad \dots . \] We claim that all these left projections are
-compatible. \todo{NEEDS PICTURES!!}  This is because the path an
-element of $A$ takes under iteration of |extend g h| can bounce around
-in the bottom sets ($B$ and $B'$), but stops (by definition!) once it
-reaches $A'$.  Suppose it takes some $a \in A$ exactly $n$ iterations
-to reach some $a' \in A'$.  If we iterate fewer than $n$ times, $a$
-will be mapped to some element of $B'$, and hence the left projection
-will be undefined at $a$.  If we iterate exactly $n$ times, $a$ will
-be mapped to $a' \in A'$, and hence it will map to $a'$ in the left
-projection as well.  If we iterate more than $n$ times, the resulting
-partial bijection will be undefined at $a$, because after reaching
-$a'$ it will be composed with |undef|.  So for any given $a \in A$,
-there is exactly one value of $n$ such that |leftPartial(extend g h^n
-h)| is defined at $a$.  Also, there can never be two different
-elements of $A$ which map to the same $A'$: two paths can never
-``converge'' in this way since we are composing partial
-\emph{bijections}, which in particular are injective where they are
-defined.
+The leftmost column of \pref{fig:iterating-ext} shows an example of
+iterating this extension operation.
+\begin{figure}
+  \centering
+  \begin{diagram}[width=350]
+    {-# LANGUAGE LambdaCase #-}
 
-Hence, we consider the infinite merge
+    import Bijections
+    import Grid
+
+    dia = grid' (with & colsep .~ 2 & rowsep .~ 2) $  -- $
+
+      map (map alignL)
+      [ [ text "$h$" <> strutX 2
+        , text "$=$"
+        , ( (a0 +++ a1)
+            .- single h -..
+            (b0 +++ b1)
+          )
+          # labelBC ["$h$"]
+          # drawBComplex
+          # alignL
+        , text "$=$"
+        ,
+          ( (a0 +++ a1)
+            .- single h -..
+            (b0 +++ b1)
+          )
+          # drawBComplex
+        , text "$\\implies$"
+        ,
+          ( a0 .- single (mkABij a0 b0 ([1,2,100]!!)) -.. b0 )
+          # drawBComplex
+        , text "$=$"
+        , text "$\\langle h ||$" <> strutX 2
+        ]
+      , [ text "$\\mathit{ext}_{g,h} h$"
+        , text "$=$"
+        , ( (a0 +++ a1)
+            .- single h -.
+            (b0 +++ b1)
+            .- (empty +++ reversing bij1) -.
+            (a0 +++ a1)
+            .- single h -..
+            (b0 +++ b1)
+          )
+          # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+          # drawBComplex
+          # alignL
+        , text "$=$"
+        ,
+          ( (a0 +++ a1)
+            .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 4; 3 -> 0; _ -> 100 })) -..
+            (b0 +++ b1)
+          )
+          # drawBComplex
+        , text "$\\implies$"
+        ,
+          ( a0 .- single (mkABij a0 b0 (const 100)) -.. b0 )
+          # drawBComplex
+        , text "$=$"
+        , text "$\\langle \\mathit{ext}_{g,h} h ||$" <> strutX 2
+        ]
+      , [ text "$\\mathit{ext}_{g,h}^2 h$"
+        , text "$=$"
+        , ( (a0 +++ a1)
+            .- single h -.
+            (b0 +++ b1)
+            .- (empty +++ reversing bij1) -.
+            (a0 +++ a1)
+            .- single h -.
+            (b0 +++ b1)
+            .- (empty +++ reversing bij1) -.
+            (a0 +++ a1)
+            .- single h -..
+            (b0 +++ b1)
+          )
+          # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+          # drawBComplex
+          # alignL
+        , text "$=$"
+        ,
+          ( (a0 +++ a1)
+            .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 0; _ -> 100 })) -..
+            (b0 +++ b1)
+          )
+          # drawBComplex
+        , text "$\\implies$"
+        ,
+          ( a0 .- single (mkABij a0 b0 ([100,100,0]!!)) -.. b0 )
+          # drawBComplex
+        , text "$=$"
+        , text "$\\langle \\mathit{ext}_{g,h}^2 h ||$" <> strutX 2
+        ]
+      ]
+      where
+        h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+  \end{diagram}
+  \caption{Iterating $\mathit{ext}_{g,h}$}
+  \label{fig:iterating-ext}
+\end{figure}
+Consider this sequence of
+partial bijections
+\[ |h|,\quad |extend g h h|,\quad |extend g h^2 h|,\quad |extend g h^3
+  h|,\quad \dots \] generated by iterating |extend g h|.  That is, the
+first is $h$, the next is |h >>> (undef |||||| inverse(g)) >>> h|,
+then
+\[ |h >>> (undef |||||| inverse(g)) >>> h >>> (undef ||||||
+  inverse(g)) >>> h|, \] and so on.  Now take the left projection of
+each, as illustrated in the rightmost column of
+\pref{fig:iterating-ext}. In this particular example, all the left
+partial projections produced are compatible with each other; in fact,
+the domains on which they are defined are completely disjoint.  In
+fact, this will always be the case.
+
+Why is this?  The path an element of $A$ takes under iteration of
+|extend g h| can bounce around in the bottom sets ($B$ and $B'$), but
+stops once it reaches $A'$.  Suppose it takes some $a \in A$ exactly
+$n$ iterations to reach some $a' \in A'$.  If we iterate fewer than
+$n$ times, $a$ will be mapped to some element of $B'$, and hence the
+left projection will be undefined at $a$.  If we iterate exactly $n$
+times, $a$ will be mapped to $a' \in A'$, and hence it will map to
+$a'$ in the left projection as well.  If we iterate more than $n$
+times, the resulting partial bijection will be undefined at $a$,
+because after reaching $a'$ it will be composed with |undef|.  So for
+any given $a \in A$, there is exactly one value of $n$ such that
+|leftPartial(extend g h^n h)| is defined at $a$.  Also, there can
+never be two different elements of $A$ which map to the same $A'$: two
+paths can never ``converge'' in this way since we are composing
+partial \emph{bijections}, which in particular are injective where
+they are defined.
+
+Hence, we are justified in considering the infinite merge
 \[ |leftPartial(h) <||||> leftPartial(extend g h h) <||||>
-  leftPartial(extend g h^2 h) <||||> leftPartial(extend g h^3 h) <||||> ...| \]
-For every element of $A$, there is some finite $n$ for which
-|leftPartial(extend g h^n h)| is defined on it, and hence this infinite
-merge actually defines a \emph{total} bijection.  Intuitively,
-this is doing exactly the same thing that the original pointwise
-implementation was doing, but without having to explicitly talk about
-individual points $a \in A$.
+  leftPartial(extend g h^2 h) <||||> leftPartial(extend g h^3 h)
+  <||||> ...| \] For every element of $A$, there is some finite $n$
+for which |leftPartial(extend g h^n h)| is defined on it, and hence
+this infinite merge actually defines a \emph{total} bijection.
+Intuitively, this is doing exactly the same thing that the original
+pointwise implementation of GCBP was doing, but without having to
+explicitly talk about individual points $a \in A$.
 
-Concretely, we have the following implementation of GCBP:
+Concretely, we can now implement GCBP as follows:
 \begin{code}
 gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
-gcbp h g = unsafeTotal
-  . foldr (<||>) undef
-  . map leftPartial
-  . iterate (extend g' h')
-  $ partial h'
+gcbp h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extend g' h') $ h'
   where
     g' = partial g
     h' = partial h
 \end{code} %$
 
-It starts with $h$ (treated as a partial bijection), iterates
-
 \todo{Implement and demo.  Prove it is equivalent to reference
   implementation?  Or that it produces a bijection?}
 
-\section{The Garsia-Milne Involution Principle}
-\label{sec:gmip}
+% \section{The Garsia-Milne Involution Principle}
+% \label{sec:gmip}
 
-There is an alternative principle, the \term{Garsia-Milne involution
-  principle} (GMIP) \citep{garsia1981method, zeilberger1984garsia},
-which also allows subtracting bijections.  Although at first blush it
-seems more complex and powerful than the Gordon principle, it turns
-out that the two are equivalent; the situation is reminiscent of the
-relationship between ``weak'' and ``strong'' induction on the natural
-numbers, which are equivalent despite their names.  Although the
-equivalence between GCBP and GMIP seems to be folklore, we have never
-seen a proof written down.  The proof is not hard---one might
-reasonably assign it as an exercise in an undergraduate course on
-combinatorics---but \todo{elaborate; something about the insight
-  afforded by our presentation.  Simpler presentation of GMIP, and
-  intuitive explanation of why they are equivalent.}
+% There is an alternative principle, the \term{Garsia-Milne involution
+%   principle} (GMIP) \citep{garsia1981method, zeilberger1984garsia},
+% which also allows subtracting bijections.  Although at first blush it
+% seems more complex and powerful than the Gordon principle, it turns
+% out that the two are equivalent; the situation is reminiscent of the
+% relationship between ``weak'' and ``strong'' induction on the natural
+% numbers, which are equivalent despite their names.  Although the
+% equivalence between GCBP and GMIP seems to be folklore, we have never
+% seen a proof written down.  The proof is not hard---one might
+% reasonably assign it as an exercise in an undergraduate course on
+% combinatorics---but \todo{elaborate; something about the insight
+%   afforded by our presentation.  Simpler presentation of GMIP, and
+%   intuitive explanation of why they are equivalent.}
 
-Let us first see GMIP the way it is usually presented.
-The setup is illustrated in \pref{fig:GMIP}, and can be described as follows:
-\begin{itemize}
-\item There are two sets $A$ and $B$, each partitioned into a
-  ``positive'' part and a ``negative'' part.  In more type-theoretic
-  terms, $A$ and $B$ are disjoint sums---that is, $A = A^- + A^+$, and
-  similarly for $B$.
-\item There is a bijection $f^- : A^- \bij B^-$ between the negative
-  parts of $A$ and $B$, and similarly a bijection $f^+ : A^+ \bij
-  B^+$.
-\item Finally, there are \emph{signed involutions} $\alpha$ and
-  $\beta$ on $A$ and $B$ respectively.  That is, in the case of $\alpha$:
-  \begin{itemize}
-    \item $\alpha : A \bij A$ is a permutation of $A$ such that
-    \item all fixed points of $\alpha$ are in $A^+$;
-    \item all other, non-fixed elements are sent from $A^+$ to $A^-$
-      or vice versa (that is, $\alpha$ always switches the ``sign'' of
-      any element it does not fix); and
-    \item $\alpha$ is an involution, that is, $\alpha \circ \alpha = \id$.
-  \end{itemize}
-  Similarly, $\beta$ is a signed involution on $B$.
-\end{itemize}
-You may be forgiven for thinking this seems rather complex!  As we
-will see, however, a lot of the complexity is merely incidental.
+% Let us first see GMIP the way it is usually presented.
+% The setup is illustrated in \pref{fig:GMIP}, and can be described as follows:
+% \begin{itemize}
+% \item There are two sets $A$ and $B$, each partitioned into a
+%   ``positive'' part and a ``negative'' part.  In more type-theoretic
+%   terms, $A$ and $B$ are disjoint sums---that is, $A = A^- + A^+$, and
+%   similarly for $B$.
+% \item There is a bijection $f^- : A^- \bij B^-$ between the negative
+%   parts of $A$ and $B$, and similarly a bijection $f^+ : A^+ \bij
+%   B^+$.
+% \item Finally, there are \emph{signed involutions} $\alpha$ and
+%   $\beta$ on $A$ and $B$ respectively.  That is, in the case of $\alpha$:
+%   \begin{itemize}
+%     \item $\alpha : A \bij A$ is a permutation of $A$ such that
+%     \item all fixed points of $\alpha$ are in $A^+$;
+%     \item all other, non-fixed elements are sent from $A^+$ to $A^-$
+%       or vice versa (that is, $\alpha$ always switches the ``sign'' of
+%       any element it does not fix); and
+%     \item $\alpha$ is an involution, that is, $\alpha \circ \alpha = \id$.
+%   \end{itemize}
+%   Similarly, $\beta$ is a signed involution on $B$.
+% \end{itemize}
+% You may be forgiven for thinking this seems rather complex!  As we
+% will see, however, a lot of the complexity is merely incidental.
 
-\begin{figure}
-  \centering
-  \begin{diagram}[width=200]
-    import Data.Bool  (bool)
-    import Data.Maybe (fromJust)
+% \begin{figure}
+%   \centering
+%   \begin{diagram}[width=200]
+%     import Data.Bool  (bool)
+%     import Data.Maybe (fromJust)
 
-    signedset name involution flip =
-      mconcat
-      [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
-      , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
-      , mconcat
-        [ circle 0.4 # dashingL [0.05, 0.05] 0
-        , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
-        ]
-        # translate ((bool id negate flip) 0.3 ^& 0.7)
-      , circle 1 # scaleY 1.5
-      , hrule 2
-      ]
-      # fontSizeL 0.4
-      # named name
+%     signedset name involution flip =
+%       mconcat
+%       [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
+%       , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
+%       , mconcat
+%         [ circle 0.4 # dashingL [0.05, 0.05] 0
+%         , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
+%         ]
+%         # translate ((bool id negate flip) 0.3 ^& 0.7)
+%       , circle 1 # scaleY 1.5
+%       , hrule 2
+%       ]
+%       # fontSizeL 0.4
+%       # named name
 
-    dia :: Diagram B
-    dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
-      # arrowBetweenAtY   ht  "f^+" ["A", "B"]
-      # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
-      # involutionArrow ht (-1) "\\alpha" "A"
-      # involutionArrow ht 1    "\\beta"  "B"
-      where
-        ht = 0.7
+%     dia :: Diagram B
+%     dia = hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+%       # arrowBetweenAtY   ht  "f^+" ["A", "B"]
+%       # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
+%       # involutionArrow ht (-1) "\\alpha" "A"
+%       # involutionArrow ht 1    "\\beta"  "B"
+%       where
+%         ht = 0.7
 
-    arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
-      let oa = location a
-          ob = location b
-          e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
-          e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
-      in  atop
-            ( mconcat
-              [ arrowBetween' arrowOpts e1 e2
-              , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
-              ]
-              # fontSizeL 0.4
-            )
+%     arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
+%       let oa = location a
+%           ob = location b
+%           e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
+%           e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
+%       in  atop
+%             ( mconcat
+%               [ arrowBetween' arrowOpts e1 e2
+%               , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
+%               ]
+%               # fontSizeL 0.4
+%             )
 
-    arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
+%     arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
 
-    involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
-      let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
-          e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
-      in  atop (
-            mconcat
-            [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
-            , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
-            ]
-            # fontSizeL 0.4
-          )
-  \end{diagram}
-  \caption{Setup for GMIP}
-  \label{fig:GMIP}
-\end{figure}
-Let $\Fix \alpha$ denote the set of fixed points of $\alpha$; by
-definition $\Fix \alpha \subseteq A^+$.  Clearly $||A^-|| = ||B^-||$
-(because of the existence of the bijection $f^-$), and similarly
-$||A^+|| = ||B^+||$ because of $f^+$. Also, since $\alpha$ is its own
-inverse, and ``sign-reversing'' on the elements it does not fix, it
-constitutes a bijection between $A^-$ and the unfixed elements of
-$A^+$; hence $||A^-|| = ||A^+|| - ||\Fix \alpha||$ and similarly
-$||B^-|| = ||B^+|| - ||\Fix \beta||$.  Putting this all together, we
-conclude that $||\Fix \alpha|| = ||\Fix \beta||$ as well.  The
-question is whether we can construct a canonical bijection
-$\Fix \alpha \bij \Fix \beta$ to witness this equality of
-cardinalities; the answer, of course, is yes.
+%     involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
+%       let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
+%           e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
+%       in  atop (
+%             mconcat
+%             [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
+%             , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
+%             ]
+%             # fontSizeL 0.4
+%           )
+%   \end{diagram}
+%   \caption{Setup for GMIP}
+%   \label{fig:GMIP}
+% \end{figure}
+% Let $\Fix \alpha$ denote the set of fixed points of $\alpha$; by
+% definition $\Fix \alpha \subseteq A^+$.  Clearly $||A^-|| = ||B^-||$
+% (because of the existence of the bijection $f^-$), and similarly
+% $||A^+|| = ||B^+||$ because of $f^+$. Also, since $\alpha$ is its own
+% inverse, and ``sign-reversing'' on the elements it does not fix, it
+% constitutes a bijection between $A^-$ and the unfixed elements of
+% $A^+$; hence $||A^-|| = ||A^+|| - ||\Fix \alpha||$ and similarly
+% $||B^-|| = ||B^+|| - ||\Fix \beta||$.  Putting this all together, we
+% conclude that $||\Fix \alpha|| = ||\Fix \beta||$ as well.  The
+% question is whether we can construct a canonical bijection
+% $\Fix \alpha \bij \Fix \beta$ to witness this equality of
+% cardinalities; the answer, of course, is yes.
 
-Start with some $a \in \Fix \alpha$ and apply $f^+$ once.  If we land
-in $\Fix \beta$, we are done.  Otherwise, we land in $B^+$ and we then
-``go around the loop''
-\[
-  \xymatrix{
-    B^+ \ar[r]^{\beta} & B^- \ar[r]^{\overline{f^-}} & A^-
-    \ar[r]^{\alpha} & A^+ \ar[r]^{f^+} & ?,
-  }
-\]
-as illustrated in \pref{fig:GMIP-loop}.  We may land in
-$\Fix \beta$---in which case we map the original $a$ to that element
-of $\Fix \beta$---or we may land in $B^+$ again, in which case we
-repeat the procedure. The Pigeonhole Principle ensures that this
-process must end; it cannot ``get stuck'' because everything is a
-bijection.
-\begin{figure}
-  \centering
-  \begin{diagram}[width=200]
-    import Data.Bool  (bool)
-    import Data.Maybe (fromJust)
+% Start with some $a \in \Fix \alpha$ and apply $f^+$ once.  If we land
+% in $\Fix \beta$, we are done.  Otherwise, we land in $B^+$ and we then
+% ``go around the loop''
+% \[
+%   \xymatrix{
+%     B^+ \ar[r]^{\beta} & B^- \ar[r]^{\overline{f^-}} & A^-
+%     \ar[r]^{\alpha} & A^+ \ar[r]^{f^+} & ?,
+%   }
+% \]
+% as illustrated in \pref{fig:GMIP-loop}.  We may land in
+% $\Fix \beta$---in which case we map the original $a$ to that element
+% of $\Fix \beta$---or we may land in $B^+$ again, in which case we
+% repeat the procedure. The Pigeonhole Principle ensures that this
+% process must end; it cannot ``get stuck'' because everything is a
+% bijection.
+% \begin{figure}
+%   \centering
+%   \begin{diagram}[width=200]
+%     import Data.Bool  (bool)
+%     import Data.Maybe (fromJust)
 
-    signedset name involution flip =
-      mconcat
-      [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
-      , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
-      , mconcat
-        [ circle 0.4 # dashingL [0.05, 0.05] 0
-        , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
-        ]
-        # translate ((bool id negate flip) 0.3 ^& 0.7)
-      , circle 1 # scaleY 1.5
-      , hrule 2
-      ]
-      # fontSizeL 0.4
-      # named name
+%     signedset name involution flip =
+%       mconcat
+%       [ text ("$" ++ name ++ "^+$") # translate ((bool negate id flip) 0.5 ^& 0.5)
+%       , text ("$" ++ name ++ "^-$") # translate (0 ^& (-0.7))
+%       , mconcat
+%         [ circle 0.4 # dashingL [0.05, 0.05] 0
+%         , text ("$\\Fix" ++ involution ++ "$") # fontSizeL 0.2
+%         ]
+%         # translate ((bool id negate flip) 0.3 ^& 0.7)
+%       , circle 1 # scaleY 1.5
+%       , hrule 2
+%       ]
+%       # fontSizeL 0.4
+%       # named name
 
-    dia :: Diagram B
-    dia = mconcat
-      [ pt # named "start" # translate (0.3 ^& 0.9)
-      , pt # named "Bp"    # translate (4.3 ^& 0.9)
-      , pt # named "Bm"    # translate (4 ^& (-1.2))
-      , pt # named "Am"    # translate (0 ^& (-1.2))
-      , pt # named "Ap"    # translate ((-0.3) ^& 1.1)
-      , text "?" # fc red # fontSizeL 0.4 # named "FB?"   # translate (3 ^& 1.7)
-      , hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
-        # arrowBetweenAtY   ht  "f^+" ["A", "B"]
-        # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
-        # involutionArrow ht (-1) "\\alpha" "A"
-        # involutionArrow ht 1    "\\beta"  "B"
-      ]
-      # connect' arrowOptsLoop "start" "Bp"
-      # connect' arrowOptsLoop "Bp" "Bm"
-      # connect' arrowOptsLoop "Bm" "Am"
-      # connect' arrowOptsLoop "Am" "Ap"
-      # connect' (arrowOptsLoop & shaftStyle %~ dashingL [0.05, 0.05] 0)
-          "Ap" "FB?"
-      where
-        ht = 0.7
-        pt = circle 0.07 # fc red # lw none
+%     dia :: Diagram B
+%     dia = mconcat
+%       [ pt # named "start" # translate (0.3 ^& 0.9)
+%       , pt # named "Bp"    # translate (4.3 ^& 0.9)
+%       , pt # named "Bm"    # translate (4 ^& (-1.2))
+%       , pt # named "Am"    # translate (0 ^& (-1.2))
+%       , pt # named "Ap"    # translate ((-0.3) ^& 1.1)
+%       , text "?" # fc red # fontSizeL 0.4 # named "FB?"   # translate (3 ^& 1.7)
+%       , hsep 2 [signedset "A" "\\alpha" False, signedset "B" "\\beta" True]
+%         # arrowBetweenAtY   ht  "f^+" ["A", "B"]
+%         # arrowBetweenAtY (-ht) "f^-" ["A", "B"]
+%         # involutionArrow ht (-1) "\\alpha" "A"
+%         # involutionArrow ht 1    "\\beta"  "B"
+%       ]
+%       # connect' arrowOptsLoop "start" "Bp"
+%       # connect' arrowOptsLoop "Bp" "Bm"
+%       # connect' arrowOptsLoop "Bm" "Am"
+%       # connect' arrowOptsLoop "Am" "Ap"
+%       # connect' (arrowOptsLoop & shaftStyle %~ dashingL [0.05, 0.05] 0)
+%           "Ap" "FB?"
+%       where
+%         ht = 0.7
+%         pt = circle 0.07 # fc red # lw none
 
-    arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
-      let oa = location a
-          ob = location b
-          e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
-          e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
-      in  atop
-            ( mconcat
-              [ arrowBetween' arrowOpts e1 e2
-              , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
-              ]
-              # fontSizeL 0.4
-            )
+%     arrowBetweenAtY y lab nms = withNames nms $ \[a,b] ->    -- $
+%       let oa = location a
+%           ob = location b
+%           e1 = fromJust (traceP (oa # translateY y) (oa .-. ob) a)
+%           e2 = fromJust (traceP (ob # translateY y) (ob .-. oa) b)
+%       in  atop
+%             ( mconcat
+%               [ arrowBetween' arrowOpts e1 e2
+%               , text ("$" ++ lab ++ "$") # moveTo (lerp 0.5 e1 e2 # translateY 0.3)
+%               ]
+%               # fontSizeL 0.4
+%             )
 
-    arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
-    arrowOptsLoop = with & gaps .~ local 0.2
-                         & shaftStyle %~ lc red
-                         & headStyle  %~ fc red
-                         & tailStyle  %~ fc red
-                         & arrowShaft .~ arc xDir (-1/6 @@@@ turn)
+%     arrowOpts = with & gaps .~ local 0.2 & arrowTail .~ dart'
+%     arrowOptsLoop = with & gaps .~ local 0.2
+%                          & shaftStyle %~ lc red
+%                          & headStyle  %~ fc red
+%                          & tailStyle  %~ fc red
+%                          & arrowShaft .~ arc xDir (-1/6 @@@@ turn)
 
-    involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
-      let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
-          e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
-      in  atop (
-            mconcat
-            [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
-            , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
-            ]
-            # fontSizeL 0.4
-          )
-  \end{diagram}
-  \caption{Going around the loop in GMIP}
-  \label{fig:GMIP-loop}
-\end{figure}
+%     involutionArrow ht lr nm thing = withName thing $ \a ->   -- $
+%       let e1 = fromJust (traceP (location a # translateY ht) (lr *^ unit_X) a)
+%           e2 = fromJust (traceP (location a # translateY (-ht)) (lr *^ unit_X) a)
+%       in  atop (
+%             mconcat
+%             [ arrowBetween' (arrowOpts & arrowShaft .~ arc yDir (-lr/2 @@@@ turn)) e1 e2
+%             , text ("$" ++ nm ++ "$") # moveTo (location a # translateX (lr * 1.6))
+%             ]
+%             # fontSizeL 0.4
+%           )
+%   \end{diagram}
+%   \caption{Going around the loop in GMIP}
+%   \label{fig:GMIP-loop}
+% \end{figure}
 
-This seems suspiciously familiar!  In fact, there is a close
-relationship to the GCBP, but it is somewhat obscured by the way GMIP
-is usually presented.  First, let us see an alternative presentation
-of GMIP.  Suppose we have six sets $U$, $V$, $W$, $U'$, $V'$, $W'$,
-and four bijections:
-\begin{itemize}
-\item $f : U+V \bij U'+V'$
-\item $g : W \bij W'$
-\item $v : V \bij W$
-\item $v' : V' \bij W'$
-\end{itemize}
-This situation is illustrated in \pref{fig:alt-GMIP}.
-\begin{figure}
-\begin{diagram}[width=200]
-  import Bijections
+% This seems suspiciously familiar!  In fact, there is a close
+% relationship to the GCBP, but it is somewhat obscured by the way GMIP
+% is usually presented.  First, let us see an alternative presentation
+% of GMIP.  Suppose we have six sets $U$, $V$, $W$, $U'$, $V'$, $W'$,
+% and four bijections:
+% \begin{itemize}
+% \item $f : U+V \bij U'+V'$
+% \item $g : W \bij W'$
+% \item $v : V \bij W$
+% \item $v' : V' \bij W'$
+% \end{itemize}
+% This situation is illustrated in \pref{fig:alt-GMIP}.
+% \begin{figure}
+% \begin{diagram}[width=200]
+%   import Bijections
 
-  dia =
-    drawGenBij tex
-      ( ((sg "U" +++ sg "V") +++ sg "W")
-          .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
-        ((sg "U'" +++ sg "V'") +++ sg "W'")
-      )
-\end{diagram}
-\caption{An alternate presentation of GMIP} \label{fig:alt-GMIP}
-\end{figure}
-Ultimately we are
-interested in constructing a bijection $U \bij U'$.  But we can easily
-construct a bijection $v ; g ; \overline{v'} : V \bij V'$, which we
-can then subtract from $f : U+V \bij U'+V'$ using GCBP.
+%   dia =
+%     drawGenBij tex
+%       ( ((sg "U" +++ sg "V") +++ sg "W")
+%           .-  lks "\\mathit{assoc}" [("A","A"), ("B","B"), ("C","C")] -..
+%         ((sg "U'" +++ sg "V'") +++ sg "W'")
+%       )
+% \end{diagram}
+% \caption{An alternate presentation of GMIP} \label{fig:alt-GMIP}
+% \end{figure}
+% Ultimately we are
+% interested in constructing a bijection $U \bij U'$.  But we can easily
+% construct a bijection $v ; g ; \overline{v'} : V \bij V'$, which we
+% can then subtract from $f : U+V \bij U'+V'$ using GCBP.
 
-In fact, the situation described above is equivalent to the usual
-setup of GMIP:
-\begin{itemize}
-\item Define $A^+ = U + V$, $A^- = W$, $B^+ = U' + V'$, and $B^- =
-  W'$.
-\item Define $f^+ = f$ and $f^- = g$.
-\item What about the signed involutions $\alpha$ and $\beta$?  Since
-  $v : V \bij W$ is a bijection, we can make it into an involution on
-  $(U + V) + W = A^+ + A^- = A$ which fixes $U$ and swaps $V$ and
-  $W$.  Formally, we define $\alpha$ by
-\[
-  \xymatrix{
-    (U + V) + W \ar@@{<->}[d]^{|assoc|} & & (U + V) + W \ar@@{<->}[d]^{\overline{|assoc|}}\\
-    U + (V + W) \ar@@{<->}[r]^{\id + (v +
-      \overline{v})} & U + (W + V) \ar@@{<->}[r]^{\id + |swap|} & U + (V + W)
-  }
-\]
-  $\beta$ is defined similarly in terms of $v'$.
-\end{itemize}
+% In fact, the situation described above is equivalent to the usual
+% setup of GMIP:
+% \begin{itemize}
+% \item Define $A^+ = U + V$, $A^- = W$, $B^+ = U' + V'$, and $B^- =
+%   W'$.
+% \item Define $f^+ = f$ and $f^- = g$.
+% \item What about the signed involutions $\alpha$ and $\beta$?  Since
+%   $v : V \bij W$ is a bijection, we can make it into an involution on
+%   $(U + V) + W = A^+ + A^- = A$ which fixes $U$ and swaps $V$ and
+%   $W$.  Formally, we define $\alpha$ by
+% \[
+%   \xymatrix{
+%     (U + V) + W \ar@@{<->}[d]^{|assoc|} & & (U + V) + W \ar@@{<->}[d]^{\overline{|assoc|}}\\
+%     U + (V + W) \ar@@{<->}[r]^{\id + (v +
+%       \overline{v})} & U + (W + V) \ar@@{<->}[r]^{\id + |swap|} & U + (V + W)
+%   }
+% \]
+%   $\beta$ is defined similarly in terms of $v'$.
+% \end{itemize}
 
-Conversely, given $A^+$, $A^-$, $f^+$, $f^-$, $\alpha$, and $\beta$:
-\begin{itemize}
-\item Define $U = \Fix \alpha$,
-\item $V = A^+ - \Fix \alpha$,
-\item $W = A^-$,
-\item and similarly define $U'$, $V'$, and $W'$ in terms of $\beta$,
-  $B^+$, and $B^-$.
-\item Finally define $v : V \bij W$ as the action of $\alpha$ on
-  $V$---the image of $\alpha$ on $V = A^+ - \Fix \alpha$ must be
-  $W = A^-$, and this must be a bijection since $\alpha$ is
-  self-inverse.
-\end{itemize}
+% Conversely, given $A^+$, $A^-$, $f^+$, $f^-$, $\alpha$, and $\beta$:
+% \begin{itemize}
+% \item Define $U = \Fix \alpha$,
+% \item $V = A^+ - \Fix \alpha$,
+% \item $W = A^-$,
+% \item and similarly define $U'$, $V'$, and $W'$ in terms of $\beta$,
+%   $B^+$, and $B^-$.
+% \item Finally define $v : V \bij W$ as the action of $\alpha$ on
+%   $V$---the image of $\alpha$ on $V = A^+ - \Fix \alpha$ must be
+%   $W = A^-$, and this must be a bijection since $\alpha$ is
+%   self-inverse.
+% \end{itemize}
 
-XXX So what's with the sign-reversing involutions?  (the
-principle is typically presented like this due to the specific way it
-often arises from inclusion-exclusion arguments in combinatorics,
-where sign-reversing involutions were already a familiar feature)
+% XXX So what's with the sign-reversing involutions?  (the
+% principle is typically presented like this due to the specific way it
+% often arises from inclusion-exclusion arguments in combinatorics,
+% where sign-reversing involutions were already a familiar feature)
 
-We have already seen how to implement this reformulated GMIP in terms
-of GCBP. \todo{show code}
+% We have already seen how to implement this reformulated GMIP in terms
+% of GCBP. \todo{show code}
 
-What about implementing GCBP in terms of GMIP?  This can also be done,
-and it is not too hard: the trick is to duplicate $B$ and $B'$, like
-so: \todo{picture} \todo{show code}
+% What about implementing GCBP in terms of GMIP?  This can also be done,
+% and it is not too hard: the trick is to duplicate $B$ and $B'$, like
+% so: \todo{picture} \todo{show code}
 
-\todo{Formal equational proof that these are equivalent?}
+% \todo{Formal equational proof that these are equivalent?}
 
 \section{Efficiency}
 \label{sec:efficiency}
