@@ -279,9 +279,7 @@
   perspective, showing how to construct such bijections at a high
   level, avoiding pointwise reasoning or being forced to construct the
   forward and backward directions separately---without sacrificing
-  performance.  Along the way we also shed light on the equivalence
-  between the principles of Gordon and Garsia-Milne, a folklore result
-  without, to our knowledge, a published proof.
+  performance.
 
   We recommend viewing this paper as a PDF or printing it on a color
   printer, though it should still be comprehensible in black and
