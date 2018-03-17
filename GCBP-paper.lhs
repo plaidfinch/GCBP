@@ -39,7 +39,10 @@
 
 %include polycode.fmt
 
-%format pattern = "\mathbf{pattern}"
+% Some keywords that lhs2TeX doesn't know about
+%format qualified = "\mathbf{qualified}"
+%format pattern   = "\mathbf{pattern}"
+%format as        = "\mathbf{as}"
 
 %format <$> = "\mathbin{\langle \$ \rangle}"
 
@@ -57,7 +60,9 @@
 %format ^^  = "\;"
 
 %format <=>   = "\leftrightarrow"
+%format <==>  = "\leftrightarrow"
 %format <->   = "\rightleftharpoons"
+%format <-->  = "\rightleftharpoons"
 %format :<=>: = "\mathbin{:\leftrightarrow:}"
 %format :<->: = "\mathbin{:\rightleftharpoons:}"
 
@@ -654,7 +659,7 @@ they have several downsides:
   proof assistant based on constructive logic.
   \citet{gudmundsson2017formalizing} has only recently given such a
   constructive formal proof, but it relies heavily on low-level
-  pointwise reasoning.  We leave to future work the problem of turning
+  pointwise reasoning.  We leave to future work the challenge of turning
   our high-level construction into a corresponding high-level
   constructive proof.
 \end{itemize}
@@ -663,7 +668,7 @@ they have several downsides:
 \label{sec:algebra}
 
 We solve these problems by eschewing point-based reasoning in favor of
-a high-level algebric approach, which we use to directly construct a
+a high-level algebraic approach, which we use to directly construct a
 bijection which is the ``difference'' of two other bijections.
 
 Since the GCBP takes two bijections as input and yields a bijection as
@@ -689,7 +694,7 @@ but it is hard to find intermediate bijections that arise during
 execution of the algorithm, out of which we could build the ultimate
 result.
 
-Instead, the idea is to generalize to \emph{partial} bijections, that
+Instead, we must generalize to \emph{partial} bijections, that
 is, bijections which may be undefined on some parts of their domain
 (\pref{fig:partial-bij}).  We can think of the algorithm as starting
 with a totally undefined bijection and building up more and more
@@ -723,10 +728,10 @@ newtype Kleisli m a b = K { runKleisli :: a -> m b }
 consisting of functions |a -> m b| for any monad |m|.  In one sense,
 this generality is overkill: working concretely with total and partial
 bijections instead of a common generalization would require a bit of
-code duplication but would be quite a bit simpler.  However, working
-in a more general setting reveals some underlying algebraic structure,
-and hints at potential extensions and generalizations to be
-discovered.
+code duplication but would be quite a bit simpler.  However, in
+addition to reducing code duplication, working in a more general
+setting reveals some underlying algebraic structure, and hints at
+potential extensions and generalizations to be discovered.
 
 In any case, picking |m = Identity| in the definition of |Kleisli m a
 b| yields normal total functions (up to some extra |newtype|
@@ -792,16 +797,16 @@ continuously across the entire diagram, as shown in
   \label{fig:partial-compose}
 \end{figure}
 
-However, not just any pair of Kleisli arrows qualifies as a
-generalized bijection.  When |m = Identity|, a generalized bijection
-should consist of two inverse functions, that is, functions whose
-composition is |id|.  When |m = Maybe|, composing the two functions
-does not have to yield the identity, since it may be undefined in some
-places---but it should certainly be the identity when restricted to
-points on which the functions are defined.  More formally, we should
-have |fwd a = Just b| if and only if |bwd b = Just a|.  This justifies
-drawing partial bijections by connecting two sets with some collection
-of undirected (\ie bidirectional) line segments, as in
+Not just any pair of Kleisli arrows qualifies as a generalized
+bijection.  When |m = Identity|, a generalized bijection should
+consist of two inverse functions, that is, functions whose composition
+is |id|.  When |m = Maybe|, composing the two functions does not have
+to yield the identity, since it may be undefined in some places---but
+it should certainly be the identity when restricted to points on which
+the functions are defined.  More formally, we should have |fwd a =
+Just b| if and only if |bwd b = Just a|.  This justifies drawing
+partial bijections by connecting two sets with some collection of
+undirected (\ie bidirectional) line segments, as in
 \pref{fig:partial-bij}.  (These laws can be generalized to any monad
 |m| with some sort of ``information ordering'' relation; intuitively
 the composition of the |fwd| and |bwd| morphisms should be the
@@ -887,8 +892,8 @@ To make working with total and partial bijections more convenient, we
 can define \emph{pattern synonyms} \citep{pickering2016pattern} which let us pretend as
 if we had directly declared types like
 \begin{spec}
-data a <=> b = (a -> b) :<=>: (b -> a)
-data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
+data a <=> b = (a -> b)        :<=>:  (b -> a)
+data a <-> b = (a -> Maybe b)  :<->:  (b -> Maybe a)
 \end{spec}
 automatically handling the required |newtype| wrapping and unwrapping.
 The declarations for these pattern synonyms are shown in
@@ -908,12 +913,13 @@ pattern (:<=>:) f g <- B  (K ((>>> runIdentity) -> f))
 \caption{Pattern synonyms for total and partial bijections} \label{fig:pat-syns}
 \end{figure}
 
-In what follows, we will use simple diagrams of labelled boxes and
-lines to abstractly represent sets and generalized bijections between
-them, since looking at the pictures gives a much better intuitive idea
-of what is going on than looking at code.  For example, we draw a
-generalized bijection $f$ between sets $A$ and $B$ as a thick line
-connecting two labelled boxes, as shown in \pref{fig:gen-bij-dia}.
+In what follows, we will sometimes use simple diagrams of labelled
+boxes and lines to abstractly represent sets and generalized
+bijections between them, since looking at the pictures gives a much
+better intuitive idea of what is going on than looking at code.  For
+example, we draw a generalized bijection $f$ between sets $A$ and $B$
+as a thick line connecting two labelled boxes, as shown in
+\pref{fig:gen-bij-dia}.
 \begin{figure}
   \begin{center}
     \begin{diagram}[width=75]
@@ -1504,7 +1510,7 @@ cycle through again while it is ``waiting'' for other elements to land
 in $B$.
 
 Unfortunately, this is quite inefficient.  For one thing, evaluating
-$f_{i+1}$ on a particular input requires evaluating two copies of
+each $f_{i+1}$ on a particular input requires evaluating two copies of
 $f_i$, leading to exponential time complexity to evaluate $f_n$ at a
 given input (at least barring any clever optimizations).  Second,
 there is something else we have swept under the rug up to this point:
@@ -1523,9 +1529,9 @@ the first place would seem to require essentially running the original
 pointful GCBP algorithm, nullifying the point of the whole exercise.
 
 Fortunately, there is a much better way to emulate at a high level
-what is really going on when we carry out GCBP elementwise, but it
-requires first exploring a few more primitive operations on partial
-bijections.
+what is really going on when we carry out the elementwise GCBP
+process. To understand it, we must first explore a few more primitive
+operations on partial bijections.
 
 \section{Compatibility and merging}
 
@@ -1537,12 +1543,12 @@ thinking about partial bijections in terms of their information
 content, and formalizing what it means for one partial bijection to be
 ``more informative'' than another.  We start by formalizing some
 intuitive notions about partial \emph{functions}, and then lift them
-to coresponding notions on partial bijections.
+to corresponding notions on partial bijections.
 
 We say that two partial functions |f, g : A -> Maybe B| are
 \term{compatible}, written $f \compat g$, if they agree at all points
-where both are defined, that is, for all |a : A| and |b : B|, |f a =
-Just b| if and only if |g a = Just b|.
+where both are defined, that is, for all |a : A| and |b : B|, \[ |f a =
+Just b| \text{ if and only if } |g b = Just a|. \]
 
 % Formally, $f \compat g$ if and only if |dom g
 % >>> f = dom f >>> g|, that is, restricting $f$ to $g$'s domain yields
@@ -1586,15 +1592,16 @@ Just b| if and only if |g a = Just b|.
 % compatible is to be equal.
 
 If two partial functions |f, g : A -> Maybe B| are compatible, we can
-define their \term{merge} as \[ (f \mrg g)(x) = f(x) \mrg g(x), \]
-where $\mrg$ on |Maybe| values yields whichever value is |Just|, or
-|Nothing| if both are |Nothing|.  If both are |Just|, compatibility
-dictates that they must be equal, so merging compatible functions does
-not introduce any bias---that is, $f \mrg g = g \mrg f$ when $f$ and
-$g$ are compatible.
+define their \term{merge} as \[ |(f <||||> g) x = f x <||> g x|, \]
+where |(<||>)| merges |Maybe| values, yielding |Nothing| if both
+arguments are |Nothing|, and the leftmost |Just| value otherwise.  In
+the case of compatible partial functions, however, when both |f x| and
+|g x| are |Just|, they must be equal, so merging compatible functions
+does not introduce any bias---that is, when $f$ and $g$ are
+compatible, $f \mrg g = g \mrg f$.
 
 These notions lift easily to the setting of partial bijections.  Two
-partial bijections $f, g : A |<->| B$ are compatible if their forward
+partial bijections |f, g : A <-> B| are compatible if their forward
 directions are compatible and their backward directions are
 compatible; the merge of two compatible partial bijections $f \mrg g$
 is computed by merging their forward and backward directions
@@ -1624,13 +1631,13 @@ instance Mergeable (<->) where
 %$
 \caption{The |Mergeable| type class} \label{fig:mergeable}
 \end{figure}
-Notice that we use an \emph{irrefutable pattern match} in the
+Notice that we use an \emph{irrefutable} (\ie lazy) \emph{pattern match} in the
 definition of |(<||||>)| for partial bijections, which means |h <||||>
 h'| can output something of the form |B (...) (...)| \emph{before}
 demanding evaluation of |h'|.  Evaluation of |h'| will only be
 demanded if evaluation of |h| on a particular input is undefined.
 This ensures that a chain of merged partial bijections can be
-evaluated lazily on a particular input, stopping as soon as the first
+evaluated lazily on each input, stopping as soon as the first
 partial bijection defined on the given input is found.  This will be
 especially important in the next section, in which we will fold an
 \emph{infinite} list via |(<||||>)|.
@@ -1752,24 +1759,26 @@ partial bijections
 first is $h$, the next is |h >>> (undef |||||| inverse(g)) >>> h|,
 then
 \[ |h >>> (undef |||||| inverse(g)) >>> h >>> (undef ||||||
-  inverse(g)) >>> h|, \] and so on.  Now take the left projection of
-each, as illustrated in the rightmost column of
+  inverse(g)) >>> h|, \] and so on.  Now we take the left projection
+of each, as illustrated in the rightmost column of
 \pref{fig:iterating-ext}. In this particular example, all the left
-partial projections produced are compatible with each other; in fact,
-the domains on which they are defined are completely disjoint.  In
-fact, this will always be the case.
+partial projections produced are compatible with each other; and
+moreover, the domains on which they are defined are completely
+disjoint.  In fact, this is no coincidence: the partial bijections
+|leftPartial(extend g h^n h)| will always be pairwise compatible.
 
 Why is this?  The path an element of $A$ takes under iteration of
 |extend g h| can bounce around in the bottom sets ($B$ and $B'$), but
-stops once it reaches $A'$.  Suppose it takes some $a \in A$ exactly
-$n$ iterations to reach some $a' \in A'$.  If we iterate fewer than
-$n$ times, $a$ will be mapped to some element of $B'$, and hence the
-left projection will be undefined at $a$.  If we iterate exactly $n$
-times, $a$ will be mapped to $a' \in A'$, and hence it will map to
-$a'$ in the left projection as well.  If we iterate more than $n$
-times, the resulting partial bijection will be undefined at $a$,
-because after reaching $a'$ it will be composed with |undef|.  So for
-any given $a \in A$, there is exactly one value of $n$ such that
+stops once it reaches $A'$, since on the next iteration it will be
+sequenced with |undef|.  Suppose it takes some $a \in A$ exactly $n$
+iterations to reach some $a' \in A'$.  If we iterate fewer than $n$
+times, $a$ will be mapped to some element of $B'$, and hence the left
+projection will be undefined at $a$.  If we iterate exactly $n$ times,
+$a$ will be mapped to $a' \in A'$, and hence it will map to $a'$ in
+the left projection as well.  If we iterate more than $n$ times, the
+resulting partial bijection will be undefined at $a$, because after
+reaching $a'$ it will be composed with |undef|.  So for any given
+$a \in A$, there is exactly one value of $n$ such that
 |leftPartial(extend g h^n h)| is defined at $a$.  Also, there can
 never be two different elements of $A$ which map to the same $A'$: two
 paths can never ``converge'' in this way since we are composing
@@ -1781,22 +1790,73 @@ Hence, we are justified in considering the infinite merge
   leftPartial(extend g h^2 h) <||||> leftPartial(extend g h^3 h)
   <||||> ...| \] For every element of $A$, there is some finite $n$
 for which |leftPartial(extend g h^n h)| is defined on it, and hence
-this infinite merge actually defines a \emph{total} bijection.
-Intuitively, this is doing exactly the same thing that the original
-pointwise implementation of GCBP was doing, but without having to
-explicitly talk about individual points $a \in A$.
+this infinite merge actually defines a \emph{total} bijection, so we
+are justified in using |unsafeTotal| to convert it.  Again, because of
+the irrefutable pattern match in the definition of |(<||||>)|, this
+infinite expression only evaluates as far as necessary for any given
+input.  Intuitively, this is doing exactly the same thing that the
+original pointwise implementation of GCBP was doing, but without
+having to explicitly talk about individual points $a \in A$.
 
-Concretely, we can now implement GCBP as follows:
+With this insight, we can finally implement GCBP as follows:
 \begin{code}
-gcbp :: (a + c <=> b + d) -> (c <=> d) -> (a <=> b)
+gcbp :: (a + b <=> a' + b') -> (b <=> b') -> (a <=> a')
 gcbp h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extend g' h') $ h'
   where
     g' = partial g
     h' = partial h
 \end{code} %$
 
-\todo{Implement and demo.  Prove it is equivalent to reference
-  implementation?  Or that it produces a bijection?}
+\pref{fig:gcbp-example} demonstrates this implementation of |gcbp| using our
+running example.
+
+\begin{figure}
+\begin{spec}
+unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
+unsafeBuildBijection pairs = unsafeTotal (f :<->: g)
+  where
+    f = flip lookup pairs
+    g = flip lookup (map swap pairs)
+
+data Three = One | Two | Three deriving (Eq, Show, Ord, Enum)
+
+h :: Three + Bool <=> Three + Bool
+h = unsafeBuildBijection
+  [ (Left One,     Left Two     )
+  , (Left Two,     Left Three   )
+  , (Left Three,   Right False  )
+  , (Right False,  Right True   )
+  , (Right True,   Left One     ) ]
+
+g :: Bool <=> Bool
+g = id :<=>: id
+\end{spec}
+\medskip
+
+  \begin{diagram}[width=200]
+    import Bijections
+
+    dia = hsep 2
+      [ drawBComplex (bc2 # labelBC ["$h$"])
+      , text "$-$" # translateY (-2.5)
+      , drawBComplex (bc1 # labelBC ["$g$"]) # translateY (-2.5)
+      , text "$=$"
+      , drawBComplex ((a0 .- bijResult -.. b0) # labelBC ["$f$"])
+      ]
+    bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
+    bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ) -- $
+    bijResult = single $ mkABij a0 b0 ((`mod` 3) . succ)  -- $
+  \end{diagram}
+  \medskip
+
+\begin{verbatim}
+> map (applyTotal (gcbp h g)) [One, Two, Three]
+[Two,Three,One]
+\end{verbatim}
+
+\caption{Testing |gcbp|} \label{fig:gcbp-example}
+\end{figure}
+
 
 % \section{The Garsia-Milne Involution Principle}
 % \label{sec:gmip}
@@ -2084,57 +2144,224 @@ gcbp h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extend g' h'
 
 % \todo{Formal equational proof that these are equivalent?}
 
-\section{Efficiency}
+\section{Efficiency I: memoization}
 \label{sec:efficiency}
 
-Let us return to our implementation of GCBP.  It essentially has a
-form like \todo{replace this with actual details.  Trying to simplify
-  is just more confusing.}
-\[ f \mrg g\;f \mrg g^2\;f \mrg g^3\;f \mrg \dots \] Operationally, to
-compute the output on some particular $a$, we perform the following
-series of steps.
+Let us return to consider the infinite merge used to compute |gcbp|:
+\[ |leftPartial(h) <||||> leftPartial(extend g h h) <||||>
+  leftPartial(extend g h^2 h) <||||> leftPartial(extend g h^3 h)
+  <||||> ...| \] Operationally, to compute the output on some
+particular $a$, we perform the following series of steps:
 \begin{enumerate}
-\item Check if $f\; a$ is defined.  If yes, output it and stop.
-\item Check if $(g\; f)\; a$ is defined.  If yes, output it and stop.
-\item Check if $(g^2\; f)\; a$ is defined. If yes, output it and stop.
-\item \dots
+\item Check if |leftPartial(h) a| is defined.  If yes, output it and stop.
+\item Check if |leftPartial(extend g h h) a = (h >>> (undef +
+  inverse(g)) >>> h) a| is defined.  If yes, output it and stop.
+\item Check if |leftPartial(extend g h^2 h) a = (h >>> (undef +
+  inverse(g)) >>> h >>> (undef + inverse(g)) >>> h) a| is defined. If yes, output it and stop.
 \end{enumerate}
-To check if $(g^k\; f)\; a$ is defined requires following a path of
-length $k$ to see where it ends: \todo{picture} Overall, this yields
-quadratic performance, since to compute the output for a particular
-$a$, we must follow a path of length $1$, then length $2$, then length
-$3$\dots until we find one that terminates in the top half of the
-diagram (that is, in the set $B$ \todo{check this}).  But this is
-manifestly stupid, since most of the work is redone on every
-iteration---the path on each iteration is the same as the path from
-the previous iteration, extended by one step.
+\dots and so on.  In general, in order to compute |leftPartial(extend
+g h^n h) a|, we must evaluate an expression of size linear in $n$.
+Evaluating |applyTotal (gcbp h g) a| therefore takes time
+\emph{quadratic} in the number of iterations required for |a|, because
+we first evaluate a path of length $1$, then length $3$, then length
+$5$, \dots until we finally evaluate the path that takes $a \in A$ all
+the way to some $a' \in A'$.
 
-The solution is memoization: along with each partial bijection, we
-store a map associating inputs on which it is defined to the
+As you may have already noticed, however, we are doing a lot of
+duplicate work. for example, to check whether |(h >>> (undef +
+inverse(g)) >>> h >>> (undef + inverse(g)) >>> h) a| is defined, we
+first compute |(h >>> (undef + inverse(g)) >>> h) a| and then apply
+|(undef + inverse(g)) >>> h| to the result---but we already computed
+|(h >>> (undef + inverse(g)) >>> h) a| on the previous iteration.  In
+general, the path followed on each iteration is the same as the path
+from the previous iteration, extended by one step.
+
+The solution is \emph{memoization}: along with each partial bijection,
+we store a map associating inputs to their corresponding outputs.
 corresponding outputs. With these maps in place, evaluating a partial
 bijection on a particular input may take any amount of time initially,
-but subsequent evaluations at the same input take only constant time.
-\todo{Finish: once we have computed $g^k f$ at some particular a,
-  evaluating $g^{k+1} f$ at a takes only constant additional time.  This
-  makes the whole process linear.}
+but subsequent evaluations at the same input take (essentially)
+constant time. This means that each iteration needs to do only a
+constant amount of additional work, and the whole evaluation reduces
+to linear time instead of quadratic.
 
-\todo{Show how to implement this.  Demonstrate it is faster.}
+\pref{fig:memo} shows some necessary utilities for memoization.  We
+make use of Conal Elliott's \verb+MemoTrie+ package
+\citep{elliott:memoization, elliott:memotrie}, which provides
+facilities for automatically memoizing pure functions, making clever
+use of GHC's lazy evaluation model to store a lookup table which is
+lazily filled in on demand. |KleisliM| represents memoized Kleisli
+arrows, with a special constructor |Id| for representing the identity
+arrow (which does not need to be memoized).  The constructor |Memo| is
+not exported; instead, a smart constructor |kleisliM| is provided
+which automatically wraps the given |a -> m b| function in a call to
+|MT.memo|, which memoizes it.  A |Category| instance for |KleisliM|
+defines composition, which requires another call to |MT.memo| to
+ensure that the result of composition is also memoized.  Finally
+|runKleisliM| re-extracts a function of type |a -> m b| from a
+|KleisliM m a b|.  Together, |kleisliM| and |runKleisliM| witness a
+sort of isomorphism between |a -> m b| and |KleisliM m a b|.  The
+trick is that although |runKleisliM (kleisliM f)| is
+\emph{semantically} equivalent to |f|, it is not \emph{operationally}
+equivalent: in particular, evaluating |runKleisliM (kleisliM f)|
+multiple times on the same input will only evaluate |f| once.
+\begin{figure}
+  \centering
+  \begin{spec}
+import            Data.MemoTrie    (HasTrie)
+import qualified  Data.MemoTrie    as MT
 
-However, there is still a problem: we are computing \emph{two}
-directions of a bijection at once.  Memoization helps with the
-\emph{forward} direction, because each iteration composes a new
-partial bijection \emph{on the right}.  \todo{pictures}  In the
-backwards direction, however, the part of the path that has already
-been computed doesn't help, since we are extending on the wrong side.
-\todo{We can see this empirically with an example like\dots}
+data KleisliM m a b where
+  Id    :: KleisliM m a a
+  Memo  :: HasTrie a => (a -> m b) -> KleisliM m a b
 
-We lose the benefits from memoization since when extending a partial
-bijection \emph{on the right}, the inverse direction gets extended
-\emph{on the left}.  The solution is the same as the punchline to the
-old joke:
+kleisliM :: HasTrie a => (a -> m b) -> KleisliM m a b
+kleisliM f = Memo (MT.memo f)
+
+instance Monad m => Category (KleisliM m) where
+  id = Id
+  Id  . m   = m
+  m   . Id  = m
+  Memo f . Memo g = kleisliM (f <=< g)
+
+runKleisliM :: Applicative m => KleisliM m a b -> (a -> m b)
+runKleisliM Id        = pure
+runKleisliM (Memo f)  = f
+  \end{spec}
+  \caption{Utilities for memoization}
+  \label{fig:memo}
+\end{figure}
+% We also define a type |Memo| to represent memoized functions |a -> b|,
+% along with a smart constructor |memo| and its inverse |apply|.
+
+Now all we have to do is redefine |Bij m|, along with our pattern
+synonyms for working with total and partial bijections
+(\pref{fig:bij-redef}).
+\begin{figure}
+\begin{spec}
+data Bij m a b = B
+  { ^^ fwd  :: KleisliM m a b
+  , ^^ bwd  :: KleisliM m b a
+  }
+
+pattern (:<->:) :: (HasTrie a, HasTrie b, Applicative m) => (a -> m b) -> (b -> m a) -> Bij m a b
+pattern (:<->:) f g <- B (runKleisliM -> f) (runKleisliM -> g)
+  where
+    f :<->: g = B (kleisliM f) (kleisliM g)
+
+pattern (:<=>:) :: (HasTrie a, HasTrie b) => (a -> b) -> (b -> a) -> Bij Identity a b
+pattern (:<=>:) f g <- B  (runKleisliM >>> (>>> runIdentity) -> f)
+                          (runKleisliM >>> (>>> runIdentity) -> g)
+  where
+    f :<=>: g = B  (kleisliM (f >>> Identity))
+                   (kleisliM (g >>> Identity))
+\end{spec}
+\caption{Redefining |Bij m| with memoization} \label{fig:bij-redef}
+\end{figure}
+The syntax for the pattern synonyms becomes even more horrendous, but
+the good news is that once we have defined them our troubles are
+(mostly) over: all the other code gets to stay pretty much the same,
+except that we have to add lots of |HasTrie| constraints everywhere,
+including the types of the |Parallel| and |Mergeable| methods, since
+we can no longer freely use any types we like, but only types for
+which a memo table can be built.
+
+To see the difference in performance between the non-memoized and
+memoized versions, consider the bijection |h : A + B <=> A + B| which
+sends each element to the ``next'' element, except for the last
+element of |B| which gets sent back to the first element of |A|.
+Indeed, the |h| in our running example is of this form, with
+$||A|| = 3$ and $||B|| = 2$.  Subtracting the identity bijection on
+|B| is a worst case for GCBP: although most elements in |A| need zero
+iterations to reach their final destination (\ie just a single
+application of |h|), the last element of |A| needs $||B||$ iterations
+before it finishes travelling through every element of |B| and finally
+reaches its destination.  \pref{fig:pessimal} exhibits some code which
+constructs this scenario, with $A = B = \{0, \dots,
+4999\}$. \pref{fig:test-pessimal} shows the result of some simple
+timing experiments at the GHCI prompt: without memoization, the
+bijection $f$ constructed by GCBP needs 30 seconds to compute |f
+4999|, whereas with memoization, it only needs half a second.
+  \begin{figure}
+    \centering
+\begin{code}
+pessimal :: Integer -> Integer
+         -> (Integer + Integer <=> Integer + Integer, Integer <=> Integer)
+pessimal m n = (add >>> cyc >>> inverse add, id)
+  where
+    -- add :: [m] + [n] <=> [m+n]
+    add = fromSum :<=>: toSum
+    fromSum (Left k)  = k
+    fromSum (Right k) = m + k
+    toSum k
+      | k >= m    = Right (k - m)
+      | otherwise = Left k
+
+    cyc = mkCyc (+1) :<=>: mkCyc (subtract 1)
+    mkCyc f k = f k `mod` (m+n)
+\end{code}
+    \caption{Constructing a pessimal input for GCBP}
+    \label{fig:pessimal}
+  \end{figure}
+
+  \begin{figure}
+    \centering
+\begin{verbatim}
+> let (h,g) = pessimal 5000 5000
+> let f = gcbp h g
+> applyTotal f 4999   -- without memoization
+0
+(30.40 secs, 12,135,183,272 bytes)
+
+
+> let (h,g) = pessimal 5000 5000
+> let f = gcbp h g
+> applyTotal f 4999   -- with memoization
+0
+(0.55 secs, 302,438,560 bytes)
+\end{verbatim}
+
+    \caption{Testing GCBP without (top) and with (bottom) memoization}
+    \label{fig:test-pessimal}
+  \end{figure}
+
+\section{Efficiency II: naive composition}
+
+However, there is still a problem: part of the point of implementing
+GCBP in a high-level style was so that we could compute \emph{both}
+directions of the bijection at once.  Memoization helps with the
+\emph{forward} direction, because each iteration sequences a new
+partial bijection \emph{on the right}, which means it goes
+\emph{after} the part we have already computed.  In the backwards
+direction, however, sequencing a new bijection on the right means
+putting it \emph{before} the part we have already computed, and this
+means that we cannot reuse our previous computation. When evaluating
+the backward direction on a particular input, we have to start over
+from scratch every time.
+
+\begin{figure}
+  \centering
+\begin{verbatim}
+> let (h,g) = pessimal 5000 5000
+> let f = gcbp h g
+> applyTotal f 4999          -- with memoization
+0
+(0.55 secs, 301,398,688 bytes)
+> applyTotal (inverse f) 0   -- memoization doesn't help!
+^CInterrupted.
+\end{verbatim}
+  \caption{Memoization doesn't help with the backwards direction}
+  \label{fig:memo-backwards}
+\end{figure}
+\pref{fig:memo-backwards} has a sample GHCI session showing that
+memoization doesn't help with the backwards direction.  Not only does
+it take a long time, it tends to use up all available memory so that
+it has to be killed.
+
+The solution is the same as the punchline to the old joke:
 \begin{quote}
   \textit{Patient: Doctor, it hurts when I do this.\\
-    Doctor:  Well, don't do that then.
+    Doctor: Well, don't do that then.
   }
 \end{quote}
 % Given two |m|-bijections $|f, g :: Bij m a a|$, we define a
@@ -2156,16 +2383,26 @@ old joke:
 % existing a <-> b  bijection and extends it with two more bijections
 % at a time: one b <-> a and one a <-> b.
 
+Since adding new partial bijections on the right causes memoization to
+be useless for the backwards direction, let's not do that.  You may
+protest that if we add new partial bijections on the \emph{left}
+instead, we may fix the problem for the backwards direction but will
+surely reintroduce the same problem for the forwards direction, and
+you would be exactly right.  But that isn't what we're going to do.
+
 Question: when is
 \[ (f_1 f_2 f_3 \dots f_n)^{-1} = f_1^{-1} f_2^{-1} f_3^{-1} \dots
-  f_n^{-1}? \] Answer: when $f_1 \dots f_n$ is a palindrome!  Luckily,
+  f_n^{-1}? \] Answer: when $f_1 \dots f_n$ is a palindrome!  If $f_1
+\dots f_n$ is a palindrome, it is equal to its own reversal, and hence
+\[ (f_1 f_2 f_3 \dots f_n)^{-1} = (f_n \dots f_3 f_2 f_1)^{-1} =
+  f_1^{-1} f_2^{-1} f_3^{-1} \dots  f_n^{-1}. \] Luckily,
 GCBP is in fact computing a palindrome, namely,
 $h \overline{g} h \overline{g} h \dots h$.  So we define an operation
 |extendPalindrome g h| which in general turns $(h g)^n h$ into
 $(h g)^{n+1} h$, by postcomposing with another copy of $g$ and $h$.
 \begin{code}
 extendPalindrome
-  ::  (a <-> b) ->  (b <-> a) ->  (a <-> b) -> (a <-> b)
+  ::  (b <-> a) ->  (a <-> b) ->  (a <-> b) -> (a <-> b)
 
 extendPalindrome     (g :<->: g')  (h :<->: h')  (f :<->: f')
   = (f >>> g >>> h) :<->: (f' >>> g' >>> h')
@@ -2176,21 +2413,38 @@ expect
   :<->: (h' >>> g' >>> f')|, \] but in this specific case the
 ``naive'' ordering works, since we know $f$ is a palindrome built from
 |g| and |h|:
-\[ hg[(hg)^n h] = [(hg)^n h] g h = (hg)^{n+1}h. \]
-Now we redefine |gcbp| as follows:
-
-
+\[ hg[(hg)^n h] = [(hg)^n h] g h = (hg)^{n+1}h. \] If we redefine
+|gcbp| using |extendPalindrome| in place of |ext|, both the forwards
+and the backwards directions will now be sequenced together in an
+order which allows them to take advantage of
+memoization. \pref{fig:ext-pal} has one last sample GHCI session
+showing that the backwards direction is now just as fast as the
+forwards direction.
+\begin{figure}
+  \centering
+\begin{verbatim}
+> let (h,g) = pessimal 5000 5000
+> let f = gcbp h g
+> applyTotal f 4999
+0
+(0.55 secs, 301,398,688 bytes)
+> applyTotal (inverse f) 0
+4999
+(0.25 secs, 181,462,968 bytes)
+\end{verbatim}
+  \caption{Forwards and backwards with memoization and
+    |extendPalindrome|}
+  \label{fig:ext-pal}
+\end{figure}
 
 % \appendix
 % \section{Appendix Title}
 
 % This is the text of the appendix, if you need one.
 
-\begin{acks}
+% \begin{acks}
 
-  Acknowledgments, if needed.
-
-\end{acks}
+% \end{acks}
 
 \bibliography{GCBP-paper}
 

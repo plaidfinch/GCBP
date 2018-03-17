@@ -1,3 +1,4 @@
+
 {-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE LambdaCase           #-}
 {-# LANGUAGE PatternSynonyms      #-}
@@ -57,8 +58,11 @@ merge = foldr (<||>) undef
 factor :: Functor m => m a + m b -> m (a + b)
 factor = either (fmap Left) (fmap Right)
 
+instance Parallel (->) where
+  (|||) = bimap
+
 instance Monad m => Parallel (Kleisli m) where
-  Kleisli f ||| Kleisli g = Kleisli $ bimap f g >>> factor
+  Kleisli f ||| Kleisli g = Kleisli $ (f ||| g) >>> factor
 
 instance (Monad m, Alternative m) => Mergeable (Kleisli m) where
   undef = Kleisli $ const empty
@@ -301,6 +305,7 @@ prop_gcbp_gcbp' (Positive m) (Positive n) = monadicIO $ do
   (f,g) <- run $ generateTestCase m n
   let h1 = gcbp f g
       h2 = gcbp' f g
+      
   assert $ map (applyTotal h1) [0..m-1] == map (applyTotal h2) [0..m-1]
 
 --------------------------------------------------
