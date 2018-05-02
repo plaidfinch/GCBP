@@ -1,8 +1,5 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-% - expand explanation of palindrome inverses
-% - "manifestly stupid": don't insult the reader!
-
 \documentclass[acmsmall,review,anonymous]{acmart}\settopmatter{printfolios=true}
 
 %% Journal information
@@ -362,7 +359,7 @@ type (+) = Either
 (Note we are punning on |(+)| at the value and type levels.  This
 function already lives in the standard \verb|Data.Bifunctor| module
 with the name |bimap|---in the |Bifunctor Either| instance---but for
-our purposes it is clearer to just define our own).  We can see
+our purposes it is clearer to just define our own.)  We can see
 that $(f + g)$ is a bijection as long as $f$ and $g$ are.
 
 So we can define the \emph{sum} of two bijections.  What about the
