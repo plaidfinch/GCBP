@@ -1,0 +1,67 @@
+XXX thank the reviewers
+Thanks for the many typos pointed out, suggestions for improvement,
+etc, all of which we will carefully take into account when revising
+the paper.
+
+One common sentiment expressed by the reviewers was the desire to see
+more formalization, e.g. to use more sophisticated features of GHC's
+type system to encode invariants so that the whole thing is proved
+correct (and total) by construction.  Several reviewers mentioned that
+it did not seem to them that the code can be seen to be correct by
+construction as it stands, and indeed, it cannot (although we do hope
+that we have given convincing informal arguments that the code is
+correct).  A formal/correct-by-construction proof is something we are
+ultimately aiming at as well, and in fact we have invested a
+significant amount of effort in a formalized Agda development, which
+is not yet complete but already quite long!  Unfortunately, it would
+certainly be far too long to fit in the paper, especially if we
+encoded everything in Haskell's type system (which tends to be much
+more verbose than an equivalent development in, say, Agda).  So
+although the desire for more formalization, type-level invariants,
+etc. is understandable, ultimately we do not think it is reasonable to
+include in this paper (perhaps it is a different paper).
+
+Some more specific responses to a selection of reviewer comments
+follow.
+
+Reviewer A
+==========
+
+> Your code isn't literate Haskell in that it appears to contain
+> typos. This is a bit of a shame.
+
+It is true that for various reasons the paper source is not actually a
+valid literate Haskell document, but we are not aware of any typos.
+Would you be willing to point out specific instances you are aware of
+so that we can fix them?
+
+> You state that the proof of termination for Gordon's theorem is
+> classical. It seems to me that there should be an straightforward
+> constructive termination proof based on defining a finite measure (the
+> number of elements of B' that have been visited so far) that reduces
+> after each iteration. I am confused about why this problem is thought
+> to be in any way non-trivial, but perhaps I am missing something. It
+> could be an interesting exercise to mechanise the termination proof in
+> a proof assistant.
+
+Yes, you're right, and we may have inadvertently implied that it is
+more conceptually difficult than it is.  In fact, as mentioned on line
+209, Gudmundsson recently (in his master's thesis) did just that; his
+Agda proof is long and tedious but conceptually along the lines you
+mention.  We have been working on a higher-level (though probably not
+shorter!) Agda proof following the construction in our paper, but it
+is not yet finished.
+
+Reviewer B
+==========
+
+Reviewer C
+==========
+
+The authors state that 'the proof [of termination] seems to make essential use of classical reasoning' -- this is only partially true. As the sets involved are all finite, you only need to consider at most (something like) |B| + 1 iterations of hg^-i. If all the elements encountered are indeed in B, you can derive a contradiction, hence this process must yield an element in A in finite time -- which is still fine constructively (if you know p does not hold on all elements of a list, you can show there is an element satisfying not p). On the other hand, the last (efficient) solution makes heavy use of partial functions, unbounded recursion, lazy pattern matching, and circular programming (through the memo tables constructed) -- this does undermine the claim a bit that other algorithms may be easier to implement and verify in a proof assistant.
+
+It would be interesting to see basic performance statistics for the earlier versions of the paper also. Or is the first version better than the later ones?
+
+Many of the abstractions used throughout the paper are really not necessary (such as the Category instances or pattern synonyms) -- but they do not distract from the overall story.
+
+The first thought that crossed my mind after seeing the gcbp algorithm (line 663) is that this definition is built from an unfold (iterate) followed by a fold -- and that the 'obvious' next optimisation is to perform some sort of fold fusion. Why not explore this avenue further?
