@@ -1,7 +1,7 @@
-XXX thank the reviewers
-Thanks for the many typos pointed out, suggestions for improvement,
-etc, all of which we will carefully take into account when revising
-the paper.
+We first would like to express our thanks to the reviewers for the
+many typos pointed out, suggestions for improvement, etc.  Although we
+do not respond specifically to every single comment below, we will
+carefully take all of them into account when revising the paper.
 
 One common sentiment expressed by the reviewers was the desire to see
 more formalization, e.g. to use more sophisticated features of GHC's
@@ -9,7 +9,7 @@ type system to encode invariants so that the whole thing is proved
 correct (and total) by construction.  Several reviewers mentioned that
 it did not seem to them that the code can be seen to be correct by
 construction as it stands, and indeed, it cannot (although we do hope
-that we have given convincing informal arguments that the code is
+that we have given convincing *informal* arguments that the code is
 correct).  A formal/correct-by-construction proof is something we are
 ultimately aiming at as well, and in fact we have invested a
 significant amount of effort in a formalized Agda development, which
@@ -31,9 +31,10 @@ Reviewer A
 > typos. This is a bit of a shame.
 
 It is true that for various reasons the paper source is not actually a
-valid literate Haskell document, but we are not aware of any typos.
-Would you be willing to point out specific instances you are aware of
-so that we can fix them?
+valid literate Haskell document, but the code is largely copied from a
+working implementation, and we are not aware of any typos.  Would you
+be willing to point out specific instances you are aware of so that we
+can fix them?
 
 > You state that the proof of termination for Gordon's theorem is
 > classical. It seems to me that there should be an straightforward
@@ -55,13 +56,51 @@ is not yet finished.
 Reviewer B
 ==========
 
+> First, the paper does't make much attempt to go into much detail on
+> potential applications of the technique. Given the broad interest in
+> optics, bidirectional programming, etc. in the ICFP community, this
+> seems like a bit of a missed opportunity.
+
+This is a good point, although in truth we are simply not aware of
+that many direct applications.
+
+> Third, the first point-free construction of the bijection comes off
+> as something of a strawman. Perhaps the paper would be clearer if
+> one jumped straight to the next solution instead?
+
+You are certainly right that it is a strawman!  Sometimes it can be
+pedagogically useful to set up and knock down a strawman; but you may
+be right that this one is not pulling its weight.  It is certainly
+something we will consider.
+
 Reviewer C
 ==========
 
-The authors state that 'the proof [of termination] seems to make essential use of classical reasoning' -- this is only partially true. As the sets involved are all finite, you only need to consider at most (something like) |B| + 1 iterations of hg^-i. If all the elements encountered are indeed in B, you can derive a contradiction, hence this process must yield an element in A in finite time -- which is still fine constructively (if you know p does not hold on all elements of a list, you can show there is an element satisfying not p). On the other hand, the last (efficient) solution makes heavy use of partial functions, unbounded recursion, lazy pattern matching, and circular programming (through the memo tables constructed) -- this does undermine the claim a bit that other algorithms may be easier to implement and verify in a proof assistant.
+> On the other hand, the last (efficient) solution makes heavy use of
+> partial functions, unbounded recursion, lazy pattern matching, and
+> circular programming (through the memo tables constructed) -- this
+> does undermine the claim a bit that other algorithms may be easier
+> to implement and verify in a proof assistant.
 
-It would be interesting to see basic performance statistics for the earlier versions of the paper also. Or is the first version better than the later ones?
+This is a good point.  In terms of formal verification in a proof
+assistant, we had only been thinking in terms of the initial version
+without optimizations, which is sufficient as long as you do not
+actually want to run it.  Verifying the optimized version would indeed
+present an interesting challenge.
 
-Many of the abstractions used throughout the paper are really not necessary (such as the Category instances or pattern synonyms) -- but they do not distract from the overall story.
+> It would be interesting to see basic performance statistics for the
+> earlier versions of the paper also. Or is the first version better
+> than the later ones?
 
-The first thought that crossed my mind after seeing the gcbp algorithm (line 663) is that this definition is built from an unfold (iterate) followed by a fold -- and that the 'obvious' next optimisation is to perform some sort of fold fusion. Why not explore this avenue further?
+Agreed, and good question.  We have not measured it, but expect the
+first (naive, pointful) version is actually fastest (though not
+asymptotically so).  Making a fast implementation is not the primary
+goal of the paper.
+
+> The first thought that crossed my mind after seeing the gcbp algorithm
+> (line 663) is that this definition is built from an unfold (iterate)
+> followed by a fold -- and that the 'obvious' next optimisation is to
+> perform some sort of fold fusion. Why not explore this avenue further?
+
+Thank you for the suggestion!  We had not thought of this and will
+certainly consider it.
