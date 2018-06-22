@@ -66,7 +66,7 @@
 %format ^.    = "\odot"
 
 %format inverse(a) = "\overline{" a "}"
-%format leftPartial(f) = "\langle" f "|"
+%format leftPartial(f) = "\big\langle" f "\,\big|"
 %format rightPartial(f) = "|" f "\rangle"
 
 %format Kleisli(m)(a)(b) = a "\to_{" m "}" b
@@ -277,11 +277,6 @@
   level, avoiding pointwise reasoning or being forced to construct the
   forward and backward directions separately---without sacrificing
   performance.
-
-  We recommend viewing this paper as a PDF or printing it on a color
-  printer, though it should still be comprehensible in black and
-  white.  The colors have been chosen to hopefully remain
-  distinguishable to individuals with common forms of colorblindness.
 \end{abstract}
 
 
@@ -321,7 +316,12 @@
 \section{Introduction}
 
 Suppose we have four finite types (sets) $A, B, A',$ and $B'$ with
-bijections $f : A \bij A'$ and $g : B \bij B'$.  Then, as illustrated
+bijections $f : A \bij A'$ and $g : B \bij B'$.  Then, as
+illustrated\footnote{We recommend viewing this paper as a PDF or
+  printing it on a color printer, though it should still be
+  comprehensible in black and white.  The colors have been chosen to
+  remain distinguishable to individuals with common forms of
+  color blindness.}
 in \pref{fig:adding-bijections}, we can ``add'' these bijections to
 produce a new bijection
 \[ h : A + B \bij A' + B', \]
@@ -468,11 +468,11 @@ Using an algebra of \term{partial bijections}, we will give a
 high-level construction of the Gordon complementary bijection
 principle (GCBP), which computes the difference of two bijections.
 One downside of our high-level implementation of GCBP is that one
-direction of the computed bijection has quadratic performance, which
-is not a problem with the usual low-level implementation. However, we
-will then show how to optimize the implementation so that both
-directions run in linear time, while retaining its high-level
-character.
+direction of the computed bijection has quadratic performance, whereas
+the usual low-level implementation takes linear time in both
+directions. However, we will then show how to optimize the
+implementation so that both directions run in linear time again, while
+retaining its high-level character.
 
 % \item We explain a related bijection principle, the \emph{Garsia-Milne
 %     involution principle} (GMIP), and prove that it is equivalent to
@@ -505,8 +505,8 @@ the element of $A'$ so obtained.
 \pref{fig:GCBP} illustrates this process.  The top two elements of the
 (dark blue) set on the upper-left map immediately into the two lower
 elements of the light blue set; the third element of the dark blue
-set, however, requires two iterations before finally landing on the
-uppermost element of the light blue set.
+set, however, requires two iterations back and forth before finally
+landing on the uppermost element of the light blue set.
 \begin{figure}[htp]
   \centering
   \begin{diagram}[width=200]
@@ -572,7 +572,7 @@ an element of $A + B$, without the need to explicitly inject it.
   \centering
 \begin{code}
 pingpong :: (a + b -> a' + b') -> (b' -> b) -> (a -> a')
-pingpong h ginv = untilLeft (h . Right . ginv) . h . Left
+pingpong h g' = untilLeft (h . Right . g') . h . Left
 
 untilLeft :: (b' -> a' + b') -> (a' + b' -> a')
 untilLeft step ab = case ab of
@@ -645,18 +645,18 @@ they have several downsides:
   are inverse.  It would be better to construct both directions of the
   bijection simultaneously, so that the resulting bijection is
   ``correct by construction''.
-\item The proof seems to make essential use of classical reasoning:
-  the termination argument in particular is a proof by contradiction.
-  Having an algorithm at all is still better than nothing, but having
-  a classical proof of correctness is irksome. Intuitively, it doesn't
-  seem like anything fundamentally non-constructive is going on, and
-  the classical proof makes it problematic to implement GCBP in a
-  proof assistant based on constructive logic.
-  \citet{gudmundsson2017formalizing} has only recently given such a
-  constructive formal proof, but it relies heavily on low-level
-  pointwise reasoning.  We leave to future work the challenge of turning
-  our high-level construction into a corresponding high-level
-  constructive proof.
+\item \todo{revise this} The proof seems to make essential use of
+  classical reasoning: the termination argument in particular is a
+  proof by contradiction.  Having an algorithm at all is still better
+  than nothing, but having a classical proof of correctness is
+  irksome. Intuitively, it doesn't seem like anything fundamentally
+  non-constructive is going on, and the classical proof makes it
+  problematic to implement GCBP in a proof assistant based on
+  constructive logic.  \citet{gudmundsson2017formalizing} has only
+  recently given such a constructive formal proof, but it relies
+  heavily on low-level pointwise reasoning.  We leave to future work
+  the challenge of turning our high-level construction into a
+  corresponding high-level constructive proof.
 \end{itemize}
 
 \section{Partial Bijections}
@@ -676,7 +676,8 @@ data Bijection a b = Bijection
 \end{spec}
 satisfying the invariants that |to . from = id| and |from . to =
 id|. (In a dependently typed language, one might well include these
-conditions as part of the definition.)  The idea would be to somehow
+conditions as part of the definition. \todo{say something about GHC
+  being ``dependently typed''?})  The idea would be to somehow
 piece together the GCBP algorithm out of high-level operations on
 bijections, so that the whole algorithm returns a valid bijection by
 construction, eliminating duplication of code and the possibility for
@@ -734,6 +735,15 @@ wrappers); picking |m = Maybe| yields partial functions.  The
 |Category| instance for |Kleisli m| provides the identity |id ::
 Kleisli m a a| along with a composition operator
 \[ |(.) :: (Kleisli m b c) -> (Kleisli m a b) -> (Kleisli m a c)|. \]
+\begin{spec}
+class Category cat where
+  id   :: cat a a
+  (.)  :: cat b c -> cat a b -> cat a b
+
+instance Monad m => Category (Kleisli m) where
+  id         = K return
+  K g . K f  = K (\a -> f a >>= g)
+\end{spec}
 In order to match up with the pictures, where we tend to draw
 functions going from left to right, we will also make use of the
 notation
@@ -877,8 +887,6 @@ multibijections.
 
 Finally, we can recover specific types for total and partial bijections as
 \begin{code}
-infixr 8 <=>, <->
-
 type a <=> b = Bij Identity a b
 type a <-> b = Bij Maybe a b
 \end{code}
@@ -1416,7 +1424,7 @@ Let's see how we might start building up something like
 \pref{fig:ping-pong}.  First of all, we can't compose
 $h : A+B \bij A' + B'$ with $|inverse(g)| : B' \bij B$ directly, since
 their types do not match. (Note, once again, that in typical mathematical
-presentations, this is glossed since a subtyping relationship
+presentations, this is glossed over since a subtyping relationship
 $B' \leq A' + B'$ is assumed.)  However, if we compose |inverse(g)| in
 parallel with $|undef : A' <-> A|$ we get
 \[ |undef |||||| inverse(g) : A'+B' <-> A+B|. \] Sequencing $h$ with
@@ -1588,11 +1596,12 @@ Just b| \text{ if and only if } |g b = Just a|. \]
 
 If two partial functions |f, g : A -> Maybe B| are compatible, we can
 define their \term{merge} as \[ |(f <||||> g) x = f x <||> g x|, \]
-where |(<||>)| merges |Maybe| values, yielding |Nothing| if both
-arguments are |Nothing|, and the leftmost |Just| value otherwise.  In
-the case of compatible partial functions, however, when both |f x| and
-|g x| are |Just|, they must be equal, so merging compatible functions
-does not introduce any bias---that is, when $f$ and $g$ are
+where the |(<||>)| operator from the |Alternative| type class
+(\pref{fig:mergeable}) merges |Maybe| values, yielding |Nothing| if
+both arguments are |Nothing|, and the leftmost |Just| value otherwise.
+In the case of compatible partial functions, however, when both |f x|
+and |g x| are |Just|, they must be equal, so merging compatible
+functions does not introduce any bias---that is, when $f$ and $g$ are
 compatible, $f \mrg g = g \mrg f$.
 
 These notions lift easily to the setting of partial bijections.  Two
@@ -1610,7 +1619,11 @@ suitable monoidal structure (via an |Alternative| instance), and this
 lifts to a corresponding instance of |Mergeable| for partial
 bijections.
 \begin{figure}
-\begin{spec}
+  \begin{spec}
+class Applicative f => Alternative f where
+  empty  :: f a
+  (<|>)  :: f a -> f a -> f a
+
 class Category arr => Mergeable arr where
   undef   :: arr a b
   (<||>)  :: arr a b -> arr a b -> arr a b
