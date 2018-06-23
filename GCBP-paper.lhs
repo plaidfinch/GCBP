@@ -1,6 +1,6 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-\documentclass[acmsmall,review,anonymous]{acmart}\settopmatter{printfolios=true}
+\documentclass[acmsmall]{acmart}\settopmatter{printfolios=true}
 
 %% Journal information
 %% Supplied to authors by publisher for camera-ready submission;
@@ -314,6 +314,8 @@
 \maketitle
 
 \section{Introduction}
+
+\todo{mention trace? from Jacques}
 
 Suppose we have four finite types (sets) $A, B, A',$ and $B'$ with
 bijections $f : A \bij A'$ and $g : B \bij B'$.  Then, as
@@ -634,37 +636,32 @@ This construction and proof would convince any combinatorialist, but
 they have several downsides:
 
 \begin{itemize}
-\item It makes heavy use of ``pointwise'' reasoning, messily following
-  the fate of individual elements through an algorithm.  We would like
-  a ``higher-level'' perspective on both the algorithm and proof.
-  Note we cannot simply rewrite the above algorithm in terms of function
-  composition and get rid of any mentions of $a$, since the algorithm may
-  iterate a different number of times for each particular $a \in A$.
+\item This presentation makes heavy use of ``pointwise'' reasoning,
+  messily following the fate of individual elements through an
+  algorithm.  We would like a ``higher-level'' perspective on both the
+  algorithm and proof.  Note we cannot simply rewrite the above
+  algorithm in terms of function composition and get rid of any
+  mentions of $a$, since the algorithm may iterate a different number
+  of times for each particular $a \in A$.
 \item Relatedly, in this presentation we construct the forward and
   backward directions separately, and then prove that the results
   are inverse.  It would be better to construct both directions of the
   bijection simultaneously, so that the resulting bijection is
   ``correct by construction''.
-\item \todo{revise this} The proof seems to make essential use of
-  classical reasoning: the termination argument in particular is a
-  proof by contradiction.  Having an algorithm at all is still better
-  than nothing, but having a classical proof of correctness is
-  irksome. Intuitively, it doesn't seem like anything fundamentally
-  non-constructive is going on, and the classical proof makes it
-  problematic to implement GCBP in a proof assistant based on
-  constructive logic.  \citet{gudmundsson2017formalizing} has only
-  recently given such a constructive formal proof, but it relies
-  heavily on low-level pointwise reasoning.  We leave to future work
-  the challenge of turning our high-level construction into a
-  corresponding high-level constructive proof.
 \end{itemize}
-
-\section{Partial Bijections}
-\label{sec:algebra}
 
 We solve these problems by eschewing point-based reasoning in favor of
 a high-level algebraic approach, which we use to directly construct a
-bijection which is the ``difference'' of two other bijections.
+bijection which is the ``difference'' of two other bijections.  We
+also hope that a high-level construction may be easier to formally
+prove correct.  \citet{gudmundsson2017formalizing} has recently given
+the first mechanized formal proof of the complementary bijection
+principle, in Agda, but it is long and relies heavily on low-level
+pointwise reasoning.  We leave to future work the challenge of turning
+our high-level construction into a corresponding high-level proof.
+
+\section{Partial Bijections}
+\label{sec:algebra}
 
 Since the GCBP takes two bijections as input and yields a bijection as
 output, one might think to begin by defining a type of bijections:
@@ -676,9 +673,10 @@ data Bijection a b = Bijection
 \end{spec}
 satisfying the invariants that |to . from = id| and |from . to =
 id|. (In a dependently typed language, one might well include these
-conditions as part of the definition. \todo{say something about GHC
-  being ``dependently typed''?})  The idea would be to somehow
-piece together the GCBP algorithm out of high-level operations on
+conditions as part of the definition. Although Haskell itself can
+simulate dependent types, invariants such as these would make our
+definitions much too heavyweight.) The idea would be to somehow piece
+together the GCBP algorithm out of high-level operations on
 bijections, so that the whole algorithm returns a valid bijection by
 construction, eliminating duplication of code and the possibility for
 the forward and backward directions to be out of sync.
@@ -1138,11 +1136,11 @@ consists of only those edges of |f| which go between |A| and |A'|.
 Any edges involving elements in |B| or |B'| are dropped.  This can be
 accomplished simply by sandwiching |f| in between |left| and
 |inverse(left)|, as shown in \pref{fig:left-partial}; code for |left|
-and |leftPartial| is shown in \pref{fig:left-partial-code}. (|right|
-and |rightPartial| could be defined similarly, but we do not need
-them.) \pref{fig:left-partial-ex} shows an example of computing the
-left partial projection |leftPartial(h)|, using the same bijection $h$
-from the introduction.
+and |leftPartial| is shown in \pref{fig:left-partial-code}. (The
+functions |right| and |rightPartial| could be defined similarly, but
+we do not need them.) \pref{fig:left-partial-ex} shows an example of
+computing the left partial projection |leftPartial(h)|, using the same
+bijection $h$ from the introduction.
 \begin{figure}
 \begin{center}
 \begin{diagram}[width=200]
@@ -1551,7 +1549,7 @@ to corresponding notions on partial bijections.
 We say that two partial functions |f, g : A -> Maybe B| are
 \term{compatible}, written $f \compat g$, if they agree at all points
 where both are defined, that is, for all |a : A| and |b : B|, \[ |f a =
-Just b| \text{ if and only if } |g b = Just a|. \]
+Just b| \text{ if and only if } |g a = Just b|. \] 
 
 % Formally, $f \compat g$ if and only if |dom g
 % >>> f = dom f >>> g|, that is, restricting $f$ to $g$'s domain yields
@@ -1814,9 +1812,20 @@ gcbp h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extend g' h'
     g' = partial g
     h' = partial h
 \end{code} %$
-
 \pref{fig:gcbp-example} demonstrates this implementation of |gcbp| using our
 running example.
+
+The use of |unsafeTotal| reflects the fact that the totality of the
+bijection constructed by |gcbp| still does not fall out ``by
+construction''; the external reasoning outlined above is required to
+show that the call to |unsafeTotal| is in fact safe.  On the other
+hand, what does fall out by construction is the fact that the
+resulting bijection is in fact a valid (partial) bijection, since it
+is constructed by composing and merging more primitive bijections.
+This is in contrast to the original pointwise definition of GCBP,
+which requires separate external reasoning to show both properties.
+
+\todo{Note this is an unfold followed by a fold --- can we do fold fusion???}
 
 \begin{figure}
 \begin{spec}
@@ -2287,7 +2296,7 @@ before it finishes travelling through every element of |B| and finally
 reaches its destination.  \pref{fig:pessimal} exhibits some code which
 constructs this scenario, with $A = B = \{0, \dots,
 4999\}$. \pref{fig:test-pessimal} shows the result of some simple
-timing experiments at the GHCI prompt: without memoization, the
+timing experiments at the GHCi prompt: without memoization, the
 bijection $f$ constructed by GCBP needs 30 seconds to compute |f
 4999|, whereas with memoization, it only needs half a second.
   \begin{figure}
@@ -2361,7 +2370,7 @@ from scratch every time.
   \caption{Memoization doesn't help with the backwards direction}
   \label{fig:memo-backwards}
 \end{figure}
-\pref{fig:memo-backwards} has a sample GHCI session showing that
+\pref{fig:memo-backwards} has a sample GHCi session showing that
 memoization doesn't help with the backwards direction.  Not only does
 it take a long time, it tends to use up all available memory so that
 it has to be killed.
@@ -2422,17 +2431,31 @@ expect
 ``naive'' ordering works, since we know $f$ is a palindrome built from
 |g| and |h|:
 \[ hg[(hg)^n h] = [(hg)^n h] g h = (hg)^{n+1}h. \] If we redefine
-|gcbp| using |extendPalindrome| in place of |ext|, both the forwards
-and the backwards directions will now be sequenced together in an
-order which allows them to take advantage of
-memoization. \pref{fig:ext-pal} has one last sample GHCI session
-showing that the backwards direction is now just as fast as the
-forwards direction.
+|gcbp| using |extendPalindrome| in place of |ext|, as shown in
+\pref{fig:opt-gcbp}, both the forwards and the backwards directions
+will now be sequenced together in an order which allows them to take
+advantage of memoization. \pref{fig:ext-pal} has one last sample GHCi
+session showing that the backwards direction is now just as fast as
+the forwards direction.
 \begin{figure}
   \centering
+  \begin{code}
+gcbp' :: (a + b <=> a' + b') -> (b <=> b') -> (a <=> a')
+gcbp' h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extendPalindrome g' h') $ h'
+  where
+    g' = partial g
+    h' = partial h
+  \end{code} %$
+  \caption{Optimized |gcbp| with |extendPalindrome|}
+  \label{fig:opt-gcbp}
+\end{figure}
+
+\begin{figure}
+  \centering
+
 \begin{verbatim}
 > let (h,g) = pessimal 5000 5000
-> let f = gcbp h g
+> let f = gcbp' h g
 > applyTotal f 4999
 0
 (0.55 secs, 301,398,688 bytes)
@@ -2445,14 +2468,45 @@ forwards direction.
   \label{fig:ext-pal}
 \end{figure}
 
+\section{Conclusion}
+\label{sec:conclusion}
+
+\todo{Foo bar.}
+
+\todo{Note that optimized version will be much harder to prove things about!}
+
+The proof seems to make use of classical reasoning: the
+  termination argument in particular is typically presented as a proof
+  by contradiction.  Having an algorithm at all is still better than
+  nothing, but having a classical proof of correctness is
+  irksome. Intuitively, it doesn't seem like anything fundamentally
+  non-constructive is going on, and the classical proof makes it
+  problematic to implement GCBP in a proof assistant based on
+  constructive logic.  \citet{gudmundsson2017formalizing} has only
+  recently given such a constructive formal proof, but it relies
+  heavily on low-level pointwise reasoning.  We leave to future work
+  the challenge of turning our high-level construction into a
+  corresponding high-level constructive proof.
+
 % \appendix
 % \section{Appendix Title}
 
 % This is the text of the appendix, if you need one.
 
-% \begin{acks}
+\begin{acks}
+  We would like to thank the anonymous reviewers for their many
+  helpful comments and suggestions.  We also thank Jacques Carette for
+  comments on a draft and pointing out some related work.
 
-% \end{acks}
+  This material is based upon work supported by the
+  \grantsponsor{GS100000001}{National Science
+    Foundation}{http://dx.doi.org/10.13039/100000001} under Grant
+  No.~\grantnum{GS100000001}{1521539} and Grant
+  No.~\grantnum{GS100000001}{1703835}.  Any opinions, findings, and
+  conclusions or recommendations expressed in this material are those
+  of the author and do not necessarily reflect the views of the
+  National Science Foundation.
+\end{acks}
 
 \bibliography{GCBP-paper}
 
