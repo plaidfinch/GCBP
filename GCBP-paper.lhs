@@ -85,6 +85,8 @@
 %format f2
 %format g1
 %format g2
+%format b1
+%format b2
 
 %format fi     = "f_i"
 %format fip1   = "f_{i+1}"
@@ -1546,8 +1548,9 @@ to corresponding notions on partial bijections.
 
 We say that two partial functions |f, g : A -> Maybe B| are
 \term{compatible}, written $f \compat g$, if they agree at all points
-where both are defined, that is, for all |a : A| and |b : B|, \[ |f a =
-Just b| \text{ if and only if } |g a = Just b|. \] 
+where both are defined, that is, for all |a : A| and |b1, b2 : B|, \[
+  \text{if } |f a =
+Just b1| \text{ and } |g a = Just b2|, \text{ then } |b1 = b2|. \]
 
 % Formally, $f \compat g$ if and only if |dom g
 % >>> f = dom f >>> g|, that is, restricting $f$ to $g$'s domain yields
