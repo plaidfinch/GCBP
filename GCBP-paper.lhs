@@ -1,6 +1,6 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-\documentclass[acmsmall]{acmart}\settopmatter{printfolios=true}
+\documentclass[acmsmall,authorversion=true]{acmart}\settopmatter{}
 
 %% Journal information
 %% Supplied to authors by publisher for camera-ready submission;
@@ -315,8 +315,6 @@
 
 \section{Introduction}
 
-\todo{mention trace? from Jacques}
-
 Suppose we have four finite types (sets) $A, B, A',$ and $B'$ with
 bijections $f : A \bij A'$ and $g : B \bij B'$.  Then, as
 illustrated\footnote{We recommend viewing this paper as a PDF or
@@ -489,7 +487,7 @@ retaining its high-level character.
 
 Let us return to the problem of computing some $h - g : A \bij A'$
 from $h : A + B \bij A' + B'$ and $g : B \bij B'$ and describe the
-solution of Gordon~\cite{gordon1983sieve} as it is typically
+solution of \citet{gordon1983sieve} as it is typically
 presented.  The key to defining $h - g$ is to use $h$ and $g$ to
 ``ping-pong'' back and forth between sets until landing in the right
 place.
@@ -1825,8 +1823,6 @@ is constructed by composing and merging more primitive bijections.
 This is in contrast to the original pointwise definition of GCBP,
 which requires separate external reasoning to show both properties.
 
-\todo{Note this is an unfold followed by a fold --- can we do fold fusion???}
-
 \begin{figure}
 \begin{spec}
 unsafeBuildBijection :: (Eq a, Eq b) => [(a,b)] -> (a <=> b)
@@ -2471,22 +2467,40 @@ gcbp' h g = unsafeTotal . foldr1 (<||>) . map leftPartial . iterate (extendPalin
 \section{Conclusion}
 \label{sec:conclusion}
 
-\todo{Foo bar.}
+In the end, what have we gained?  Certainly nothing of immediate
+practical value: the original, pointwise implementation of GCBP is
+probably still the fastest, and proving it correct is not too
+difficult.  Though it is easier to see why the high-level
+implementation must produce a bijection, it seems the same effort is
+still required to see why the produced bijection is total.  And as
+pointed out by several reviewers, proving the correctness of the
+\emph{optimized} high-level implementation is probably much
+\emph{harder} than proving the pointwise implementation correct in the
+first place!
 
-\todo{Note that optimized version will be much harder to prove things about!}
+So why bother?  This work initially grew, not out of a need for a
+solution or a desire to optimize, but out of a desire to
+\emph{understand} the complementary bijection principle.  Re-imagining
+the principle in a high-level, ``point-free'' way gives us much better
+insight into the original problem, its solution, and related
+ideas. For example, there is another principle, the celebrated
+\emph{Garsia-Milne involution principle} \citep{garsia1981method},
+which turns out to be equivalent to GCBP---and this becomes very easy
+to see when thinking in terms of our point-free framework of partial
+bijections.  Re-imagining GCBP at a higher level also yields potential
+new opportunities for generalization.  For example, what happens when
+we choose a monad other than |m = Maybe| for our |m|-bijections?  Is
+there a deeper relationship between this work and traced monoidal
+categories \citet{joyal1996traced}, and if so, what can it tell us?
+Finally, the high-level construction also gives us new tradeoffs to
+play with when writing a mechanized formal proof; although the
+resulting formal proof may not be any shorter, we expect it will be
+more modular, with more reusable pieces (and, perhaps, more pleasant
+to write!).  Instead of proving many tedious statements about
+individual elements, we can focus on proving higher-level properties
+of partial bijections and their operations.
 
-The proof seems to make use of classical reasoning: the
-  termination argument in particular is typically presented as a proof
-  by contradiction.  Having an algorithm at all is still better than
-  nothing, but having a classical proof of correctness is
-  irksome. Intuitively, it doesn't seem like anything fundamentally
-  non-constructive is going on, and the classical proof makes it
-  problematic to implement GCBP in a proof assistant based on
-  constructive logic.  \citet{gudmundsson2017formalizing} has only
-  recently given such a constructive formal proof, but it relies
-  heavily on low-level pointwise reasoning.  We leave to future work
-  the challenge of turning our high-level construction into a
-  corresponding high-level constructive proof.
+% \todo{joyal1996traced}
 
 % \appendix
 % \section{Appendix Title}
