@@ -1,6 +1,6 @@
 % -*- mode: LaTeX; compile-command: "./build.sh" -*-
 
-\documentclass[acmsmall,authorversion=true]{acmart}\settopmatter{}
+\documentclass[acmsmall,screen]{acmart}\settopmatter{}
 
 %% Journal information
 %% Supplied to authors by publisher for camera-ready submission;
