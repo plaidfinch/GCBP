@@ -2,6 +2,9 @@
 
 \documentclass[acmsmall,screen]{acmart}\settopmatter{}
 
+\pdfpagewidth=8.5in
+\pdfpageheight=11in
+
 \setcopyright{rightsretained}
 \acmPrice{}
 \acmDOI{10.1145/3236796}
@@ -105,6 +108,10 @@
 \usepackage{xcolor}
 \usepackage[all]{xy}
 \usepackage{breakurl}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Diagrams
