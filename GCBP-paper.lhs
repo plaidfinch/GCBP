@@ -2514,7 +2514,7 @@ of partial bijections and their operations.
   No.~\grantnum{GS100000001}{1521539} and Grant
   No.~\grantnum{GS100000001}{1703835}.  Any opinions, findings, and
   conclusions or recommendations expressed in this material are those
-  of the author and do not necessarily reflect the views of the
+  of the authors and do not necessarily reflect the views of the
   National Science Foundation.
 \end{acks}
 
