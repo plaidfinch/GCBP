@@ -2494,7 +2494,7 @@ bijections.  Re-imagining GCBP at a higher level also yields potential
 new opportunities for generalization.  For example, what happens when
 we choose a monad other than |m = Maybe| for our |m|-bijections?  Is
 there a deeper relationship between this work and traced monoidal
-categories \citet{joyal1996traced}, and if so, what can it tell us?
+categories \citep{joyal1996traced}, and if so, what can it tell us?
 Finally, the high-level construction also gives us new tradeoffs to
 play with when writing a mechanized formal proof; although the
 resulting formal proof may not be any shorter, we expect it will be
@@ -2502,13 +2502,6 @@ more modular, with more reusable pieces (and, perhaps, more pleasant
 to write!).  Instead of proving many tedious statements about
 individual elements, we can focus on proving higher-level properties
 of partial bijections and their operations.
-
-% \todo{joyal1996traced}
-
-% \appendix
-% \section{Appendix Title}
-
-% This is the text of the appendix, if you need one.
 
 \begin{acks}
   We would like to thank the anonymous reviewers for their many
