@@ -201,14 +201,12 @@
 \begin{document}
 
 %% Title information
-\title{What's the Difference?}         %% [Short Title] is optional;
+\title[What's the Difference? A Functional Pearl on Subtracting Bijections]
+  {What's the Difference? \\ A Functional Pearl on Subtracting Bijections}
+  %% [Short Title] is optional;
                                         %% when present, will be used in
                                         %% header instead of Full Title.
 % \titlenote{with title note}             %% \titlenote is optional;
-%                                         %% can be repeated if necessary;
-%                                         %% contents suppressed with 'anonymous'
-\subtitle{A Functional Pearl on Subtracting Bijections}
-% \subtitlenote{with subtitle note}       %% \subtitlenote is optional;
 %                                         %% can be repeated if necessary;
 %                                         %% contents suppressed with 'anonymous'
 
