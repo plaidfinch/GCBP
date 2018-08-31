@@ -25,6 +25,9 @@ cabal.sandbox.config
 *.bbl
 *.blg
 *.bst
+*.nav
+*.snm
+*.toc
 .DS_Store
 diagrams-latex.sty
 shake
@@ -44,3 +47,4 @@ Test
 Test.png
 
 Shake
+/talk/GCBP-talk.tex
