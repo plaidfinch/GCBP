@@ -5,29 +5,30 @@
 {-# LANGUAGE PartialTypeSignatures     #-}
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TupleSections             #-}
+{-# LANGUAGE TypeFamilies              #-}
 {-# LANGUAGE TypeOperators             #-}
 {-# LANGUAGE TypeSynonymInstances      #-}
-{-# LANGUAGE TypeFamilies              #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Bijections where
 
-import           Control.Arrow       ((&&&))
-import           Data.Default.Class
+import           Control.Arrow               ((&&&))
 import           Data.Bifunctor
-import           Data.List           (find, findIndex, isSuffixOf, partition)
-import qualified Data.Map            as M
-import           Data.Maybe          (catMaybes, fromMaybe)
-import           Data.Tuple          (swap)
+import           Data.Default.Class
+import           Data.List                   (find, findIndex, isSuffixOf,
+                                              partition)
+import qualified Data.Map                    as M
+import           Data.Maybe                  (catMaybes, fromMaybe)
+import           Data.Tuple                  (swap)
 import           Data.Typeable
 
 import           Diagrams.Core.Names
-import           Diagrams.Prelude    hiding (dot, end, r2, start, set)
+import           Diagrams.Prelude            hiding (dot, end, r2, set, start)
 
 import qualified Diagrams.TwoD.Path.Metafont as MF
 
-import Data.Colour.SRGB
+import           Data.Colour.SRGB
 
 ------------------------------------------------------------
 -- Diagram utilities
@@ -218,8 +219,8 @@ instance Default (ABij b) where
       defaultStyle = const $ mempty # dashingL [0.2,0.1] 0 # lineCap LineCapButt
 
 data Bij b = Bij { _bijParts :: [ABij b]
-                 , _bijSep    :: Double
-                 , _bijLabel  :: Maybe (Diagram b)
+                 , _bijSep   :: Double
+                 , _bijLabel :: Maybe (Diagram b)
                  }
 
 makeLenses ''Bij
@@ -288,14 +289,14 @@ concatA (Single a) b l     = Cons a b l
 concatA (Cons a b l) b' l' = Cons a b (concatA l b' l')
 
 flattenA :: AltList (AltList a b) b -> AltList a b
-flattenA (Single l) = l
+flattenA (Single l)    = l
 flattenA (Cons l b l') = concatA l b (flattenA l')
 
 instance Bifunctor AltList where
-  first f (Single a) = Single (f a)
+  first f (Single a)   = Single (f a)
   first f (Cons a b l) = Cons (f a) b (first f l)
 
-  second _ (Single a) = Single a
+  second _ (Single a)   = Single a
   second g (Cons a b l) = Cons a (g b) (second g l)
 
 zipWith2 :: (x -> b -> c) -> [x] -> AltList a b -> AltList a c
@@ -478,6 +479,10 @@ bij1 = single $ mkABij a1 b1 id
 colorEdge :: _ => Name -> Colour Double -> Bij b -> Bij b
 colorEdge n c = bijParts . traverse . bijStyle
   %~ \sty n' -> if (n' == n) then (sty n' # lc c # lw thick) else sty n'
+
+bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
+bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+
 
 ------------------------------------------------------------
 -- Generalized bijection diagrams
