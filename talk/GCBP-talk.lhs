@@ -262,11 +262,17 @@
 
       \note{So the name of the game is to somehow use the information
         contained in $h$ and $g$ to find some canonical way to match
-        up the elements of the blue sets.  Which light blue element
-        should the topmost dark blue element be matched to, and why?
-        What about the others?  OK, I want you to turn to your
+        up the elements of the blue sets.  Of course in this case we
+        can just look at these sets and arbitrarily decide how to
+        match them up, but our goal is to come up with a general
+        principle that tells us which elements we should match by
+        looking only at $h$ and $g$.
+
+        OK, I want you to turn to your
         neighbor and see if you can figure out how to do this.  You
-        have sixty seconds, starting\dots now!}
+        have sixty seconds, starting\dots now!
+
+        XXX get clock to count down on a keypress?}
   \end{xframe}
 
   \begin{xframe}{}
