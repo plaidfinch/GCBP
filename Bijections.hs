@@ -575,3 +575,10 @@ drawGenBij drawLabel = fst . go 0 0
                 in  roundedRect (width r) (height r) (min (width r) (height r) / 8)
                     # fc white
               ]
+
+------------------------------------------------------------
+
+select :: _ => Int -> Int -> Diagram b -> Diagram b
+select nm i d = d
+  # withNameAll nm (\ss -> atop (circle 0.25 # lw veryThick # lc yellow
+                                             # moveTo (location (ss !! i))))
