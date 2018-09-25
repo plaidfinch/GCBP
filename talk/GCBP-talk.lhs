@@ -6,6 +6,8 @@
 
 %format Either = "\Tycon{Either}"
 
+%format ...  = "\dots"
+
 %format a    = "\SetA{a}"
 %format a'   = "\SetAP{a^{\prime}}"
 %format b    = "\SetB{b}"
@@ -67,6 +69,8 @@
 \newcommand{\SetAP}[1]{\textcolor{SetAPBlue}{#1}}
 \newcommand{\SetB}[1]{\textcolor{SetBOrange}{#1}}
 \newcommand{\SetBP}[1]{\textcolor{SetBPOrange}{#1}}
+
+\newcommand{\andthen}{\mathbin{;}}
 
 \mode<presentation>
 {
@@ -718,4 +722,69 @@
     \end{spec}
   \end{xframe}
 
+  \begin{xframe}{}
+    \begin{spec}
+      undef :: a <-> b
+      undef = Nothing :<->: Nothing
+    \end{spec}
+    XXX picture
+  \end{xframe}
+
+  \begin{xframe}{}
+    XXX picture!
+    \begin{spec}
+      class Category c => Parallel c where
+        (+) :: c a b -> c a' b' -> c (Either a a') (Either b b')
+
+      instance Parallel (<=>) where
+        (f :<=>: inv(f)) + (g :<=>: inv(g)) = ...
+
+      instance Parallel (<->) where
+        (f :<->: inv(f)) + (g :<->: inv(g)) = ...
+    \end{spec}
+  \end{xframe}
+
+  \begin{xframe}{}
+    \begin{center}
+      \begin{diagram}[width=300]
+        import Bijections
+        dia = gcbp
+                # labelBC (cycle ["$h$", "$\\varnothing + \\overline{g}$"])
+                # drawBComplex
+
+        gcbp = (a0 +++ a1) .-
+             (bij2 # colorEdge ('a' .> (0 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (1 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (2 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -..
+           (b0 +++ b1)
+
+      \end{diagram}
+    \end{center}
+
+    \begin{code}
+      trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h
+    \end{code}
+  \end{xframe}
+
+  \begin{xframe}{}
+    \begin{code}
+      trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> ... ?
+    \end{code}
+
+  \end{xframe}
 \end{document}
