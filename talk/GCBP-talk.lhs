@@ -48,7 +48,7 @@
 %% XXX
 %format <~>   = "\mathbin{\leftrightsquigarrow}"
 
-%format undef = "\varnothing"
+%format undef = "\bot"
 %format <||>  = "\mrg"
 
 %%% TODO -- better notation?
@@ -194,39 +194,39 @@
       $f$ on one side and $g$ on the other.}
   \end{xframe}
 
-  \begin{xframe}{}
-    \begin{center}
-    \begin{diagram}[width=100]
-      import Bijections
+  % \begin{xframe}{}
+  %   \begin{center}
+  %   \begin{diagram}[width=100]
+  %     import Bijections
 
-      dia = vsep 1 . map centerX $  -- $
-        [ hsep 3
-          [ drawBComplex (bc0 & labelBC ["$f$"])
-          , text "$+$"
-          , drawBComplex (bc1 & labelBC ["$g$"])
-          ]
-        , hsep 3
-          [ text "$=$"
-          , drawBComplex (bc01 & labelBC ["$f + g$"])
-          ]
-        ]
-    \end{diagram}
-    \end{center}
-    \begin{code}
-      (+) :: (a -> a') -> (b -> b') -> (Either a b -> Either a' b')
-      (f + g) (Left a)   = Left   (f a)
-      (f + g) (Right b)  = Right  (g b)
-    \end{code}
-    \note{Just to be concrete, here's some Haskell code which
-      expresses one direction of this operation on bijections.  Given
-      a function from $a$ to $a'$---representing just the forward
-      direction of the bijection $f$---and a function from $b$ to
-      $b'$, the new bijection relates the disjoint union of $a$ and
-      $b$ to the disjoint union of $a'$ and $b'$. In the forward
-      direction, this bijection works by doing a case analysis on its
-      input to see which ``side'' it comes from, |Left| or |Right|,
-      and then running the appropriate function.}
-  \end{xframe}
+  %     dia = vsep 1 . map centerX $  -- $
+  %       [ hsep 3
+  %         [ drawBComplex (bc0 & labelBC ["$f$"])
+  %         , text "$+$"
+  %         , drawBComplex (bc1 & labelBC ["$g$"])
+  %         ]
+  %       , hsep 3
+  %         [ text "$=$"
+  %         , drawBComplex (bc01 & labelBC ["$f + g$"])
+  %         ]
+  %       ]
+  %   \end{diagram}
+  %   \end{center}
+  %   \begin{code}
+  %     (+) :: (a -> a') -> (b -> b') -> (Either a b -> Either a' b')
+  %     (f + g) (Left a)   = Left   (f a)
+  %     (f + g) (Right b)  = Right  (g b)
+  %   \end{code}
+  %   \note{Just to be concrete, here's some Haskell code which
+  %     expresses one direction of this operation on bijections.  Given
+  %     a function from $a$ to $a'$---representing just the forward
+  %     direction of the bijection $f$---and a function from $b$ to
+  %     $b'$, the new bijection relates the disjoint union of $a$ and
+  %     $b$ to the disjoint union of $a'$ and $b'$. In the forward
+  %     direction, this bijection works by doing a case analysis on its
+  %     input to see which ``side'' it comes from, |Left| or |Right|,
+  %     and then running the appropriate function.}
+  % \end{xframe}
 
   {
     \renewcommand{\secimage}{grass}
@@ -361,11 +361,12 @@
       context.}
   }
 
-  \begin{xframe}{}
-    \note{Why might one care about this problem?  Comes up in
-      combinatorics, the mathematical study of counting things. XXX
-      explain why.  Also just computationally interesting.}
-  \end{xframe}
+  % XXX combinatorics picture
+  % \begin{xframe}{}
+  %   \note{Why might one care about this problem?  Comes up in
+  %     combinatorics, the mathematical study of counting things. XXX
+  %     explain why.  Also just computationally interesting.}
+  % \end{xframe}
 
   \begin{xframe}{}
     \begin{center}
@@ -513,6 +514,7 @@
       dark orange set.}
   \end{xframe}
 
+  % XXX if time: make inv(g) more easily distinguishable
   \begin{xframe}{}
     \begin{center}
       \begin{diagram}[width=150]
@@ -726,6 +728,7 @@
     }
   \end{xframe}
 
+  % XXX add picture of id and composition
   \begin{xframe}{}
     \begin{center}
       \begin{diagram}[width=100]
@@ -733,64 +736,71 @@
         dia = drawBComplex bc0
       \end{diagram}
     \end{center}
-    \begin{spec}
-      data a <=> b = (a -> a') :<=>: (a' -> a)
-    \end{spec}
+    % \begin{spec}
+    %   data a <=> a' = (a -> a') :<=>: (a' -> a)
+    % \end{spec}
     \note{So what is a bijection?  We can represent a bijection
       between types |a| and |b| simply as a pair of functions from |a
       -> b| and |b -> a|; of course we also require that the two
-      functions compose to the identity.}
+      functions compose to the identity.  There is an id bijection and
+      we can compose them, that is, they form a category.}
   \end{xframe}
 
-  \begin{xframe}{}
-    \begin{spec}
-      instance Category (<=>) where
-        id = id :<=>: id
-        (f :<=>: inv(f)) . (g :<=>: inv(g)) = (f . g) :<=>: (inv(g) . inv(f))
-    \end{spec}
-    \onslide<2>
-    \vspace{-0.25in}
-    \begin{spec}
-      instance Groupoid (<=>) where
-        inv(f :<=>: g) = g :<=>: f
-    \end{spec}
-    \note{Bijections are an instance of the |Category| type class,
-      which just says that there is an identity bijection and that
-      bijections can be composed just like functions.  Bijections also
-      form a |Groupoid|, which just says that we can always invert a
-      bijection between |a| and |b| to get a bijection between |b| and
-      |a|.}
-  \end{xframe}
+  % \begin{xframe}{}
+  %   \begin{spec}
+  %     instance Category (<=>) where
+  %       id = id :<=>: id
+  %       (f :<=>: inv(f)) . (g :<=>: inv(g)) = (f . g) :<=>: (inv(g) . inv(f))
+  %   \end{spec}
+  %   \onslide<2>
+  %   \vspace{-0.25in}
+  %   \begin{spec}
+  %     instance Groupoid (<=>) where
+  %       inv(f :<=>: g) = g :<=>: f
+  %   \end{spec}
+  %   \note{Bijections are an instance of the |Category| type class,
+  %     which just says that there is an identity bijection and that
+  %     bijections can be composed just like functions.  Bijections also
+  %     form a |Groupoid|, which just says that we can always invert a
+  %     bijection between |a| and |b| to get a bijection between |b| and
+  %     |a|.}
+  % \end{xframe}
 
   \begin{xframe}{}
     \begin{center}
-      \begin{diagram}[width=100]
-        {-# LANGUAGE LambdaCase #-}
+      \begin{diagram}[width=300]
         import Bijections
+        dia = gcbp
+                # labelBC (cycle ["$h$", "$\\overline{g}$"])
+                # drawBComplex
 
-        dia = drawBComplex (a .- pbij -.. b)
-          where
-            a = nset 4 (colors!!0)
-            b = nset 4 (colors!!1)
-        pbij = single $ bijFun [0..3] (\case { 1 -> Just 0; 3 -> Just 3; _ -> Nothing}) -- $
+        gcbp = (a0 +++ a1) .-
+             (bij2 # colorEdge ('a' .> (0 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (1 :: Int)) (colors !! 4)
+                   # colorEdge ('a' .> (2 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (0 :: Int)) (colors !! 5)
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+               # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2 # colorEdge ('b' .> (1 :: Int)) (colors !! 5)
+             ) -..
+           (b0 +++ b1)
+
       \end{diagram}
     \end{center}
-    \onslide<2>
-    \vspace{-0.25in}
-    \begin{spec}
-      data a <-> b = (a -> Maybe a') :<->: (a' -> Maybe a)
-    \end{spec}
-    \[ \text{If } |f :<->: g| \text{ then } (|f a = Just a'| \Leftrightarrow |g a' = Just a|) \]
-
-    \note{It turns out that bijections aren't enough. We also need
-      \emph{partial} bijections, which are like bijections except that
-      they may be undefined in some places.
-
-      Formally, we can define a partial bijection as a pair of
-      partial functions in opposite directions.  You don't really have
-      to understand this law, it just formally expresses the intuition
-      that if a partial bijection \emph{is} defined somewhere in one
-      direction, then }
+    \note{Going back to this for a minute, we can see that bijections
+      aren't enough\dots notice these gaps.  The types don't match up,
+      since $g$ is only defined on the orange sets.  So we introduce
+      the notion of \emph{partial bijections}.}
   \end{xframe}
 
   \begin{xframe}{}
@@ -798,7 +808,6 @@
       \begin{diagram}[width=250]
         {-# LANGUAGE LambdaCase #-}
         import Bijections
-
         dia = hsep 3
           [ drawBComplex (a .- bij1 -. b .- bij2 -.. c)
           , text "$=$"
@@ -814,55 +823,93 @@
             bijC = single $ bijFun [0..3] (\case { 0 -> Just 2; 2 -> Just 1; _ -> Nothing})  -- $
       \end{diagram}
     \end{center}
-    \onslide<2>
-    \begin{spec}
-      instance Category (<->) where
-        id = Just :<->: Just
-        (f :<->: inv(f)) . (g :<->: inv(g)) = (f <=< g) :<->: (inv(g) <=< inv(f))
-    \end{spec}
-    \note{Composing partial bijections works like you might expect.
-      If you can follow a path all the way from one side to the other,
-      the result will be defined there.  But in all other cases the
-      result will be undefined.  In this example, two of the edges
-      ``disappear'' because they get matched up with something
-      undefiend.
+    % \onslide<2>
+    % \vspace{-0.25in}
+    % \begin{spec}
+    %   data a <-> a' = (a -> Maybe a') :<->: (a' -> Maybe a)
+    % \end{spec}
+    % \[ \text{Given } |f :<->: g|, (|f a = Just a'| \text{ iff } |g a' = Just a|) \]
 
-      So these also form a |Category|.  We have to compose each
-      direction using the monadic fish operator, which in this case is
-      handling the potential failure introduced by the |Maybe|
-      results.
-    }
+    \note{It turns out that bijections aren't enough. We also need
+      \emph{partial} bijections, which are like bijections except that
+      they may be undefined in some places.
+
+      Formally, we can define a partial bijection as a pair of partial
+      functions in opposite directions.  We can do all the same things
+      with them as with total bijections, like compose them in
+      sequence and in parallel.  The composition works like\dots}
   \end{xframe}
 
-  \begin{xframe}{}
-    \begin{spec}
-      undef :: a <-> b
-      undef = Nothing :<->: Nothing
-    \end{spec}
-    \note{We need just a couple more things.}
-  \end{xframe}
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[width=250]
+  %       {-# LANGUAGE LambdaCase #-}
+  %       import Bijections
 
-  \begin{xframe}{}
-    % XXX picture!
-    \begin{spec}
-      class Category c => Parallel c where
-        (+) :: c a b -> c a' b' -> c (Either a a') (Either b b')
+  %       dia = hsep 3
+  %         [ drawBComplex (a .- bij1 -. b .- bij2 -.. c)
+  %         , text "$=$"
+  %         , drawBComplex (a .- bijC -.. c)
+  %         ]
+  %         where
+  %           a = nset 4 (colors!!0)
+  %           b = nset 5 (colors!!2)
+  %           c = nset 3 (colors!!4)
+  %           bij1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 2 -> Just 3; 3 -> Just 2; _ -> Nothing}) -- $
+  %           bij2 = single $ bijFun [0..4] (\case { 0 -> Just 0; 1 -> Just 2; 3 -> Just 1; _ -> Nothing}) -- $
+  %           -- Manually compose bij1 >>> bij2
+  %           bijC = single $ bijFun [0..3] (\case { 0 -> Just 2; 2 -> Just 1; _ -> Nothing})  -- $
+  %     \end{diagram}
+  %   \end{center}
+  %   \onslide<2>
+  %   \begin{spec}
+  %     instance Category (<->) where
+  %       id = Just :<->: Just
+  %       (f :<->: inv(f)) . (g :<->: inv(g)) = (f <=< g) :<->: (inv(g) <=< inv(f))
+  %   \end{spec}
+  %   \note{Composing partial bijections works like you might expect.
+  %     If you can follow a path all the way from one side to the other,
+  %     the result will be defined there.  But in all other cases the
+  %     result will be undefined.  In this example, two of the edges
+  %     ``disappear'' because they get matched up with something
+  %     undefiend.
 
-      instance Parallel (<=>) where
-        (f :<=>: inv(f)) + (g :<=>: inv(g)) = ...
+  %     So these also form a |Category|.  We have to compose each
+  %     direction using the monadic fish operator, which in this case is
+  %     handling the potential failure introduced by the |Maybe|
+  %     results.
+  %   }
+  % \end{xframe}
 
-      instance Parallel (<->) where
-        (f :<->: inv(f)) + (g :<->: inv(g)) = ...
-    \end{spec}
-    \note{Here's something else we need\dots}
-  \end{xframe}
+  % \begin{xframe}{}
+  %   \begin{spec}
+  %     undef :: a <-> b
+  %     undef = Nothing :<->: Nothing
+  %   \end{spec}
+  %   \note{We need just a couple more things.}
+  % \end{xframe}
+
+  % \begin{xframe}{}
+  %   % XXX picture!
+  %   \begin{spec}
+  %     class Category c => Parallel c where
+  %       (+) :: c a b -> c a' b' -> c (Either a a') (Either b b')
+
+  %     instance Parallel (<=>) where
+  %       (f :<=>: inv(f)) + (g :<=>: inv(g)) = ...
+
+  %     instance Parallel (<->) where
+  %       (f :<->: inv(f)) + (g :<->: inv(g)) = ...
+  %   \end{spec}
+  %   \note{Here's something else we need\dots}
+  % \end{xframe}
 
   \begin{xframe}{}
     \begin{center}
       \begin{diagram}[width=300]
         import Bijections
         dia = gcbp
-                # labelBC (cycle ["$h$", "$\\varnothing + \\overline{g}$"])
+                # labelBC (cycle ["$h$", "$\\bot + \\overline{g}$"])
                 # drawBComplex
 
         gcbp = (a0 +++ a1) .-
@@ -889,9 +936,9 @@
       \end{diagram}
     \end{center}
 
-    \begin{code}
-      trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h
-    \end{code}
+    % \begin{code}
+    %   trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h
+    % \end{code}
     \note{So now we can finally put the pieces together to construct a
       trace.  We compose the empty partial bijection in parallel with
       the inverse of $g$ for the intermediate steps; then we compose
@@ -901,20 +948,61 @@
   \end{xframe}
 
   \begin{xframe}{}
-    \begin{code}
-      trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> ... ?
-    \end{code}
+    % \begin{code}
+    %   trace h g = h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> (undef + inv(g)) >>> h >>> ... ?
+    % \end{code}
+
+    % XXX put ellipsis afterwards
+    \begin{center}
+      \begin{diagram}[width=300]
+        import Bijections
+        dia = gcbp
+                # labelBC (cycle ["$h$", "$\\bot + \\overline{g}$"])
+                # drawBComplex
+
+        gcbp = (a0 +++ a1) .-
+             bij2
+              -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2
+             ) -.
+           (b0 +++ b1) .-
+             ( (empty +++ reversing bij1)
+             ) -.
+           (a0 +++ a1) .-
+             (bij2
+             ) -..
+           (b0 +++ b1)
+      \end{diagram}
+    \end{center}
+
     \note{Unfortunately, this doesn't actually work!  First, how do we
       know how many times to iterate?}
   \end{xframe}
 
+  % XXX color edges, horiz spacing around arrows
   \begin{xframe}{}
     \begin{center}
       \begin{diagram}[width=350]
         import Bijections
         dia = hsep 3
           [ gcbp
-            # labelBC (cycle ["$h$", "$\\varnothing + \\overline{g}$"])
+            # labelBC (cycle ["$h$", "$\\bot + \\overline{g}$"])
             # drawBComplex
           , text "$=$"
           , ( (a0 +++ a1) .-
@@ -957,186 +1045,171 @@
       from one side to the other!}
   \end{xframe}
 
-  {
-    \renewcommand{\secimage}{merge}
-    \section{Merging}
-    \note{We need one more basic ingredient\dots}
-  }
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[width=250]
+  %       {-# LANGUAGE LambdaCase #-}
+  %       import Bijections
+
+  %       dia :: Diagram B
+  %       dia = hsep 3 . map (vsep 0.5) $ -- $
+  %         [ [ topSet, botSet1 ]
+  %         , [ topSet, botSet2 ]
+  %         ]
+
+  %       a = nset 4 (colors!!0)
+  %       b = nset 4 (colors!!1)
+
+  %       topSet, botSet1, botSet2 :: Diagram B
+  %       topSet = drawBComplex (a .- pbijTop -.. b)
+  %       botSet1 = drawBComplex (a .- pbijBot1 -.. b)
+  %       botSet2 = drawBComplex (a .- pbijBot2 -.. b)
+
+  %       pbijTop = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; _ -> Nothing}) -- $
+  %       pbijBot1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 2; _ -> Nothing }) -- $
+  %       pbijBot2 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 3; _ -> Nothing }) -- $
+  %     \end{diagram}
+  %   \end{center}
+  %   \note{First, let's define what it means for two partial bijections
+  %     to be \emph{compatible}. Essentially it means that they never
+  %     conflict: their edges either coincide or are completely
+  %     disjoint.  The two on the left here are compatible: they have
+  %     one edge in common, and the other edges do not touch at all.  On
+  %     the other hand, the ones on the right are not compatible, since
+  %     they disagree on the very lower right element.}
+  % \end{xframe}
+
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[width=250]
+  %       {-# LANGUAGE LambdaCase #-}
+  %       import Bijections
+
+  %       dia :: Diagram B
+  %       dia = hsep 2 . map centerY $ -- $
+  %         [ vcat
+  %           [ topSet
+  %           , text "$\\sqcup$"
+  %           , strutY 1
+  %           , botSet1
+  %           ]
+  %         , text "$=$"
+  %         , merged
+  %         ]
+
+  %       a = nset 4 (colors!!0)
+  %       b = nset 4 (colors!!1)
+
+  %       topSet, botSet1, merged :: Diagram B
+  %       topSet = drawBComplex (a .- pbijTop -.. b)
+  %       botSet1 = drawBComplex (a .- pbijBot1 -.. b)
+  %       merged = drawBComplex (a .- pbijM -.. b)
+
+  %       pbijTop = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; _ -> Nothing}) -- $
+  %       pbijBot1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 2; _ -> Nothing }) -- $
+  %       pbijM = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; 3 -> Just 2 }) -- $
+  %     \end{diagram}
+  %   \end{center}
+  %   \note{The point is that we can \emph{merge} compatible partial bijections
+  %     to produce one that is ``more informative'' than either one.}
+  % \end{xframe}
+
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[height=75]
+  %       import Bijections
+  %       dia = ( (a0 +++ a1)
+  %               .- single h -..
+  %               (b0 +++ b1)
+  %             )
+  %             # labelBC ["$h$"]
+  %             # drawBComplex
+  %         where
+  %           h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+  %     \end{diagram}
+  %   \end{center}
+  %   \note{Now recall iterating this process of composing with copies
+  %     of $g$ inverse and $h$.  At each step of the process some of the
+  %     elements in the dark blue set may ``finish'' and reach the light
+  %     blue set, in which case their path will be completely connected
+  %     and they will be defined in the final composed bijection.  For
+  %     example, \dots}
+  % \end{xframe}
+
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[height=75]
+  %       import Bijections
+  %       dia = ( (a0 +++ a1)
+  %               .- single h -.
+  %               (b0 +++ b1)
+  %               .- (empty +++ reversing bij1) -.
+  %               (a0 +++ a1)
+  %               .- single h -..
+  %               (b0 +++ b1)
+  %             )
+  %             # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+  %             # drawBComplex
+  %         where
+  %           h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+  %     \end{diagram}
+  %   \end{center}
+  %   \note{Iterate\dots}
+  % \end{xframe}
+
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[height=75]
+  %       import Bijections
+  %       dia = ( (a0 +++ a1)
+  %               .- single h -.
+  %               (b0 +++ b1)
+  %               .- (empty +++ reversing bij1) -.
+  %               (a0 +++ a1)
+  %               .- single h -.
+  %               (b0 +++ b1)
+  %               .- (empty +++ reversing bij1) -.
+  %               (a0 +++ a1)
+  %               .- single h -..
+  %               (b0 +++ b1)
+  %             )
+  %             # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+  %             # drawBComplex
+  %         where
+  %           h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+  %     \end{diagram}
+  %   \end{center}
+  %   \note{Iterate\dots}
+  % \end{xframe}
 
   \begin{xframe}{}
     \begin{center}
-      \begin{diagram}[width=250]
-        {-# LANGUAGE LambdaCase #-}
-        import Bijections
-
-        dia :: Diagram B
-        dia = hsep 3 . map (vsep 0.5) $ -- $
-          [ [ topSet, botSet1 ]
-          , [ topSet, botSet2 ]
-          ]
-
-        a = nset 4 (colors!!0)
-        b = nset 4 (colors!!1)
-
-        topSet, botSet1, botSet2 :: Diagram B
-        topSet = drawBComplex (a .- pbijTop -.. b)
-        botSet1 = drawBComplex (a .- pbijBot1 -.. b)
-        botSet2 = drawBComplex (a .- pbijBot2 -.. b)
-
-        pbijTop = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; _ -> Nothing}) -- $
-        pbijBot1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 2; _ -> Nothing }) -- $
-        pbijBot2 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 3; _ -> Nothing }) -- $
-      \end{diagram}
-    \end{center}
-    \note{First, let's define what it means for two partial bijections
-      to be \emph{compatible}. Essentially it means that they never
-      conflict: their edges either coincide or are completely
-      disjoint.  The two on the left here are compatible: they have
-      one edge in common, and the other edges do not touch at all.  On
-      the other hand, the ones on the right are not compatible, since
-      they disagree on the very lower right element.}
-  \end{xframe}
-
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[width=250]
-        {-# LANGUAGE LambdaCase #-}
-        import Bijections
-
-        dia :: Diagram B
-        dia = hsep 2 . map centerY $ -- $
-          [ vcat
-            [ topSet
-            , text "$\\sqcup$"
-            , strutY 1
-            , botSet1
-            ]
-          , text "$=$"
-          , merged
-          ]
-
-        a = nset 4 (colors!!0)
-        b = nset 4 (colors!!1)
-
-        topSet, botSet1, merged :: Diagram B
-        topSet = drawBComplex (a .- pbijTop -.. b)
-        botSet1 = drawBComplex (a .- pbijBot1 -.. b)
-        merged = drawBComplex (a .- pbijM -.. b)
-
-        pbijTop = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; _ -> Nothing}) -- $
-        pbijBot1 = single $ bijFun [0..3] (\case { 0 -> Just 1; 3 -> Just 2; _ -> Nothing }) -- $
-        pbijM = single $ bijFun [0..3] (\case { 0 -> Just 1; 1 -> Just 0; 2 -> Just 3; 3 -> Just 2 }) -- $
-      \end{diagram}
-    \end{center}
-    \note{The point is that we can \emph{merge} compatible partial bijections
-      to produce one that is ``more informative'' than either one.}
-  \end{xframe}
-
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[height=75]
-        import Bijections
-        dia = ( (a0 +++ a1)
-                .- single h -..
-                (b0 +++ b1)
-              )
-              # labelBC ["$h$"]
-              # drawBComplex
-          where
-            h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
-      \end{diagram}
-    \end{center}
-    \note{Now recall iterating this process of composing with copies
-      of $g$ inverse and $h$.  At each step of the process some of the
-      elements in the dark blue set may ``finish'' and reach the light
-      blue set, in which case their path will be completely connected
-      and they will be defined in the final composed bijection.  For
-      example, \dots}
-  \end{xframe}
-
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[height=75]
-        import Bijections
-        dia = ( (a0 +++ a1)
-                .- single h -.
-                (b0 +++ b1)
-                .- (empty +++ reversing bij1) -.
-                (a0 +++ a1)
-                .- single h -..
-                (b0 +++ b1)
-              )
-              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
-              # drawBComplex
-          where
-            h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
-      \end{diagram}
-    \end{center}
-    \note{Iterate\dots}
-  \end{xframe}
-
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[height=75]
-        import Bijections
-        dia = ( (a0 +++ a1)
-                .- single h -.
-                (b0 +++ b1)
-                .- (empty +++ reversing bij1) -.
-                (a0 +++ a1)
-                .- single h -.
-                (b0 +++ b1)
-                .- (empty +++ reversing bij1) -.
-                (a0 +++ a1)
-                .- single h -..
-                (b0 +++ b1)
-              )
-              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
-              # drawBComplex
-          where
-            h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
-      \end{diagram}
-    \end{center}
-    \note{Iterate\dots}
-  \end{xframe}
-
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[width=300]
+      \begin{diagram}[height=200]
         {-# LANGUAGE LambdaCase #-}
 
         import Bijections
         import Grid
 
-        dia = grid' (with & colsep .~ 2 & rowsep .~ 2) $  -- $
+        dia = grid' (with & colsep .~ 2 & rowsep .~ 0) $  -- $
 
-          map (map alignL)
-          [ [ text "$h$" <> strutX 2
-            , text "$=$"
-            , ( (a0 +++ a1)
+          [ [ ( (a0 +++ a1)
                 .- single h -..
                 (b0 +++ b1)
               )
               # labelBC ["$h$"]
               # drawBComplex
               # alignL
-            , text "$=$"
-            ,
-              ( (a0 +++ a1)
-                .- single h -..
-                (b0 +++ b1)
-              )
-              # drawBComplex
             , text "$\\implies$"
             ,
               ( a0 .- single (mkABij a0 b0 ([1,2,100]!!)) -.. b0 )
               # drawBComplex
-            , text "$=$"
-            , text "$\\langle h ||$" <> strutX 2
+              # alignL
             ]
-          , [ text "$\\mathit{ext}_{g,h} h$"
-            , text "$=$"
-            , ( (a0 +++ a1)
+          , [ mempty, mempty
+            , text "$\\sqcup$" # translateX 2.5 # translateY 2
+              <> strutY 2
+            ]
+          , [ ( (a0 +++ a1)
                 .- single h -.
                 (b0 +++ b1)
                 .- (empty +++ reversing bij1) -.
@@ -1144,26 +1217,20 @@
                 .- single h -..
                 (b0 +++ b1)
               )
-              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+              # labelBC ["$h$", "$\\bot \\parsum \\overline{g}$", "$h$"]
               # drawBComplex
               # alignL
-            , text "$=$"
-            ,
-              ( (a0 +++ a1)
-                .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 4; 3 -> 0; _ -> 100 })) -..
-                (b0 +++ b1)
-              )
-              # drawBComplex
             , text "$\\implies$"
             ,
               ( a0 .- single (mkABij a0 b0 (const 100)) -.. b0 )
               # drawBComplex
-            , text "$=$"
-            , text "$\\langle \\mathit{ext}_{g,h} h ||$" <> strutX 2
+              # alignL
             ]
-          , [ text "$\\mathit{ext}_{g,h}^2 h$"
-            , text "$=$"
-            , ( (a0 +++ a1)
+          , [ mempty, mempty
+            , text "$\\sqcup$" # translateX 2.5 # translateY 2
+              <> strutY 2
+            ]
+          , [ ( (a0 +++ a1)
                 .- single h -.
                 (b0 +++ b1)
                 .- (empty +++ reversing bij1) -.
@@ -1175,26 +1242,27 @@
                 .- single h -..
                 (b0 +++ b1)
               )
-              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+              # labelBC ["$h$", "$\\bot \\parsum \\overline{g}$", "$h$", "$\\bot \\parsum \\overline{g}$", "$h$"]
               # drawBComplex
               # alignL
-            , text "$=$"
-            ,
-              ( (a0 +++ a1)
-                .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 0; _ -> 100 })) -..
-                (b0 +++ b1)
-              )
-              # drawBComplex
             , text "$\\implies$"
             ,
               ( a0 .- single (mkABij a0 b0 ([100,100,0]!!)) -.. b0 )
               # drawBComplex
-            , text "$=$"
-            , text "$\\langle \\mathit{ext}_{g,h}^2 h ||$" <> strutX 2
+              # alignL
+            ]
+          , [ mempty, mempty
+            , text "$\\sqcup$" # translateX 2.5 # translateY 2
+              <> strutY 2
+            ]
+          , [ vdots # translateX 10
+            , mempty
+            , vdots # translateX 2.5
             ]
           ]
           where
             h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+            vdots = vsep 0.5 (circle 0.1 # fc black # replicate 3)
       \end{diagram}
     \end{center}
     \note{These are all compatible (see paper), so if we take the

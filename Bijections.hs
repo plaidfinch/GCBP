@@ -478,7 +478,7 @@ bij1 = single $ mkABij a1 b1 id
 
 colorEdge :: _ => Name -> Colour Double -> Bij b -> Bij b
 colorEdge n c = bijParts . traverse . bijStyle
-  %~ \sty n' -> if (n' == n) then (sty n' # lc c # lw thick) else sty n'
+  %~ \sty n' -> if (n' == n) then (mempty # lc c # lw thick) else sty n'
 
 bc2 = (a0 +++ a1) .- bij2 -.. (b0 +++ b1)
 bij2 = single $ mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
@@ -580,5 +580,5 @@ drawGenBij drawLabel = fst . go 0 0
 
 select :: _ => Int -> Int -> Diagram b -> Diagram b
 select nm i d = d
-  # withNameAll nm (\ss -> atop (circle 0.25 # lw veryThick # lc yellow
+  # withNameAll nm (\ss -> atop (circle 0.25 # lwL 0.1 # lc yellow
                                              # moveTo (location (ss !! i))))
