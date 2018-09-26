@@ -2188,12 +2188,12 @@ from the previous iteration, extended by one step.
 
 The solution is \emph{memoization}: along with each partial bijection,
 we store a map associating inputs to their corresponding outputs.
-corresponding outputs. With these maps in place, evaluating a partial
-bijection on a particular input may take any amount of time initially,
-but subsequent evaluations at the same input take (essentially)
-constant time. This means that each iteration needs to do only a
-constant amount of additional work, and the whole evaluation reduces
-to linear time instead of quadratic.
+With these maps in place, evaluating a partial bijection on a
+particular input may take any amount of time initially, but subsequent
+evaluations at the same input take (essentially) constant time. This
+means that each iteration needs to do only a constant amount of
+additional work, and the whole evaluation reduces to linear time
+instead of quadratic.
 
 \pref{fig:memo} shows some necessary utilities for memoization.  We
 make use of Conal Elliott's \verb+MemoTrie+ package
