@@ -108,7 +108,7 @@
 % \usepackage{pgfpages}
 % \pgfpagesuselayout{4 on 1}[uspaper, border shrink=5mm]
 
-\setbeameroption{show only notes}
+% \setbeameroption{show only notes}
 
 \usepackage[english]{babel}
 \usepackage[T1]{fontenc}
@@ -311,44 +311,45 @@
           enough for me.  I don't just want to know they have the same
           size, I want a \emph{concrete matching} between the blue
           sets that I can actually compute.}
+
+        % \note{So the name of the game is to somehow use the information
+  %       contained in $h$ and $g$ to find some canonical way to match
+  %       up the elements of the blue sets.  Of course in this case we
+  %       can just look at these sets and arbitrarily decide how to
+  %       match them up, but our goal is to come up with a general
+  %       principle that tells us which elements we should match by
+  %       looking only at $h$ and $g$.
+
+  %       OK, I want you to turn to your
+  %       neighbor and see if you can figure out how to do this.  You
+  %       have sixty seconds, starting\dots now!}
     \end{center}
   \end{xframe}
 
-  \begin{xframe}{}
-    \begin{center}
-      \begin{diagram}[width=250]
-        import Bijections
+  % \begin{xframe}{}
+  %   \begin{center}
+  %     \begin{diagram}[width=250]
+  %       import Bijections
 
-        dia = vsep 1 . map centerX $  -- $
-          [ hsep 3
-            [ drawBComplex (bc2 # labelBC ["$h$"])
-            , text "$-$" # translateY (-2.5)
-            , drawBComplex (bc1 # labelBC ["$g$"]) # translateY (-2.5)
-            ]
-          , hsep 3
-            [ text "$=$"
-            , drawBComplex ((a0 .- empty -.. b0))
-              <>
-              text "?"
-            ]
-          ]
-        \end{diagram}
-      \end{center}
-      XXX if time --- tweak image a bit, e.g. show tiny arrows coming
-      out of blue which don't know where to go
+  %       dia = vsep 1 . map centerX $  -- $
+  %         [ hsep 3
+  %           [ drawBComplex (bc2 # labelBC ["$h$"])
+  %           , text "$-$" # translateY (-2.5)
+  %           , drawBComplex (bc1 # labelBC ["$g$"]) # translateY (-2.5)
+  %           ]
+  %         , hsep 3
+  %           [ text "$=$"
+  %           , drawBComplex ((a0 .- empty -.. b0))
+  %             <>
+  %             text "?"
+  %           ]
+  %         ]
+  %       \end{diagram}
+  %     \end{center}
+  %     % XXX if time --- tweak image a bit, e.g. show tiny arrows coming
+  %     % out of blue which don't know where to go
 
-      \note{So the name of the game is to somehow use the information
-        contained in $h$ and $g$ to find some canonical way to match
-        up the elements of the blue sets.  Of course in this case we
-        can just look at these sets and arbitrarily decide how to
-        match them up, but our goal is to come up with a general
-        principle that tells us which elements we should match by
-        looking only at $h$ and $g$.
-
-        OK, I want you to turn to your
-        neighbor and see if you can figure out how to do this.  You
-        have sixty seconds, starting\dots now!}
-  \end{xframe}
+  % \end{xframe}
 
   {
     \renewcommand{\secimage}{background}
@@ -359,7 +360,8 @@
 
   \begin{xframe}{}
     \note{Why might one care about this problem?  Comes up in
-      combinatorics, the mathematical study of counting things.  XXX}
+      combinatorics, the mathematical study of counting things. XXX
+      explain why.  Also just computationally interesting.}
   \end{xframe}
 
   \begin{xframe}{}
@@ -400,7 +402,7 @@
           # select 0 0
       \end{diagram}
     \end{center}
-    XXX if time highlight edges
+    % XXX if time highlight edges
     \note{If we start with this element and follow $h$ across\dots}
   \end{xframe}
 
@@ -838,7 +840,7 @@
   \end{xframe}
 
   \begin{xframe}{}
-    XXX picture!
+    % XXX picture!
     \begin{spec}
       class Category c => Parallel c where
         (+) :: c a b -> c a' b' -> c (Either a a') (Either b b')
@@ -1096,6 +1098,102 @@
   \end{xframe}
 
   \begin{xframe}{}
+    \begin{center}
+      \begin{diagram}[width=300]
+        {-# LANGUAGE LambdaCase #-}
+
+        import Bijections
+        import Grid
+
+        dia = grid' (with & colsep .~ 2 & rowsep .~ 2) $  -- $
+
+          map (map alignL)
+          [ [ text "$h$" <> strutX 2
+            , text "$=$"
+            , ( (a0 +++ a1)
+                .- single h -..
+                (b0 +++ b1)
+              )
+              # labelBC ["$h$"]
+              # drawBComplex
+              # alignL
+            , text "$=$"
+            ,
+              ( (a0 +++ a1)
+                .- single h -..
+                (b0 +++ b1)
+              )
+              # drawBComplex
+            , text "$\\implies$"
+            ,
+              ( a0 .- single (mkABij a0 b0 ([1,2,100]!!)) -.. b0 )
+              # drawBComplex
+            , text "$=$"
+            , text "$\\langle h ||$" <> strutX 2
+            ]
+          , [ text "$\\mathit{ext}_{g,h} h$"
+            , text "$=$"
+            , ( (a0 +++ a1)
+                .- single h -.
+                (b0 +++ b1)
+                .- (empty +++ reversing bij1) -.
+                (a0 +++ a1)
+                .- single h -..
+                (b0 +++ b1)
+              )
+              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+              # drawBComplex
+              # alignL
+            , text "$=$"
+            ,
+              ( (a0 +++ a1)
+                .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 4; 3 -> 0; _ -> 100 })) -..
+                (b0 +++ b1)
+              )
+              # drawBComplex
+            , text "$\\implies$"
+            ,
+              ( a0 .- single (mkABij a0 b0 (const 100)) -.. b0 )
+              # drawBComplex
+            , text "$=$"
+            , text "$\\langle \\mathit{ext}_{g,h} h ||$" <> strutX 2
+            ]
+          , [ text "$\\mathit{ext}_{g,h}^2 h$"
+            , text "$=$"
+            , ( (a0 +++ a1)
+                .- single h -.
+                (b0 +++ b1)
+                .- (empty +++ reversing bij1) -.
+                (a0 +++ a1)
+                .- single h -.
+                (b0 +++ b1)
+                .- (empty +++ reversing bij1) -.
+                (a0 +++ a1)
+                .- single h -..
+                (b0 +++ b1)
+              )
+              # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
+              # drawBComplex
+              # alignL
+            , text "$=$"
+            ,
+              ( (a0 +++ a1)
+                .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 0; _ -> 100 })) -..
+                (b0 +++ b1)
+              )
+              # drawBComplex
+            , text "$\\implies$"
+            ,
+              ( a0 .- single (mkABij a0 b0 ([100,100,0]!!)) -.. b0 )
+              # drawBComplex
+            , text "$=$"
+            , text "$\\langle \\mathit{ext}_{g,h}^2 h ||$" <> strutX 2
+            ]
+          ]
+          where
+            h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
+      \end{diagram}
+    \end{center}
     \note{These are all compatible (see paper), so if we take the
       infinite merge (as long as it is lazy enough), we get exactly
       what we wanted!}
@@ -1139,103 +1237,6 @@
           # drawBComplex
       \end{diagram}
     \end{center}
-
-    % \begin{center}
-    %   \begin{diagram}[width=300]
-    %     {-# LANGUAGE LambdaCase #-}
-
-    %     import Bijections
-    %     import Grid
-
-    %     dia = grid' (with & colsep .~ 2 & rowsep .~ 2) $  -- $
-
-    %       map (map alignL)
-    %       [ [ text "$h$" <> strutX 2
-    %         , text "$=$"
-    %         , ( (a0 +++ a1)
-    %             .- single h -..
-    %             (b0 +++ b1)
-    %           )
-    %           # labelBC ["$h$"]
-    %           # drawBComplex
-    %           # alignL
-    %         , text "$=$"
-    %         ,
-    %           ( (a0 +++ a1)
-    %             .- single h -..
-    %             (b0 +++ b1)
-    %           )
-    %           # drawBComplex
-    %         , text "$\\implies$"
-    %         ,
-    %           ( a0 .- single (mkABij a0 b0 ([1,2,100]!!)) -.. b0 )
-    %           # drawBComplex
-    %         , text "$=$"
-    %         , text "$\\langle h ||$" <> strutX 2
-    %         ]
-    %       , [ text "$\\mathit{ext}_{g,h} h$"
-    %         , text "$=$"
-    %         , ( (a0 +++ a1)
-    %             .- single h -.
-    %             (b0 +++ b1)
-    %             .- (empty +++ reversing bij1) -.
-    %             (a0 +++ a1)
-    %             .- single h -..
-    %             (b0 +++ b1)
-    %           )
-    %           # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
-    %           # drawBComplex
-    %           # alignL
-    %         , text "$=$"
-    %         ,
-    %           ( (a0 +++ a1)
-    %             .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 4; 3 -> 0; _ -> 100 })) -..
-    %             (b0 +++ b1)
-    %           )
-    %           # drawBComplex
-    %         , text "$\\implies$"
-    %         ,
-    %           ( a0 .- single (mkABij a0 b0 (const 100)) -.. b0 )
-    %           # drawBComplex
-    %         , text "$=$"
-    %         , text "$\\langle \\mathit{ext}_{g,h} h ||$" <> strutX 2
-    %         ]
-    %       , [ text "$\\mathit{ext}_{g,h}^2 h$"
-    %         , text "$=$"
-    %         , ( (a0 +++ a1)
-    %             .- single h -.
-    %             (b0 +++ b1)
-    %             .- (empty +++ reversing bij1) -.
-    %             (a0 +++ a1)
-    %             .- single h -.
-    %             (b0 +++ b1)
-    %             .- (empty +++ reversing bij1) -.
-    %             (a0 +++ a1)
-    %             .- single h -..
-    %             (b0 +++ b1)
-    %           )
-    %           # labelBC ["$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$", "$\\varnothing \\parsum \\overline{g}$", "$h$"]
-    %           # drawBComplex
-    %           # alignL
-    %         , text "$=$"
-    %         ,
-    %           ( (a0 +++ a1)
-    %             .- single (mkABij (a0 +++ a1) (b0 +++ b1) (\case { 2 -> 0; _ -> 100 })) -..
-    %             (b0 +++ b1)
-    %           )
-    %           # drawBComplex
-    %         , text "$\\implies$"
-    %         ,
-    %           ( a0 .- single (mkABij a0 b0 ([100,100,0]!!)) -.. b0 )
-    %           # drawBComplex
-    %         , text "$=$"
-    %         , text "$\\langle \\mathit{ext}_{g,h}^2 h ||$" <> strutX 2
-    %         ]
-    %       ]
-    %       where
-    %         h = mkABij (a0 +++ a1) (b0 +++ b1) ((`mod` 5) . succ)
-    %   \end{diagram}
-    % \end{center}
     \note{So, thanks very much for listening, and go read the paper!}
   \end{xframe}
 \end{document}
