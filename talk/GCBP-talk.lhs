@@ -239,9 +239,12 @@
     \begin{center}
       \onslide<1->
       1. ``type'' = ``set'' \\[1em]
-      \onslide<2>
-      2. everything is finite
+      \onslide<2->
+      2. everything is finite$^*$ \\[3em]
+    \onslide<3>
+    {\tiny $^*$ except for that one infinite thing}
     \end{center}
+
     \note{Rule number 1: types and sets are the
       same thing. I am going to use these words interchangeably.  Rule
       number 2: everything is finite. OK? After my talk we can all go
@@ -731,7 +734,7 @@
       \end{diagram}
     \end{center}
     \begin{spec}
-      data a <=> b = (a -> b) :<=>: (b -> a)
+      data a <=> b = (a -> a') :<=>: (a' -> a)
     \end{spec}
     \note{So what is a bijection?  We can represent a bijection
       between types |a| and |b| simply as a pair of functions from |a
@@ -775,9 +778,9 @@
     \onslide<2>
     \vspace{-0.25in}
     \begin{spec}
-      data a <-> b = (a -> Maybe b) :<->: (b -> Maybe a)
+      data a <-> b = (a -> Maybe a') :<->: (a' -> Maybe a)
     \end{spec}
-    \[ \text{If } |f :<->: g| \text{ then } (|f a = Just b| \Leftrightarrow |g b = Just a|) \]
+    \[ \text{If } |f :<->: g| \text{ then } (|f a = Just a'| \Leftrightarrow |g a' = Just a|) \]
 
     \note{It turns out that bijections aren't enough. We also need
       \emph{partial} bijections, which are like bijections except that
